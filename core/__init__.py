@@ -1,0 +1,1 @@
+"""Slothery core package."""

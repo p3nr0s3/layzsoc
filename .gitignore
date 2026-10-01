@@ -1,0 +1,25 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Local databases & keys
+*.db
+*.sqlite3
+data/cache.db
+keys.json
+.env
+
+# Streamlit
+.streamlit/
+
+# OS files
+.DS_Store
+Thumbs.db
