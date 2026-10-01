@@ -1,15 +1,15 @@
 /* Slothery Minimal Cyber-Aesthetic Stylesheet */
-
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-primary: #0a0d14;
-  --bg-card: #111622;
-  --bg-card-hover: #161c2b;
+  --bg-primary: #080b11;
+  --bg-sidebar: #0b0f19;
+  --bg-card: #0e1422;
+  --bg-card-hover: #131a2c;
   --border-color: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(0, 242, 254, 0.3);
+  --border-hover: rgba(0, 242, 254, 0.35);
   --accent-cyan: #00f2fe;
-  --accent-blue: #4facfe;
+  --accent-blue: #38bdf8;
   --malicious-red: #ef4444;
   --suspicious-amber: #f59e0b;
   --clean-green: #10b981;
@@ -18,58 +18,238 @@
   --text-muted: #94a3b8;
 }
 
-/* App container tweaks */
-.stApp {
-  background-color: var(--bg-primary);
-  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-  color: var(--text-main);
+/* ============================================================
+   1. TOTAL REMOVAL OF STREAMLIT DEFAULT HEADER & CHROME
+   ============================================================ */
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+#MainMenu,
+footer,
+.stDeployButton,
+div[data-testid="stStatusWidget"],
+div[data-testid="stDecoration"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
 }
 
-/* Monospace font for inputs and indicators */
-code, pre, .mono-text, .stTextArea textarea {
+/* Body and Layout Reset */
+.stApp {
+  background-color: var(--bg-primary) !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+  color: var(--text-main) !important;
+}
+
+.main .block-container {
+  padding-top: 1.5rem !important;
+  padding-bottom: 2.5rem !important;
+  max-width: 1400px !important;
+}
+
+/* ============================================================
+   2. SIDEBAR STYLING
+   ============================================================ */
+section[data-testid="stSidebar"] {
+  background-color: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border-color) !important;
+}
+
+section[data-testid="stSidebar"] > div:first-child {
+  padding-top: 1.25rem !important;
+}
+
+/* Sidebar expanders */
+section[data-testid="stSidebar"] [data-testid="stExpander"] {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  margin-bottom: 12px !important;
+}
+
+/* ============================================================
+   3. CUSTOM MODERN SEGMENTED TABS (NO DEFAULT RED LINES)
+   ============================================================ */
+div[data-baseweb="tab-list"] {
+  background: #0d121d !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  padding: 4px !important;
+  gap: 6px !important;
+  display: inline-flex !important;
+  width: auto !important;
+  margin-bottom: 1.25rem !important;
+}
+
+div[data-baseweb="tab-border"] {
+  display: none !important;
+}
+
+div[data-baseweb="tab-highlight"] {
+  display: none !important;
+}
+
+button[data-baseweb="tab"] {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  color: var(--text-muted) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  padding: 8px 18px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-bottom: none !important;
+}
+
+button[data-baseweb="tab"]:hover {
+  color: #f8fafc !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+button[data-baseweb="tab"][aria-selected="true"] {
+  background: rgba(0, 242, 254, 0.12) !important;
+  color: var(--accent-cyan) !important;
+  border: 1px solid rgba(0, 242, 254, 0.35) !important;
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.15) !important;
+}
+
+/* ============================================================
+   4. INPUTS, TEXTAREAS & UPLOADERS
+   ============================================================ */
+code, pre, .mono-text {
   font-family: 'JetBrains Mono', monospace !important;
 }
 
-/* Header & Branding */
+div[data-baseweb="textarea"] {
+  background-color: #0b0f19 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+div[data-baseweb="textarea"]:focus-within {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 14px rgba(0, 242, 254, 0.25) !important;
+}
+
+div[data-baseweb="textarea"] textarea {
+  color: #f8fafc !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.88rem !important;
+}
+
+div[data-baseweb="input"] {
+  background-color: #0b0f19 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+div[data-baseweb="input"]:focus-within {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.2) !important;
+}
+
+/* File Uploader */
+section[data-testid="stFileUploadDropzone"] {
+  background: #0b0f19 !important;
+  border: 1px dashed rgba(0, 242, 254, 0.3) !important;
+  border-radius: 10px !important;
+  padding: 1.25rem !important;
+  transition: all 0.2s ease !important;
+}
+
+section[data-testid="stFileUploadDropzone"]:hover {
+  border-color: var(--accent-cyan) !important;
+  background: #0f1524 !important;
+}
+
+/* ============================================================
+   5. BUTTON STYLES
+   ============================================================ */
+/* Primary button */
+button[kind="primary"] {
+  background: linear-gradient(135deg, #00f2fe 0%, #0284c7 100%) !important;
+  color: #040914 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.55rem 1.4rem !important;
+  box-shadow: 0 4px 16px rgba(0, 242, 254, 0.28) !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.02em !important;
+}
+
+button[kind="primary"]:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 22px rgba(0, 242, 254, 0.42) !important;
+}
+
+button[kind="primary"]:disabled {
+  background: #1e293b !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* Secondary button */
+button[kind="secondary"] {
+  background: #101625 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+button[kind="secondary"]:hover {
+  background: #161e33 !important;
+  border-color: var(--accent-cyan) !important;
+  color: var(--accent-cyan) !important;
+}
+
+/* ============================================================
+   6. BRANDING & HERO
+   ============================================================ */
 .brand-container {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px 0 20px 0;
+  gap: 16px;
+  padding: 4px 0 16px 0;
   border-bottom: 1px solid var(--border-color);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .brand-logo {
   font-size: 2.2rem;
   line-height: 1;
-  filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.4));
+  filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.5));
 }
 
 .brand-title {
-  font-size: 1.65rem;
-  font-weight: 700;
+  font-size: 1.6rem;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #ffffff 30%, #00f2fe 100%);
+  background: linear-gradient(135deg, #ffffff 40%, #00f2fe 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
 }
 
 .brand-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   color: var(--text-muted);
   font-weight: 400;
-  margin-top: 2px;
-  letter-spacing: 0.01em;
+  margin-top: 3px;
 }
 
-/* Metrics Dashboard Cards */
+/* ============================================================
+   7. METRICS CARDS
+   ============================================================ */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
-  margin: 18px 0 24px 0;
+  margin: 16px 0 22px 0;
 }
 
 .metric-card {
@@ -79,7 +259,6 @@ code, pre, .mono-text, .stTextArea textarea {
   padding: 14px 16px;
   transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
 }
 
 .metric-card:hover {
@@ -90,7 +269,7 @@ code, pre, .mono-text, .stTextArea textarea {
 
 .metric-title {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -99,25 +278,27 @@ code, pre, .mono-text, .stTextArea textarea {
 
 .metric-val {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 1.6rem;
+  font-size: 1.65rem;
   font-weight: 700;
   line-height: 1;
 }
 
-.metric-card.malicious .metric-val { color: var(--malicious-red); text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
-.metric-card.suspicious .metric-val { color: var(--suspicious-amber); text-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-.metric-card.clean .metric-val { color: var(--clean-green); text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+.metric-card.malicious .metric-val { color: var(--malicious-red); text-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+.metric-card.suspicious .metric-val { color: var(--suspicious-amber); text-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+.metric-card.clean .metric-val { color: var(--clean-green); text-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
 .metric-card.unknown .metric-val { color: var(--unknown-slate); }
-.metric-card.total .metric-val { color: var(--accent-cyan); text-shadow: 0 0 10px rgba(0, 242, 254, 0.3); }
+.metric-card.total .metric-val { color: var(--accent-cyan); text-shadow: 0 0 12px rgba(0, 242, 254, 0.4); }
 
-/* Status Badges */
+/* ============================================================
+   8. BADGES & CHIPS
+   ============================================================ */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -132,21 +313,21 @@ code, pre, .mono-text, .stTextArea textarea {
 .badge-malicious {
   background: rgba(239, 68, 68, 0.15);
   color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 .badge-malicious .badge-dot { background: var(--malicious-red); box-shadow: 0 0 6px var(--malicious-red); }
 
 .badge-suspicious {
   background: rgba(245, 158, 11, 0.15);
   color: #fde68a;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 .badge-suspicious .badge-dot { background: var(--suspicious-amber); box-shadow: 0 0 6px var(--suspicious-amber); }
 
 .badge-clean {
   background: rgba(16, 185, 129, 0.15);
   color: #a7f3d0;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 .badge-clean .badge-dot { background: var(--clean-green); box-shadow: 0 0 6px var(--clean-green); }
 
@@ -157,19 +338,13 @@ code, pre, .mono-text, .stTextArea textarea {
 }
 .badge-unknown .badge-dot { background: var(--unknown-slate); }
 
-/* Sidebar cyber elements */
-[data-testid="stSidebar"] {
-  background-color: #0d1117 !important;
-  border-right: 1px solid var(--border-color);
-}
-
-/* Key pool status card */
+/* Key pool status card in sidebar */
 .key-pool-card {
-  background: #111622;
+  background: #0d121e;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 12px 14px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .key-pool-header {
@@ -192,23 +367,8 @@ code, pre, .mono-text, .stTextArea textarea {
   align-items: center;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
-  padding: 4px 0;
+  padding: 5px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-/* Throttle banner */
-.throttle-banner {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin: 12px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #fde68a;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
 }
 
 /* Custom scrollbars */
@@ -224,5 +384,5 @@ code, pre, .mono-text, .stTextArea textarea {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 242, 254, 0.3);
+  background: rgba(0, 242, 254, 0.35);
 }

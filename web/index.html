@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLOTHERY // Threat Intelligence & IoC Triage</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            cyber: {
+              bg: '#070a10',
+              sidebar: '#0b0f18',
+              card: '#0e1422',
+              cardHover: '#131b2e',
+              border: 'rgba(255, 255, 255, 0.08)',
+              borderHover: 'rgba(0, 242, 254, 0.35)',
+              cyan: '#00f2fe',
+              blue: '#38bdf8',
+              red: '#ef4444',
+              amber: '#f59e0b',
+              green: '#10b981',
+              slate: '#64748b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #070a10;
+      color: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #070a10;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 242, 254, 0.35);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.25);
+    }
+    .glow-red {
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+    }
+    .glow-green {
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+    .glow-amber {
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased custom-scrollbar">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="h-16 border-b border-cyber-border bg-[#090d16]/80 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan/20 to-blue-600/10 border border-cyber-cyan/30 flex items-center justify-center text-xl glow-cyan">
+        🦥
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-lg tracking-tight text-white">SLOTHERY</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/25">v2.0</span>
+        </div>
+        <p class="text-xs text-slate-400 font-mono">IoC THREAT ENRICHMENT & KEY ROTATION ENGINE</p>
+      </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <nav class="flex items-center gap-1.5 p-1 bg-[#0d121e] border border-cyber-border rounded-xl">
+      <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
+        <i data-lucide="target" class="w-3.5 h-3.5"></i>
+        <span>IoC Triage</span>
+      </button>
+      <button onclick="switchTab('keys')" id="tab-btn-keys" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="key" class="w-3.5 h-3.5"></i>
+        <span>API Key Pools</span>
+      </button>
+      <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="database" class="w-3.5 h-3.5"></i>
+        <span>Cache & Audit</span>
+      </button>
+    </nav>
+
+    <!-- RIGHT STATUS BADGES -->
+    <div class="flex items-center gap-3">
+      <div id="pool-status-indicator" class="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-300">Pools Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- ============================================================
+         TAB 1: TRIAGE SCANNER
+         ============================================================ -->
+    <section id="view-triage" class="space-y-6">
+      
+      <!-- INPUT GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- TEXT INPUT BOX (8 cols) -->
+        <div class="lg:col-span-8 bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
+              <i data-lucide="terminal" class="w-4 h-4 text-cyber-cyan"></i>
+              Paste Raw / Defanged Indicators or Logs
+            </label>
+            <div class="flex items-center gap-2">
+              <button onclick="loadSampleData()" class="px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border flex items-center gap-1.5 transition">
+                <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                Load Sample
+              </button>
+              <button onclick="clearInput()" class="px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-300 border border-cyber-border transition">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <textarea 
+            id="ioc-input"
+            oninput="handleInputDebounce()"
+            rows="6" 
+            placeholder="Paste mixed indicators here...&#10;e.g. 1[.]1[.]1[.]1&#10;185.220.101.5&#10;ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222&#10;hxxps://malicious-domain[.]ru/c2"
+            class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-sm font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan transition custom-scrollbar"
+          ></textarea>
+
+          <!-- DETECTED PILLS BAR -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-cyber-border/60">
+            <div id="detected-pills" class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-slate-500 font-mono">Awaiting input...</span>
+            </div>
+            
+            <button 
+              id="btn-scan" 
+              onclick="startScan()"
+              disabled
+              class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-blue-600 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyber-cyan/25 active:scale-95"
+            >
+              <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
+              <span>Enrich Indicators</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FILE UPLOADER & ENGINE CONTROLS (4 cols) -->
+        <div class="lg:col-span-4 space-y-4">
+          
+          <!-- File Dropzone -->
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono mb-3 flex items-center gap-2">
+              <i data-lucide="file-up" class="w-4 h-4 text-cyber-cyan"></i>
+              Upload Batch File (.txt, .csv)
+            </h3>
+            
+            <div 
+              id="dropzone"
+              onclick="document.getElementById('file-input').click()"
+              class="border-2 border-dashed border-cyber-border hover:border-cyber-cyan/60 rounded-xl p-5 text-center cursor-pointer transition-all bg-[#090d16]/50 hover:bg-[#090d16]"
+            >
+              <input type="file" id="file-input" class="hidden" accept=".txt,.csv" onchange="handleFileSelect(event)">
+              <div class="w-10 h-10 mx-auto mb-2 rounded-full bg-cyber-cyan/10 flex items-center justify-center text-cyber-cyan">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              </div>
+              <p class="text-xs font-medium text-slate-300">Click to upload or drag & drop</p>
+              <p class="text-[11px] text-slate-500 font-mono mt-0.5">CSV or TXT with indicators</p>
+            </div>
+          </div>
+
+          <!-- Quick Settings -->
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400">Use Local SQLite Cache</span>
+              <input type="checkbox" id="cfg-cache" checked class="w-4 h-4 accent-cyber-cyan rounded">
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400">Filter RFC1918 Private IPs</span>
+              <input type="checkbox" id="cfg-filter-private" checked class="w-4 h-4 accent-cyber-cyan rounded">
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400">Smart Rate-Limit Auto-wait</span>
+              <input type="checkbox" id="cfg-throttle" checked class="w-4 h-4 accent-cyber-cyan rounded">
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SCAN PROGRESS BANNER -->
+      <div id="scan-progress-box" class="hidden bg-cyber-card border border-cyber-cyan/40 rounded-xl p-4 glow-cyan space-y-2">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div>
+            <span id="scan-status-text" class="text-cyber-cyan font-bold">Scanning indicators...</span>
+          </div>
+          <span id="scan-percentage" class="text-slate-400">0%</span>
+        </div>
+        <div class="w-full bg-[#090d16] h-1.5 rounded-full overflow-hidden">
+          <div id="scan-progress-bar" class="h-full bg-gradient-to-r from-cyber-cyan to-blue-500 transition-all duration-300 w-0"></div>
+        </div>
+      </div>
+
+      <!-- RESULTS SECTION -->
+      <div id="results-section" class="hidden space-y-6">
+
+        <!-- METRICS COUNTER CARDS -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Total Checked</div>
+            <div id="metric-total" class="text-2xl font-mono font-bold text-cyber-cyan mt-1">0</div>
+          </div>
+          <div class="bg-cyber-card border border-red-500/25 rounded-xl p-4 glow-red">
+            <div class="text-[11px] font-mono text-red-400 font-bold uppercase">Malicious</div>
+            <div id="metric-malicious" class="text-2xl font-mono font-bold text-red-400 mt-1">0</div>
+          </div>
+          <div class="bg-cyber-card border border-amber-500/25 rounded-xl p-4 glow-amber">
+            <div class="text-[11px] font-mono text-amber-400 font-bold uppercase">Suspicious</div>
+            <div id="metric-suspicious" class="text-2xl font-mono font-bold text-amber-400 mt-1">0</div>
+          </div>
+          <div class="bg-cyber-card border border-emerald-500/25 rounded-xl p-4 glow-green">
+            <div class="text-[11px] font-mono text-emerald-400 font-bold uppercase">Clean</div>
+            <div id="metric-clean" class="text-2xl font-mono font-bold text-emerald-400 mt-1">0</div>
+          </div>
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Unknown / Local</div>
+            <div id="metric-unknown" class="text-2xl font-mono font-bold text-slate-400 mt-1">0</div>
+          </div>
+        </div>
+
+        <!-- CONTROLS & EXPORTS BAR -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-cyber-card border border-cyber-border rounded-xl p-3.5">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-2.5"></i>
+              <input 
+                type="text" 
+                id="search-filter" 
+                oninput="renderResultsTable()" 
+                placeholder="Filter by indicator, vendor, ASN..."
+                class="pl-9 pr-3 py-1.5 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan w-64"
+              >
+            </div>
+            
+            <select id="verdict-filter" onchange="renderResultsTable()" class="py-1.5 px-3 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 focus:outline-none focus:border-cyber-cyan">
+              <option value="ALL">All Verdicts</option>
+              <option value="Malicious">Malicious Only</option>
+              <option value="Suspicious">Suspicious Only</option>
+              <option value="Clean">Clean Only</option>
+              <option value="Unknown">Unknown Only</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer mr-2">
+              <input type="checkbox" id="export-defang" checked class="w-3.5 h-3.5 accent-cyber-cyan rounded">
+              <span class="font-mono text-[11px]">Defang [.]</span>
+            </label>
+            <button onclick="downloadExport('csv')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              CSV
+            </button>
+            <button onclick="downloadExport('json')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition">
+              <i data-lucide="file-json" class="w-3.5 h-3.5"></i>
+              JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- TABLE OF RESULTS -->
+        <div class="bg-cyber-card border border-cyber-border rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-[#090d16] border-b border-cyber-border text-slate-400 font-bold uppercase text-[11px]">
+                <tr>
+                  <th class="py-3 px-4">Verdict</th>
+                  <th class="py-3 px-4">Indicator</th>
+                  <th class="py-3 px-4">Type</th>
+                  <th class="py-3 px-4">VirusTotal v3</th>
+                  <th class="py-3 px-4">AbuseIPDB v2</th>
+                  <th class="py-3 px-4">Telemetry Notes</th>
+                  <th class="py-3 px-4 text-center">Inspect</th>
+                </tr>
+              </thead>
+              <tbody id="results-tbody" class="divide-y divide-cyber-border/60 text-slate-300">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================================
+         TAB 2: API KEY POOLS
+         ============================================================ -->
+    <section id="view-keys" class="hidden space-y-6">
+      
+      <!-- Key Stats Header -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- VT Pool -->
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-cyber-border/60 pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <i data-lucide="shield" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">VirusTotal v3 Key Pool</h3>
+                <p class="text-[11px] font-mono text-slate-400">Rate limit: 4 req/min, 500 req/day</p>
+              </div>
+            </div>
+            <button onclick="openAddKeyModal('virustotal')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 transition">
+              + Add Key
+            </button>
+          </div>
+
+          <div id="vt-keys-list" class="space-y-2">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- AbuseIPDB Pool -->
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-cyber-border/60 pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">AbuseIPDB v2 Key Pool</h3>
+                <p class="text-[11px] font-mono text-slate-400">Daily limit: 1,000 queries/day</p>
+              </div>
+            </div>
+            <button onclick="openAddKeyModal('abuseipdb')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 transition">
+              + Add Key
+            </button>
+          </div>
+
+          <div id="abuse-keys-list" class="space-y-2">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================================
+         TAB 3: CACHE & AUDIT
+         ============================================================ -->
+    <section id="view-cache" class="hidden space-y-6">
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="database" class="w-4 h-4 text-cyber-cyan"></i>
+              SQLite Local Cache
+            </h3>
+            <p class="text-xs text-slate-400 font-mono">Avoid repeat queries and quota consumption</p>
+          </div>
+          <button onclick="purgeCache()" class="px-3 py-1.5 text-xs font-mono font-semibold rounded-lg bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition">
+            Purge Cache
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-[#090d16] text-slate-400 uppercase text-[11px]">
+              <tr>
+                <th class="py-2.5 px-3">Indicator</th>
+                <th class="py-2.5 px-3">Type</th>
+                <th class="py-2.5 px-3">Verdict</th>
+                <th class="py-2.5 px-3">Hits</th>
+                <th class="py-2.5 px-3">Updated</th>
+                <th class="py-2.5 px-3">Expires</th>
+              </tr>
+            </thead>
+            <tbody id="cache-tbody" class="divide-y divide-cyber-border/40 text-slate-300">
+              <!-- Injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: ADD KEY -->
+  <div id="modal-add-key" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-cyber-card border border-cyber-border rounded-xl max-w-md w-full p-6 space-y-4 glow-cyan">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="key" class="w-4 h-4 text-cyber-cyan"></i>
+          Add API Key to Pool
+        </h3>
+        <button onclick="closeAddKeyModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-mono mb-1">Target Service</label>
+          <select id="modal-key-service" class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-2 text-slate-200">
+            <option value="virustotal">VirusTotal v3</option>
+            <option value="abuseipdb">AbuseIPDB v2</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 font-mono mb-1">API Key Token</label>
+          <input type="password" id="modal-key-value" placeholder="Paste your API key here..." class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-2 font-mono text-slate-200">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-cyber-border">
+        <button onclick="closeAddKeyModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancel</button>
+        <button onclick="submitNewKey()" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition">Add Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER: INSPECT TELEMETRY -->
+  <div id="drawer-inspect" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
+    <div class="bg-cyber-card border-l border-cyber-border w-full max-w-xl h-full p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-cyber-border/80 pb-3">
+        <div>
+          <h3 id="inspect-title" class="text-sm font-mono font-bold text-white">Indicator Deep Dive</h3>
+          <p id="inspect-subtitle" class="text-xs font-mono text-cyber-cyan mt-0.5"></p>
+        </div>
+        <button onclick="closeDrawer()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+
+      <div id="inspect-content" class="space-y-4 text-xs font-mono">
+        <!-- Telemetry injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    let currentResults = [];
+    let debounceTimer = null;
+
+    const SAMPLE_TEXT = `# Malicious and Defanged Indicators (Sample)
+118[.]25[.]6[.]39
+185.220.101.5
+hxxps://141[.]98[.]11[.]11/malware
+# Clean public DNS
+1.1.1.1
+8[.]8[.]8[.]8
+# Local / Private RFC1918
+192.168.1.105
+10[.]0[.]0[.]1
+# Malware file hashes (WannaCry & Emotet)
+ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
+84c82835a5d21bbcf75a61706d8ab549
+# Clean Notepad.exe SHA256 (Windows)
+90757a3e6f9cdde117183e8b4e72323a8e9e7f80509a7b9ef8487b3a4a8d0526`;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      fetchStatus();
+    });
+
+    function switchTab(tabId) {
+      ['triage', 'keys', 'cache'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).classList.remove('bg-cyber-cyan/15', 'text-cyber-cyan', 'border', 'border-cyber-cyan/30', 'glow-cyan');
+        document.getElementById(`tab-btn-${t}`).classList.add('text-slate-400');
+      });
+
+      document.getElementById(`view-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      activeBtn.classList.add('bg-cyber-cyan/15', 'text-cyber-cyan', 'border', 'border-cyber-cyan/30', 'glow-cyan');
+      activeBtn.classList.remove('text-slate-400');
+
+      if (tabId === 'keys') fetchKeys();
+      if (tabId === 'cache') fetchCache();
+      lucide.createIcons();
+    }
+
+    function loadSampleData() {
+      document.getElementById('ioc-input').value = SAMPLE_TEXT;
+      handleInputDebounce();
+    }
+
+    function clearInput() {
+      document.getElementById('ioc-input').value = '';
+      document.getElementById('detected-pills').innerHTML = '<span class="text-xs text-slate-500 font-mono">Awaiting input...</span>';
+      document.getElementById('btn-scan').disabled = true;
+      document.getElementById('results-section').classList.add('hidden');
+    }
+
+    function handleInputDebounce() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        const text = document.getElementById('ioc-input').value;
+        if (!text.trim()) {
+          clearInput();
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/parse', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ raw_text: text })
+          });
+          const data = await res.json();
+          renderDetectedPills(data.items);
+        } catch (e) {
+          console.error(e);
+        }
+      }, 250);
+    }
+
+    function renderDetectedPills(items) {
+      const container = document.getElementById('detected-pills');
+      if (!items || items.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-500 font-mono">No valid indicators detected</span>';
+        document.getElementById('btn-scan').disabled = true;
+        return;
+      }
+
+      const ipCount = items.filter(i => i.type === 'ipv4' || i.type === 'ipv6').length;
+      const hashCount = items.filter(i => ['md5', 'sha1', 'sha256'].includes(i.type)).length;
+      const privCount = items.filter(i => i.is_private).length;
+
+      container.innerHTML = `
+        <span class="text-xs text-slate-400 font-mono font-bold mr-1">DETECTED:</span>
+        <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">● ${ipCount} IPs</span>
+        <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30">● ${hashCount} Hashes</span>
+        ${privCount ? `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-500/15 text-slate-300 border border-slate-500/30">● ${privCount} Private</span>` : ''}
+        <span class="text-[11px] font-mono text-slate-500">(${items.length} total)</span>
+      `;
+      document.getElementById('btn-scan').disabled = false;
+    }
+
+    async function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        const extractedValues = data.items.map(i => i.value).join('\n');
+        document.getElementById('ioc-input').value = extractedValues;
+        renderDetectedPills(data.items);
+      } catch (err) {
+        alert("Failed to parse file: " + err);
+      }
+    }
+
+    async function startScan() {
+      const text = document.getElementById('ioc-input').value;
+      if (!text.trim()) return;
+
+      const progressBox = document.getElementById('scan-progress-box');
+      const progressBar = document.getElementById('scan-progress-bar');
+      const statusText = document.getElementById('scan-status-text');
+      const percentageText = document.getElementById('scan-percentage');
+      const scanBtn = document.getElementById('btn-scan');
+
+      progressBox.classList.remove('hidden');
+      scanBtn.disabled = true;
+      progressBar.style.width = '30%';
+      statusText.innerText = "Querying VirusTotal & AbuseIPDB pools...";
+      percentageText.innerText = "30%";
+
+      try {
+        const res = await fetch('/api/scan', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            raw_text: text,
+            use_cache: document.getElementById('cfg-cache').checked,
+            skip_private_ips: document.getElementById('cfg-filter-private').checked,
+            auto_throttle: document.getElementById('cfg-throttle').checked
+          })
+        });
+
+        progressBar.style.width = '100%';
+        percentageText.innerText = "100%";
+        statusText.innerText = "Complete!";
+
+        const data = await res.json();
+        currentResults = data.results || [];
+        
+        setTimeout(() => {
+          progressBox.classList.add('hidden');
+          scanBtn.disabled = false;
+          renderResults(data);
+        }, 400);
+
+      } catch (e) {
+        alert("Scan failed: " + e);
+        progressBox.classList.add('hidden');
+        scanBtn.disabled = false;
+      }
+    }
+
+    function renderResults(data) {
+      const summary = data.summary;
+      document.getElementById('metric-total').innerText = summary.total;
+      document.getElementById('metric-malicious').innerText = summary.malicious;
+      document.getElementById('metric-suspicious').innerText = summary.suspicious;
+      document.getElementById('metric-clean').innerText = summary.clean;
+      document.getElementById('metric-unknown').innerText = summary.unknown;
+
+      document.getElementById('results-section').classList.remove('hidden');
+      renderResultsTable();
+    }
+
+    function renderResultsTable() {
+      const tbody = document.getElementById('results-tbody');
+      const search = document.getElementById('search-filter').value.toLowerCase();
+      const verdictFilter = document.getElementById('verdict-filter').value;
+
+      let filtered = currentResults;
+      if (verdictFilter !== 'ALL') {
+        filtered = filtered.filter(r => r.verdict === verdictFilter);
+      }
+      if (search) {
+        filtered = filtered.filter(r => 
+          r.ioc.toLowerCase().includes(search) || 
+          (r.notes && r.notes.toLowerCase().includes(search)) ||
+          r.type.toLowerCase().includes(search)
+        );
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500 font-mono">No indicators matching filter criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        let badgeClass = "bg-slate-500/15 text-slate-300 border-slate-500/30";
+        let dotColor = "bg-slate-400";
+        if (r.verdict === "Malicious") {
+          badgeClass = "bg-red-500/15 text-red-300 border-red-500/35 glow-red";
+          dotColor = "bg-red-500";
+        } else if (r.verdict === "Suspicious") {
+          badgeClass = "bg-amber-500/15 text-amber-300 border-amber-500/35 glow-amber";
+          dotColor = "bg-amber-400";
+        } else if (r.verdict === "Clean") {
+          badgeClass = "bg-emerald-500/15 text-emerald-300 border-emerald-500/35 glow-green";
+          dotColor = "bg-emerald-400";
+        }
+
+        return `
+          <tr class="hover:bg-white/[0.02] transition">
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold border ${badgeClass}">
+                <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+                ${r.verdict}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-bold text-white">${r.ioc}</td>
+            <td class="py-3 px-4 text-slate-400 uppercase">${r.type}</td>
+            <td class="py-3 px-4 text-slate-300">${r.vt_stats || 'N/A'}</td>
+            <td class="py-3 px-4 text-slate-300">${r.abuse_score || 'N/A'}</td>
+            <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${r.notes || '-'}</td>
+            <td class="py-3 px-4 text-center">
+              <button onclick='openInspectDrawer("${r.ioc}")' class="p-1 rounded hover:bg-cyber-cyan/15 text-slate-400 hover:text-cyber-cyan transition">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function openInspectDrawer(iocVal) {
+      const item = currentResults.find(r => r.ioc === iocVal);
+      if (!item) return;
+
+      document.getElementById('inspect-title').innerText = item.ioc;
+      document.getElementById('inspect-subtitle').innerText = `${item.type.toUpperCase()} • Verdict: ${item.verdict.toUpperCase()}`;
+
+      const content = document.getElementById('inspect-content');
+      let abuseHtml = '';
+      if (item.abuse_data && item.abuse_data.success) {
+        const ad = item.abuse_data.data;
+        abuseHtml = `
+          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-1.5">
+            <div class="font-bold text-cyber-cyan uppercase text-[11px]">AbuseIPDB Telemetry</div>
+            <div>Confidence Score: <span class="text-white font-bold">${ad.abuse_confidence_score}%</span></div>
+            <div>Total Reports: <span class="text-white font-bold">${ad.total_reports}</span></div>
+            <div>ISP: <span class="text-white">${ad.isp}</span> (${ad.country_name})</div>
+            <div>Domain: <span class="text-white">${ad.domain || 'N/A'}</span></div>
+            <div>Usage: <span class="text-white">${ad.usage_type || 'N/A'}</span></div>
+          </div>
+        `;
+      }
+
+      let vtHtml = '';
+      if (item.vt_data && item.vt_data.success && !item.vt_data.not_found) {
+        const stats = item.vt_data.stats || {};
+        vtHtml = `
+          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-1.5">
+            <div class="font-bold text-cyber-cyan uppercase text-[11px]">VirusTotal Telemetry</div>
+            <div>Malicious Detections: <span class="text-red-400 font-bold">${stats.malicious || 0}</span></div>
+            <div>Suspicious Detections: <span class="text-amber-400 font-bold">${stats.suspicious || 0}</span></div>
+            <div>Harmless / Undetected: ${stats.harmless || 0} / ${stats.undetected || 0}</div>
+            ${item.vt_data.threat_label ? `<div>Threat Family: <span class="text-white font-bold">${item.vt_data.threat_label}</span></div>` : ''}
+            ${item.vt_data.file_type ? `<div>File Type: <span class="text-white">${item.vt_data.file_type}</span></div>` : ''}
+          </div>
+        `;
+      }
+
+      content.innerHTML = `
+        ${abuseHtml}
+        ${vtHtml}
+        <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3">
+          <div class="font-bold text-slate-400 uppercase text-[11px] mb-1">Raw API Payload</div>
+          <pre class="text-[10px] text-slate-300 overflow-x-auto custom-scrollbar p-2 bg-black/40 rounded">${JSON.stringify(item, null, 2)}</pre>
+        </div>
+      `;
+
+      document.getElementById('drawer-inspect').classList.remove('hidden');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawer-inspect').classList.add('hidden');
+    }
+
+    async function downloadExport(format) {
+      if (!currentResults.length) return;
+      const defang = document.getElementById('export-defang').checked;
+      
+      const res = await fetch('/api/export', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          results: currentResults,
+          format: format,
+          defang: defang
+        })
+      });
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `slothery_report.${format}`;
+      a.click();
+    }
+
+    // Keys management
+    async function fetchKeys() {
+      const res = await fetch('/api/status');
+      const data = await res.json();
+      
+      renderKeyList('vt-keys-list', data.services.virustotal, 'virustotal');
+      renderKeyList('abuse-keys-list', data.services.abuseipdb, 'abuseipdb');
+      lucide.createIcons();
+    }
+
+    function renderKeyList(containerId, keys, service) {
+      const container = document.getElementById(containerId);
+      if (!keys || keys.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 font-mono py-2">No API keys configured.</div>`;
+        return;
+      }
+
+      container.innerHTML = keys.map(k => `
+        <div class="flex items-center justify-between p-2.5 bg-[#090d16] border border-cyber-border rounded-lg font-mono text-xs">
+          <div>
+            <span class="font-bold text-white">${k.key_masked}</span>
+            <span class="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold ${k.status === 'ACTIVE' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${k.status}</span>
+            <div class="text-[10px] text-slate-500 mt-0.5">Queries: ${k.total_queries} | Errors: ${k.errors}</div>
+          </div>
+          <button onclick="removeKey('${service}', '${k.key_raw}')" class="text-slate-500 hover:text-red-400 transition p-1">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function openAddKeyModal(service) {
+      document.getElementById('modal-key-service').value = service;
+      document.getElementById('modal-key-value').value = '';
+      document.getElementById('modal-add-key').classList.remove('hidden');
+    }
+
+    function closeAddKeyModal() {
+      document.getElementById('modal-add-key').classList.add('hidden');
+    }
+
+    async function submitNewKey() {
+      const service = document.getElementById('modal-key-service').value;
+      const key = document.getElementById('modal-key-value').value.trim();
+      if (!key) return;
+
+      try {
+        const res = await fetch('/api/keys', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ service, key })
+        });
+        if (res.ok) {
+          closeAddKeyModal();
+          fetchKeys();
+        } else {
+          const err = await res.json();
+          alert(err.detail || "Error adding key");
+        }
+      } catch (e) {
+        alert("Failed to add key: " + e);
+      }
+    }
+
+    async function removeKey(service, key) {
+      if (!confirm("Remove this API key from the pool?")) return;
+      await fetch(`/api/keys?service=${service}&key=${encodeURIComponent(key)}`, { method: 'DELETE' });
+      fetchKeys();
+    }
+
+    // Cache management
+    async function fetchCache() {
+      const res = await fetch('/api/cache');
+      const data = await res.json();
+      const tbody = document.getElementById('cache-tbody');
+
+      if (!data.entries || data.entries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500 font-mono">SQLite cache is empty.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.entries.map(e => `
+        <tr class="hover:bg-white/[0.02]">
+          <td class="py-2 px-3 text-white font-bold">${e.ioc_value}</td>
+          <td class="py-2 px-3 text-slate-400 uppercase">${e.ioc_type}</td>
+          <td class="py-2 px-3 font-semibold text-slate-300">${e.overall_verdict}</td>
+          <td class="py-2 px-3 text-cyber-cyan">${e.hit_count}</td>
+          <td class="py-2 px-3 text-slate-500 text-[10px]">${e.updated_at}</td>
+          <td class="py-2 px-3 text-slate-500 text-[10px]">${e.expires_at}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function purgeCache() {
+      if (!confirm("Are you sure you want to clear the entire SQLite cache?")) return;
+      await fetch('/api/cache', { method: 'DELETE' });
+      fetchCache();
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const totalKeys = (data.pools.virustotal.total || 0) + (data.pools.abuseipdb.total || 0);
+        document.getElementById('pool-status-indicator').innerHTML = `
+          <span class="w-2 h-2 rounded-full ${totalKeys > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
+          <span class="text-slate-300">${totalKeys} Keys Configured</span>
+        `;
+      } catch (e) {
+        console.error("Status fetch failed", e);
+      }
+    }
+  </script>
+</body>
+</html>

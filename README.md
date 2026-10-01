@@ -49,10 +49,22 @@ CACHE_TTL_HOURS=24
 ```
 
 ### 4. Launch Dashboard
+
+You have **two UI experiences** available:
+
+#### Option A: Bespoke Modern Web App (Recommended)
+A dedicated, custom-styled single-page application with real-time reactive indicator pills, telemetry inspection drawer, glowing cybersecurity metrics, and zero generic framework chrome:
+```powershell
+python server.py
+```
+Open your browser at **`http://localhost:8000`**.
+
+#### Option B: Revamped Streamlit Dashboard
+The Streamlit dashboard with all Streamlit chrome (Deploy button, hamburger menu, banners) stripped and restyled with custom segmented control tabs and glowing dark themes:
 ```powershell
 streamlit run app.py
 ```
-Open your browser at `http://localhost:8501`.
+Open your browser at **`http://localhost:8501`**.
 
 ---
 
