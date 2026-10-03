@@ -26,13 +26,13 @@
           },
           colors: {
             cyber: {
-              bg: '#070a10',
-              sidebar: '#0b0f18',
-              card: '#0e1422',
-              cardHover: '#131b2e',
-              border: 'rgba(255, 255, 255, 0.08)',
-              borderHover: 'rgba(0, 242, 254, 0.35)',
-              cyan: '#00f2fe',
+              bg: 'var(--color-bg)',
+              sidebar: 'var(--color-bg)',
+              card: 'var(--color-card)',
+              cardHover: 'var(--color-card-hover)',
+              border: 'var(--color-border)',
+              borderHover: 'var(--color-border-hover)',
+              cyan: 'var(--color-accent)',
               blue: '#38bdf8',
               red: '#ef4444',
               amber: '#f59e0b',
@@ -47,33 +47,84 @@
   </script>
 
   <style>
+    :root {
+      --color-bg: #070a10;
+      --color-card: #0e1422;
+      --color-card-hover: #131b2e;
+      --color-border: rgba(255, 255, 255, 0.08);
+      --color-border-hover: rgba(0, 242, 254, 0.35);
+      --color-accent: #00f2fe;
+      --color-accent-rgb: 0, 242, 254;
+      --glow-color: rgba(0, 242, 254, 0.25);
+    }
+    [data-theme="matrix"] {
+      --color-bg: #040d06;
+      --color-card: #091a0c;
+      --color-card-hover: #0f2b14;
+      --color-border: rgba(0, 255, 102, 0.15);
+      --color-border-hover: rgba(0, 255, 102, 0.45);
+      --color-accent: #00ff66;
+      --color-accent-rgb: 0, 255, 102;
+      --glow-color: rgba(0, 255, 102, 0.28);
+    }
+    [data-theme="dracula"] {
+      --color-bg: #090514;
+      --color-card: #130c24;
+      --color-card-hover: #1d1238;
+      --color-border: rgba(192, 132, 252, 0.16);
+      --color-border-hover: rgba(192, 132, 252, 0.45);
+      --color-accent: #c084fc;
+      --color-accent-rgb: 192, 132, 252;
+      --glow-color: rgba(192, 132, 252, 0.28);
+    }
+    [data-theme="crimson"] {
+      --color-bg: #120407;
+      --color-card: #1c080e;
+      --color-card-hover: #2b0d16;
+      --color-border: rgba(255, 0, 85, 0.16);
+      --color-border-hover: rgba(255, 0, 85, 0.45);
+      --color-accent: #ff0055;
+      --color-accent-rgb: 255, 0, 85;
+      --glow-color: rgba(255, 0, 85, 0.28);
+    }
+    [data-theme="nord"] {
+      --color-bg: #0b111e;
+      --color-card: #131d2e;
+      --color-card-hover: #1a283f;
+      --color-border: rgba(56, 189, 248, 0.14);
+      --color-border-hover: rgba(56, 189, 248, 0.4);
+      --color-accent: #38bdf8;
+      --color-accent-rgb: 56, 189, 248;
+      --glow-color: rgba(56, 189, 248, 0.28);
+    }
     body {
-      background-color: #070a10;
+      background-color: var(--color-bg);
       color: #f1f5f9;
       font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: #070a10;
+      background: var(--color-bg);
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.12);
       border-radius: 3px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 242, 254, 0.35);
+      background: var(--color-border-hover);
     }
     .glow-cyan {
-      box-shadow: 0 0 16px rgba(0, 242, 254, 0.25);
+      box-shadow: 0 0 16px var(--glow-color);
     }
     .glow-red {
       box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
     }
     .glow-green {
-      box-shadow: 0 0 12px rgba(160, 185, 129, 0.3);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
     }
     .glow-amber {
       box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
@@ -118,14 +169,44 @@
         <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
         <span>Mail Health</span>
       </button>
+      <button onclick="switchTab('feed')" id="tab-btn-feed" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="rss" class="w-3.5 h-3.5"></i>
+        <span>Cyber Feeds</span>
+      </button>
       <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
         <span>Cache</span>
       </button>
     </nav>
 
-    <!-- RIGHT STATUS BADGES -->
+    <!-- RIGHT STATUS BADGES & THEME PICKER -->
     <div class="flex items-center gap-3">
+      <!-- THEME SELECTOR DROPDOWN -->
+      <div class="relative">
+        <button onclick="toggleThemeDropdown(event)" id="theme-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition">
+          <i data-lucide="palette" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+          <span id="theme-name">Cyberpunk</span>
+          <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+        </button>
+        <div id="theme-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-xl bg-cyber-card border border-cyber-border shadow-2xl z-50 p-1.5 space-y-1 font-mono text-xs backdrop-blur-md">
+          <button onclick="setTheme('cyberpunk')" class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between hover:bg-white/10 transition text-slate-200">
+            <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#00f2fe]"></span>Cyberpunk Cyan</span>
+          </button>
+          <button onclick="setTheme('matrix')" class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between hover:bg-white/10 transition text-slate-200">
+            <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#00ff66]"></span>Matrix Green</span>
+          </button>
+          <button onclick="setTheme('dracula')" class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between hover:bg-white/10 transition text-slate-200">
+            <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#c084fc]"></span>Dracula Violet</span>
+          </button>
+          <button onclick="setTheme('crimson')" class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between hover:bg-white/10 transition text-slate-200">
+            <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#ff0055]"></span>Crimson Alert</span>
+          </button>
+          <button onclick="setTheme('nord')" class="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between hover:bg-white/10 transition text-slate-200">
+            <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#38bdf8]"></span>Nordic Frost</span>
+          </button>
+        </div>
+      </div>
+
       <div id="pool-status-indicator" class="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span class="text-slate-300">Checking...</span>
@@ -141,111 +222,125 @@
          ============================================================ -->
     <section id="view-triage" class="space-y-6">
       
-      <!-- INPUT GRID -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- INPUT GRID (8 cols left, 4 cols right, aligned stretch) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         <!-- TEXT INPUT & PROVIDER CONTROLS (8 cols) -->
-        <div class="lg:col-span-8 bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
-          <div class="flex items-center justify-between">
-            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
-              <i data-lucide="terminal" class="w-4 h-4 text-cyber-cyan"></i>
-              Paste Mixed Indicators (IPs, Hashes, Domains, URLs)
-            </label>
-            <div class="flex items-center gap-2">
-              <button onclick="loadSampleData()" class="px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border flex items-center gap-1.5 transition">
-                <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-cyber-cyan"></i>
-                Load Sample
-              </button>
-              <button onclick="clearInput()" class="px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-300 border border-cyber-border transition">
-                Clear
-              </button>
-            </div>
-          </div>
-
-          <textarea 
-            id="ioc-input"
-            oninput="handleInputDebounce()"
-            rows="6" 
-            placeholder="Paste mixed indicators here...&#10;e.g. 1[.]1[.]1[.]1&#10;185.220.101.5&#10;hxxps://evil-phish[.]xyz/login&#10;malicious-c2[.]online&#10;ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222"
-            class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-sm font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan transition custom-scrollbar"
-          ></textarea>
-
-          <!-- SMART AUTO-ROUTING PIPELINE -->
-          <div id="auto-routing-container" class="pt-3 border-t border-cyber-border/60 space-y-2">
+        <div class="lg:col-span-8 bg-cyber-card border border-cyber-border rounded-xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
             <div class="flex items-center justify-between">
-              <span class="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="cpu" class="w-3.5 h-3.5 text-cyber-cyan"></i>
-                Threat Intel Auto-Detection Pipeline:
-              </span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/25 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-cyber-cyan animate-pulse"></span>
-                Auto-Routing Active
-              </span>
+              <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
+                <i data-lucide="terminal" class="w-4 h-4 text-cyber-cyan"></i>
+                Paste Mixed Indicators (IPs, Hashes, Domains, URLs)
+              </label>
+              <div class="flex items-center gap-2">
+                <button onclick="loadSampleData()" class="px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border flex items-center gap-1.5 transition">
+                  <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                  Load Sample
+                </button>
+                <button onclick="clearInput()" class="px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-300 border border-cyber-border transition">
+                  Clear
+                </button>
+              </div>
             </div>
-            <div id="routing-pills" class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
-              <span class="text-slate-500 italic">Pasting indicators will automatically trigger targeted threat intel providers...</span>
+
+            <textarea 
+              id="ioc-input"
+              oninput="handleInputDebounce()"
+              rows="6" 
+              placeholder="Paste mixed indicators here...&#10;e.g. 1[.]1[.]1[.]1&#10;185.220.101.5&#10;hxxps://evil-phish[.]xyz/login&#10;malicious-c2[.]online&#10;ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222"
+              class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-sm font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan transition custom-scrollbar"
+            ></textarea>
+
+            <!-- SMART AUTO-ROUTING PIPELINE -->
+            <div id="auto-routing-container" class="pt-3 border-t border-cyber-border/60 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="cpu" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                  Threat Intel Auto-Detection Pipeline:
+                </span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/25 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyber-cyan animate-pulse"></span>
+                  Auto-Routing Active
+                </span>
+              </div>
+              <div id="routing-pills" class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                <span class="text-slate-500 italic">Pasting indicators will automatically trigger targeted threat intel providers...</span>
+              </div>
             </div>
           </div>
 
-          <!-- DETECTED PILLS BAR -->
+          <!-- DETECTED PILLS & ENGINE CONTROLS ALIGNED SEJAJAR WITH ENRICH INDICATORS -->
           <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-cyber-border/60">
             <div id="detected-pills" class="flex flex-wrap items-center gap-2">
               <span class="text-xs text-slate-500 font-mono">Awaiting input...</span>
             </div>
             
-            <button 
-              id="btn-scan" 
-              onclick="startScan()"
-              disabled
-              class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-blue-600 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyber-cyan/25 active:scale-95"
-            >
-              <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
-              <span>Enrich Indicators</span>
-            </button>
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Quick Engine Options (Disejajarkan dengan tombol Enrich) -->
+              <div class="flex items-center gap-2.5 bg-[#090d16] border border-cyber-border px-3 py-1.5 rounded-lg text-xs font-mono">
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white" title="Use SQLite Local Cache to save quota">
+                  <input type="checkbox" id="cfg-cache" checked class="w-3.5 h-3.5 accent-cyber-cyan rounded">
+                  <span>SQLite Cache</span>
+                </label>
+                <span class="text-slate-600">|</span>
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white" title="Filter RFC1918 Private IPs">
+                  <input type="checkbox" id="cfg-filter-private" checked class="w-3.5 h-3.5 accent-cyber-cyan rounded">
+                  <span>Filter RFC1918</span>
+                </label>
+                <span class="text-slate-600">|</span>
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white" title="Smart Rate-Limit Auto-wait">
+                  <input type="checkbox" id="cfg-throttle" checked class="w-3.5 h-3.5 accent-cyber-cyan rounded">
+                  <span>Auto-throttle</span>
+                </label>
+              </div>
+
+              <!-- Enrich Button -->
+              <button 
+                id="btn-scan" 
+                onclick="startScan()"
+                disabled
+                class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-blue-600 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyber-cyan/25 active:scale-95"
+              >
+                <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
+                <span>Enrich Indicators</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- FILE UPLOADER & ENGINE CONTROLS (4 cols) -->
-        <div class="lg:col-span-4 space-y-4">
-          
-          <!-- File Dropzone -->
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5">
-            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono mb-3 flex items-center gap-2">
-              <i data-lucide="file-up" class="w-4 h-4 text-cyber-cyan"></i>
-              Upload Batch File (.txt, .csv)
-            </h3>
+        <!-- FILE UPLOADER (4 cols) - FULL HEIGHT ALIGNED -->
+        <div class="lg:col-span-4 flex flex-col">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 flex-1 flex flex-col justify-between space-y-4">
+            <div>
+              <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono mb-1 flex items-center gap-2">
+                <i data-lucide="file-up" class="w-4 h-4 text-cyber-cyan"></i>
+                Upload Batch File (.txt, .csv)
+              </h3>
+              <p class="text-[11px] text-slate-400 font-mono">Bulk triage hundreds of indicators at once</p>
+            </div>
             
             <div 
               id="dropzone"
               onclick="document.getElementById('file-input').click()"
-              class="border-2 border-dashed border-cyber-border hover:border-cyber-cyan/60 rounded-xl p-5 text-center cursor-pointer transition-all bg-[#090d16]/50 hover:bg-[#090d16]"
+              class="border-2 border-dashed border-cyber-border hover:border-cyber-cyan/60 rounded-xl p-6 text-center cursor-pointer transition-all bg-[#090d16]/50 hover:bg-[#090d16] flex flex-col items-center justify-center flex-1 my-1"
             >
               <input type="file" id="file-input" class="hidden" accept=".txt,.csv" onchange="handleFileSelect(event)">
-              <div class="w-10 h-10 mx-auto mb-2 rounded-full bg-cyber-cyan/10 flex items-center justify-center text-cyber-cyan">
-                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              <div class="w-12 h-12 mb-3 rounded-full bg-cyber-cyan/10 flex items-center justify-center text-cyber-cyan">
+                <i data-lucide="upload-cloud" class="w-6 h-6"></i>
               </div>
-              <p class="text-xs font-medium text-slate-300">Click to upload or drag & drop</p>
-              <p class="text-[11px] text-slate-500 font-mono mt-0.5">CSV or TXT with indicators</p>
+              <p class="text-xs font-semibold text-slate-200">Click to upload or drag & drop</p>
+              <p class="text-[11px] text-slate-500 font-mono mt-1">Supports CSV, TXT, and firewall logs</p>
+            </div>
+
+            <div class="text-[11px] font-mono text-slate-500 flex items-center justify-between border-t border-cyber-border/60 pt-3">
+              <span>Auto-extracts defanged IoCs</span>
+              <span class="text-cyber-cyan font-bold">RFC-Compliant</span>
             </div>
           </div>
-
-          <!-- Quick Settings -->
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-3">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">Use Local SQLite Cache</span>
-              <input type="checkbox" id="cfg-cache" checked class="w-4 h-4 accent-cyber-cyan rounded">
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">Filter RFC1918 Private IPs</span>
-              <input type="checkbox" id="cfg-filter-private" checked class="w-4 h-4 accent-cyber-cyan rounded">
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">Smart Rate-Limit Auto-wait</span>
-              <input type="checkbox" id="cfg-throttle" checked class="w-4 h-4 accent-cyber-cyan rounded">
-            </div>
-          </div>
-
         </div>
+
+      </div>
 
       </div>
 
@@ -790,6 +885,60 @@
     </section>
 
     <!-- ============================================================
+         TAB 5: CYBER THREAT INTEL FEEDS (RSS)
+         ============================================================ -->
+    <section id="view-feed" class="hidden space-y-6">
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-5">
+        <!-- Header & Controls -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyber-border/70 pb-4">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="rss" class="w-4 h-4 text-cyber-cyan"></i>
+              Live Cyber Threat Intelligence Feeds
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Real-time alerts, vulnerability advisories & news from top security publishers</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Search Filter -->
+            <div class="relative w-64">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="feed-search-input" 
+                oninput="filterFeedArticles()" 
+                placeholder="Filter news (ransomware, 0-day)..." 
+                class="w-full bg-[#090d16] border border-cyber-border rounded-lg pl-8 pr-3 py-1.5 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyber-cyan transition"
+              >
+            </div>
+            <!-- Refresh Button -->
+            <button onclick="fetchCyberFeeds(true)" id="btn-refresh-feed" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Source Filter Badges -->
+        <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
+          <button onclick="setFeedSourceFilter('all')" id="feed-src-all" class="feed-src-btn px-3 py-1 rounded-lg bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 font-bold transition">All Feeds</button>
+          <button onclick="setFeedSourceFilter('thehackernews')" id="feed-src-thehackernews" class="feed-src-btn px-3 py-1 rounded-lg bg-[#090d16] text-slate-400 border border-cyber-border hover:text-white transition">The Hacker News</button>
+          <button onclick="setFeedSourceFilter('bleepingcomputer')" id="feed-src-bleepingcomputer" class="feed-src-btn px-3 py-1 rounded-lg bg-[#090d16] text-slate-400 border border-cyber-border hover:text-white transition">BleepingComputer</button>
+          <button onclick="setFeedSourceFilter('cisa')" id="feed-src-cisa" class="feed-src-btn px-3 py-1 rounded-lg bg-[#090d16] text-slate-400 border border-cyber-border hover:text-white transition">CISA Advisories</button>
+          <button onclick="setFeedSourceFilter('krebs')" id="feed-src-krebs" class="feed-src-btn px-3 py-1 rounded-lg bg-[#090d16] text-slate-400 border border-cyber-border hover:text-white transition">Krebs on Security</button>
+        </div>
+
+        <!-- Feed Articles Grid -->
+        <div id="feed-articles-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          <div class="col-span-full py-12 text-center text-slate-400 font-mono text-xs">
+            <div class="w-6 h-6 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            Loading latest threat intelligence feeds...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
          CACHE & AUDIT
          ============================================================ -->
     <section id="view-cache" class="hidden space-y-6">
@@ -969,12 +1118,13 @@ Content-Type: text/html; charset=UTF-8
 </html>`;
 
     document.addEventListener("DOMContentLoaded", () => {
+      initTheme();
       lucide.createIcons();
       fetchStatus();
     });
 
     function switchTab(tabId) {
-      ['triage', 'recon', 'eml', 'mail', 'cache'].forEach(t => {
+      ['triage', 'recon', 'eml', 'mail', 'feed', 'cache'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (view) view.classList.add('hidden');
@@ -992,6 +1142,7 @@ Content-Type: text/html; charset=UTF-8
         activeBtn.classList.remove('text-slate-400');
       }
 
+      if (tabId === 'feed') fetchCyberFeeds();
       if (tabId === 'cache') fetchCache();
       lucide.createIcons();
     }
@@ -2084,6 +2235,200 @@ tags:
       } catch (e) {
         console.error("Status fetch failed", e);
       }
+    }
+
+    // ==========================================
+    // THEME MANAGEMENT
+    // ==========================================
+    const THEME_NAMES = {
+      cyberpunk: 'Cyberpunk',
+      matrix: 'Matrix Green',
+      dracula: 'Dracula',
+      crimson: 'Crimson Alert',
+      nord: 'Nordic Frost'
+    };
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('lazysoc_theme') || 'cyberpunk';
+      setTheme(savedTheme, false);
+      
+      document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('theme-dropdown');
+        const btn = document.getElementById('theme-btn');
+        if (dropdown && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+          dropdown.classList.add('hidden');
+        }
+      });
+    }
+
+    function toggleThemeDropdown(e) {
+      e.stopPropagation();
+      const dropdown = document.getElementById('theme-dropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
+    function setTheme(themeName, save = true) {
+      if (!THEME_NAMES[themeName]) themeName = 'cyberpunk';
+      if (themeName === 'cyberpunk') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', themeName);
+      }
+      if (save) localStorage.setItem('lazysoc_theme', themeName);
+
+      const nameEl = document.getElementById('theme-name');
+      if (nameEl) nameEl.innerText = THEME_NAMES[themeName];
+
+      const dropdown = document.getElementById('theme-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    // ==========================================
+    // CYBER FEEDS (RSS)
+    // ==========================================
+    let allFeedArticles = [];
+    let activeFeedSource = 'all';
+
+    async function fetchCyberFeeds(forceRefresh = false) {
+      const container = document.getElementById('feed-articles-container');
+      const refreshBtn = document.getElementById('btn-refresh-feed');
+      if (refreshBtn) refreshBtn.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> Loading...`;
+
+      try {
+        const res = await fetch(`/api/feed?source=all&limit=45`);
+        const data = await res.json();
+        allFeedArticles = data.items || [];
+        filterFeedArticles();
+      } catch (err) {
+        console.error("Failed to fetch feeds:", err);
+        container.innerHTML = `
+          <div class="col-span-full py-8 text-center text-red-400 font-mono text-xs">
+            Failed to load cyber threat intelligence feeds. Please check network connectivity.
+          </div>
+        `;
+      } finally {
+        if (refreshBtn) {
+          refreshBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> <span>Refresh</span>`;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    function setFeedSourceFilter(source) {
+      activeFeedSource = source;
+      ['all', 'thehackernews', 'bleepingcomputer', 'cisa', 'krebs'].forEach(s => {
+        const btn = document.getElementById(`feed-src-${s}`);
+        if (!btn) return;
+        if (s === source) {
+          btn.className = 'feed-src-btn px-3 py-1 rounded-lg bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 font-bold transition';
+        } else {
+          btn.className = 'feed-src-btn px-3 py-1 rounded-lg bg-[#090d16] text-slate-400 border border-cyber-border hover:text-white transition';
+        }
+      });
+      filterFeedArticles();
+    }
+
+    function filterFeedArticles() {
+      const query = (document.getElementById('feed-search-input')?.value || '').toLowerCase().trim();
+      let filtered = allFeedArticles;
+
+      if (activeFeedSource !== 'all') {
+        filtered = filtered.filter(a => a.source_key === activeFeedSource);
+      }
+
+      if (query) {
+        filtered = filtered.filter(a => 
+          (a.title && a.title.toLowerCase().includes(query)) ||
+          (a.summary && a.summary.toLowerCase().includes(query)) ||
+          (a.category && a.category.toLowerCase().includes(query))
+        );
+      }
+
+      renderFeedCards(filtered);
+    }
+
+    function renderFeedCards(articles) {
+      const container = document.getElementById('feed-articles-container');
+      if (!articles || articles.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-500 font-mono text-xs">
+            No cyber news articles found matching the current filter.
+          </div>
+        `;
+        return;
+      }
+
+      const categoryColors = {
+        'Vulnerability': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        'Ransomware': 'bg-red-500/15 text-red-300 border-red-500/30',
+        'Malware': 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+        'Data Breach': 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+        'Advisory': 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+        'Cyber News': 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+      };
+
+      const sourceColors = {
+        'The Hacker News': 'bg-red-950/40 text-red-400 border-red-500/30',
+        'BleepingComputer': 'bg-blue-950/40 text-blue-400 border-blue-500/30',
+        'CISA Advisories': 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30',
+        'Krebs on Security': 'bg-purple-950/40 text-purple-400 border-purple-500/30'
+      };
+
+      container.innerHTML = articles.map((a, idx) => {
+        const catClass = categoryColors[a.category] || categoryColors['Cyber News'];
+        const srcClass = sourceColors[a.source] || 'bg-slate-800 text-slate-300 border-slate-700';
+        const cleanDate = a.pub_date ? a.pub_date.substring(0, 16) : '';
+
+        return `
+          <div class="bg-[#090d16] border border-cyber-border hover:border-cyber-cyan/40 rounded-xl p-4 flex flex-col justify-between space-y-3 transition-all group hover:shadow-lg">
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between gap-2 text-[10px] font-mono">
+                <span class="px-2 py-0.5 rounded border font-semibold ${srcClass}">
+                  ${a.source}
+                </span>
+                <span class="px-2 py-0.5 rounded border font-semibold ${catClass}">
+                  ${a.category}
+                </span>
+              </div>
+
+              <a href="${a.link}" target="_blank" rel="noopener noreferrer" class="block text-xs font-bold text-slate-100 hover:text-cyber-cyan transition line-clamp-2 leading-relaxed">
+                ${a.title}
+                <i data-lucide="external-link" class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 text-cyber-cyan transition"></i>
+              </a>
+
+              <p class="text-[11px] text-slate-400 line-clamp-3 leading-relaxed font-sans">
+                ${a.summary || 'Click link to read full advisory and technical analysis on publisher website.'}
+              </p>
+            </div>
+
+            <div class="pt-3 border-t border-cyber-border/60 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-slate-500 text-[10px]">${cleanDate}</span>
+              <div class="flex items-center gap-2">
+                <button onclick="sendArticleToTriage(${idx})" class="px-2 py-1 rounded bg-white/5 hover:bg-cyber-cyan/15 text-slate-400 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[10px] font-mono transition flex items-center gap-1" title="Extract and scan indicators found in this article">
+                  <i data-lucide="crosshair" class="w-3 h-3"></i>
+                  <span>Scan IoCs</span>
+                </button>
+                <a href="${a.link}" target="_blank" rel="noopener noreferrer" class="text-cyber-cyan hover:underline text-[10px] font-bold flex items-center gap-0.5">
+                  Read ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function sendArticleToTriage(articleIndex) {
+      const article = allFeedArticles[articleIndex];
+      if (!article) return;
+
+      const raw = `${article.title}\n${article.summary}\n${article.link}`;
+      document.getElementById('ioc-input').value = raw;
+      switchTab('triage');
+      handleInputDebounce();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   </script>
 </body>

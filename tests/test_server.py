@@ -107,3 +107,18 @@ def test_index_html_hides_key_management():
     assert 'id="tab-btn-keys"' not in res.text
     assert 'id="view-keys"' not in res.text
     assert "removeKey(" not in res.text
+    # Verify theme picker & feed tab exist
+    assert 'id="theme-btn"' in res.text
+    assert 'id="tab-btn-feed"' in res.text
+    assert 'id="view-feed"' in res.text
+
+
+def test_cyber_feed_endpoint():
+    res = client.get("/api/feed?source=all&limit=5")
+    assert res.status_code == 200
+    data = res.json()
+    assert "total" in data
+    assert "sources" in data
+    assert "items" in data
+    assert isinstance(data["items"], list)
+

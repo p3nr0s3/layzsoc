@@ -38,6 +38,7 @@ from core.database import (
     get_scan_history,
 )
 from core.exporter import export_to_csv, export_to_json
+from core.feed import get_cyber_news
 
 app = FastAPI(title="LazySOC Threat Triage & Investigation Platform", version="3.0.0")
 
@@ -252,6 +253,12 @@ def export_results(req: ExportRequest):
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=lazysoc_report.csv"},
         )
+
+
+@app.get("/api/feed")
+def get_cyber_feed_endpoint(source: str = "all", limit: int = 40):
+    """Fetches real-time cyber security news & threat advisories."""
+    return get_cyber_news(source=source, limit=limit)
 
 
 @app.get("/", response_class=HTMLResponse)
