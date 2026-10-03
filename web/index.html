@@ -880,7 +880,7 @@
             <i data-lucide="file-check" class="w-4 h-4 text-purple-400"></i>
             SOC Incident Triage & Handover Note
           </h3>
-          <p class="text-[11px] font-mono text-slate-400 mt-0.5">Ready-to-paste markdown summary for Jira, ServiceNow, TheHive, or Slack</p>
+          <p class="text-[11px] font-mono text-slate-400 mt-0.5">Ready-to-paste clean handover note for Jira, ServiceNow, TheHive, or Slack</p>
         </div>
         <button onclick="closeSocTicketModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
@@ -1557,34 +1557,61 @@ tags:
 
       const malicious = currentResults.filter(r => r.verdict === 'Malicious');
       const suspicious = currentResults.filter(r => r.verdict === 'Suspicious');
+      const clean = currentResults.filter(r => r.verdict === 'Clean');
       const sev = malicious.length > 0 ? "HIGH / CRITICAL" : (suspicious.length > 0 ? "MEDIUM" : "LOW / INFORMATIONAL");
 
       let iocList = "";
-      [...malicious, ...suspicious].forEach(item => {
-        const notes = item.notes ? ` (${item.notes})` : "";
-        iocList += `- \`${item.ioc}\` [${item.type.toUpperCase()}] -> **${item.verdict.toUpperCase()}**${notes}\n`;
-      });
-      if (!iocList) {
-        iocList = "- No malicious or suspicious indicators detected. All clean / internal / unknown.\n";
+      const alertItems = [...malicious, ...suspicious];
+      if (alertItems.length > 0) {
+        alertItems.forEach((item, idx) => {
+          const notes = item.notes ? ` - ${item.notes}` : "";
+          iocList += `${idx + 1}. [${item.type.toUpperCase()}] ${item.ioc} : ${item.verdict.toUpperCase()}${notes}\n`;
+        });
+      } else {
+        iocList = "None. All evaluated indicators are clean or unclassified.\n";
       }
 
-      const note = `### 🚨 SOC Triage & Threat Escalation Handover Note
-**Timestamp (UTC):** ${new Date().toUTCString()}
-**Analyst:** SOC Operations Tier 1/2
-**Incident Severity:** ${sev}
-**Total Indicators Evaluated:** ${currentResults.length} (${malicious.length} Malicious, ${suspicious.length} Suspicious)
+      let actionsList = "";
+      if (malicious.length > 0) {
+        actionsList = [
+          "1. Block identified malicious IPs, domains, and URLs on perimeter firewalls.",
+          "2. Execute hunting queries across SIEM to identify any historical connections within the last 30 days.",
+          "3. Isolate affected endpoints via EDR if internal communication is confirmed.",
+          "4. Invalidate credentials and reset MFA for any associated user accounts.",
+          "5. Add malicious indicators to email security gateway and web proxy blocklists."
+        ].join('\n');
+      } else if (suspicious.length > 0) {
+        actionsList = [
+          "1. Monitor traffic to suspicious indicators in SIEM for any anomalies.",
+          "2. Verify internal host activity and DNS resolution logs.",
+          "3. Escalate for deeper sandbox analysis if user interaction is observed."
+        ].join('\n');
+      } else {
+        actionsList = [
+          "1. No immediate perimeter block required based on current threat feeds.",
+          "2. Retain logs and close ticket as Low Risk or False Positive."
+        ].join('\n');
+      }
 
-#### 🎯 Observed Indicators of Compromise (IoCs):
-${iocList}
-#### 🛡️ Recommended Containment & Remediation Actions:
-${malicious.length > 0 ? `1. [ ] Block identified malicious IPs & domains at perimeter firewalls (Palo Alto / Fortinet / CheckPoint).
-2. [ ] Query SIEM (Splunk / Microsoft Sentinel) for past 30-day lateral movement or communication with these IoCs.
-3. [ ] If endpoint contact is confirmed, isolate affected host via EDR (CrowdStrike / Defender ATP / SentinelOne) immediately.
-4. [ ] Invalidate user credentials and reset MFA tokens for affected accounts.
-5. [ ] Submit malicious domains and URLs to Secure Email Gateway (SEG) blacklists.` : `1. [ ] No immediate perimeter containment block required based on current threat feeds.
-2. [ ] Continue standard baseline monitoring and close ticket as False Positive / Low Risk.`}
-
-*Report generated automatically by LazySOC Threat Triage & Investigation Platform.*`;
+      const note = [
+        "SOC INCIDENT HANDOVER NOTE",
+        "----------------------------------------",
+        `Date & Time (UTC) : ${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC`,
+        `Analyst           : SOC Operations`,
+        `Incident Severity : ${sev}`,
+        `Total Evaluated   : ${currentResults.length} (${malicious.length} Malicious, ${suspicious.length} Suspicious, ${clean.length} Clean)`,
+        "",
+        "OBSERVED INDICATORS (IOCs):",
+        "----------------------------------------",
+        iocList.trimEnd(),
+        "",
+        "RECOMMENDED CONTAINMENT ACTIONS:",
+        "----------------------------------------",
+        actionsList,
+        "",
+        "----------------------------------------",
+        "Generated by LazySOC Investigation Platform"
+      ].join('\n');
 
       document.getElementById('soc-ticket-output').value = note;
       document.getElementById('ticket-copy-status').innerText = "";
@@ -1598,7 +1625,7 @@ ${malicious.length > 0 ? `1. [ ] Block identified malicious IPs & domains at per
     function copySocTicket() {
       const text = document.getElementById('soc-ticket-output').value;
       navigator.clipboard.writeText(text);
-      document.getElementById('ticket-copy-status').innerText = "✓ Copied Markdown to clipboard!";
+      document.getElementById('ticket-copy-status').innerText = "Copied to clipboard!";
       setTimeout(() => document.getElementById('ticket-copy-status').innerText = "", 2500);
     }
 
