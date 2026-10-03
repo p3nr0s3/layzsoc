@@ -142,73 +142,67 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased custom-scrollbar">
 
-  <!-- TOP NAVIGATION BAR -->
-  <header class="h-16 border-b border-cyber-border bg-[#090d16]/85 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
-    <div class="flex items-center gap-3.5">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan/25 via-blue-600/15 to-emerald-500/10 border border-cyber-cyan/35 flex items-center justify-center text-xl glow-cyan">
+  <!-- TOP NAVIGATION BAR (Flexible on split/halved screens) -->
+  <header class="min-h-16 h-auto py-2.5 px-4 sm:px-6 border-b border-cyber-border bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-40 flex flex-wrap lg:flex-nowrap items-center justify-between gap-y-2.5 gap-x-3">
+    <!-- BRAND (Only LazySOC brand name as requested) -->
+    <div class="flex items-center gap-2.5 flex-shrink-0">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber-cyan/25 via-blue-600/15 to-emerald-500/10 border border-cyber-cyan/35 flex items-center justify-center text-base glow-cyan">
         🦥
       </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="font-extrabold text-lg tracking-tight text-white">LazySOC</span>
-          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30">v3.0 SOC</span>
-        </div>
-        <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
-          <span>ZERO-EFFORT THREAT TRIAGE & SOC WORKBENCH</span>
-          <span class="text-slate-600 hidden sm:inline">•</span>
-          <a href="https://github.com/p3nr0s3/layzsoc" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1 text-slate-400 hover:text-cyber-cyan transition font-semibold">
-            <i data-lucide="github" class="w-3 h-3"></i>
-            <span>@p3nr0s3</span>
-          </a>
-        </div>
-      </div>
+      <span class="font-extrabold text-lg tracking-tight text-white font-mono">LazySOC</span>
     </div>
 
-    <!-- TABS NAVIGATION (7 TABS) -->
-    <nav class="flex items-center gap-1 p-1 bg-[#0d121e] border border-cyber-border rounded-xl">
-      <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
+    <!-- TABS NAVIGATION (7 TABS) - Gracefully scrolls horizontally on narrow or split screens -->
+    <nav class="flex items-center gap-1 p-1 bg-[#0d121e] border border-cyber-border rounded-xl overflow-x-auto custom-scrollbar flex-nowrap order-3 lg:order-2 w-full lg:w-auto max-w-full">
+      <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
         <i data-lucide="target" class="w-3.5 h-3.5"></i>
         <span>IoC Triage</span>
       </button>
-      <button onclick="switchTab('recon')" id="tab-btn-recon" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('recon')" id="tab-btn-recon" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="radar" class="w-3.5 h-3.5"></i>
         <span>Network Recon</span>
       </button>
-      <button onclick="switchTab('eml')" id="tab-btn-eml" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('eml')" id="tab-btn-eml" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="mail-warning" class="w-3.5 h-3.5"></i>
         <span>Phishing EML</span>
       </button>
-      <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
         <span>Mail Health</span>
       </button>
-      <button onclick="switchTab('feed')" id="tab-btn-feed" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('feed')" id="tab-btn-feed" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="rss" class="w-3.5 h-3.5"></i>
         <span>Cyber Feeds</span>
       </button>
-      <button onclick="switchTab('cve')" id="tab-btn-cve" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('cve')" id="tab-btn-cve" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
         <span>CVE / NVD</span>
       </button>
-      <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
         <span>Cache</span>
       </button>
     </nav>
 
-    <!-- RIGHT STATUS BADGES & THEME PICKER & GITHUB WATERMARK -->
-    <div class="flex items-center gap-2.5">
-      <!-- GITHUB WATERMARK BUTTON -->
-      <a href="https://github.com/p3nr0s3/layzsoc" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition group" title="View Source & Star on GitHub">
+    <!-- RIGHT STATUS BADGES, ABOUT, THEME PICKER & GITHUB WATERMARK -->
+    <div class="flex items-center gap-2 flex-shrink-0 order-2 lg:order-3 ml-auto lg:ml-0">
+      <!-- ABOUT MENU BUTTON -->
+      <button onclick="openAboutModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyber-card hover:bg-white/10 border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition" title="About LazySOC Platform">
+        <i data-lucide="info" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+        <span class="hidden sm:inline">About</span>
+      </button>
+
+      <!-- GITHUB PROFILE BUTTON -->
+      <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition group" title="Creator GitHub Profile">
         <i data-lucide="github" class="w-3.5 h-3.5 text-cyber-cyan group-hover:scale-110 transition-transform"></i>
-        <span class="hidden xl:inline font-bold">p3nr0s3</span>
+        <span class="hidden sm:inline font-bold">@p3nr0s3</span>
       </a>
 
       <!-- THEME SELECTOR DROPDOWN -->
       <div class="relative">
-        <button onclick="toggleThemeDropdown(event)" id="theme-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition">
+        <button onclick="toggleThemeDropdown(event)" id="theme-btn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition">
           <i data-lucide="palette" class="w-3.5 h-3.5 text-cyber-cyan"></i>
-          <span id="theme-name">Cyberpunk</span>
+          <span id="theme-name" class="hidden sm:inline">Cyberpunk</span>
           <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
         </button>
         <div id="theme-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-xl bg-cyber-card border border-cyber-border shadow-2xl z-50 p-1.5 space-y-1 font-mono text-xs backdrop-blur-md">
@@ -230,9 +224,9 @@
         </div>
       </div>
 
-      <div id="pool-status-indicator" class="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
+      <div id="pool-status-indicator" class="flex items-center gap-2 text-xs font-mono px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="text-slate-300">Checking...</span>
+        <span class="text-slate-300 hidden sm:inline">Checking...</span>
       </div>
     </div>
   </header>
@@ -958,11 +952,33 @@
             Loading latest threat intelligence feeds...
           </div>
         </div>
+
+        <!-- Feed Pagination Bar -->
+        <div id="feed-pagination" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-cyber-border/70 text-xs font-mono">
+          <div class="text-slate-400 text-[11px]">
+            Showing <span id="feed-range-start" class="text-white font-bold">1</span>-<span id="feed-range-end" class="text-white font-bold">9</span> of <span id="feed-total-count" class="text-cyber-cyan font-bold">0</span> articles
+          </div>
+
+          <div class="flex items-center gap-1.5" id="feed-pagination-controls">
+            <!-- Injected dynamically via JS: Prev, Page buttons, Next -->
+          </div>
+
+          <div class="flex items-center gap-2 text-[11px] text-slate-400">
+            <span>Per page:</span>
+            <select id="feed-page-size" onchange="changeFeedPageSize(this.value)" class="bg-[#090d16] border border-cyber-border rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-cyber-cyan">
+              <option value="6">6</option>
+              <option value="9" selected>9</option>
+              <option value="12">12</option>
+              <option value="18">18</option>
+              <option value="30">30</option>
+            </select>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- ============================================================
-         TAB 6: CVE & NVD VULNERABILITY INTELLIGENCE
+         TAB 6: LIVE ONLINE CVE & NIST NVD SEARCH (NO LOCAL DB)
          ============================================================ -->
     <section id="view-cve" class="hidden space-y-6">
       <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-5">
@@ -971,9 +987,12 @@
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <i data-lucide="shield-alert" class="w-4 h-4 text-cyber-cyan"></i>
-              NIST NVD & CVE Vulnerability Intelligence
+              Live Online NIST NVD & CVE Intelligence
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE LIVE API
+              </span>
             </h3>
-            <p class="text-xs text-slate-400 font-mono mt-0.5">National Vulnerability Database (NVD) official CVSS metrics, exploits & impact analysis</p>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Direct live online query to NIST NVD 2.0 & CISA Known Exploited Vulnerabilities catalog (Zero local database required)</p>
           </div>
 
           <div class="flex items-center gap-2">
@@ -984,30 +1003,44 @@
                 type="text" 
                 id="cve-search-input" 
                 onkeydown="if(event.key==='Enter') executeCveSearch()" 
-                placeholder="Search CVE ID or Vendor (e.g. CVE-2024-3400)..." 
+                placeholder="Search CVE ID or Vendor online..." 
                 class="w-full bg-[#090d16] border border-cyber-border rounded-lg pl-8 pr-3 py-1.5 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyber-cyan transition"
               >
             </div>
             <!-- Search Button -->
             <button onclick="executeCveSearch()" id="btn-search-cve" class="px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
               <i data-lucide="search" class="w-3.5 h-3.5"></i>
-              <span>Search</span>
+              <span>Live Search</span>
             </button>
           </div>
         </div>
 
         <!-- Quick Trending Pills -->
         <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
-          <span class="text-slate-400 text-[11px] font-bold uppercase">Trending 0-Days:</span>
+          <span class="text-slate-400 text-[11px] font-bold uppercase">Quick Online Lookups:</span>
           <button onclick="quickCveLookup('CVE-2024-3400')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Palo Alto (CVE-2024-3400)</button>
-          <button onclick="quickCveLookup('CVE-2024-21887')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Ivanti Connect (CVE-2024-21887)</button>
+          <button onclick="quickCveLookup('CVE-2024-21887')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Ivanti (CVE-2024-21887)</button>
           <button onclick="quickCveLookup('CVE-2023-4966')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Citrix Bleed (CVE-2023-4966)</button>
           <button onclick="quickCveLookup('CVE-2021-44228')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Log4Shell (CVE-2021-44228)</button>
+          <button onclick="quickCveLookup('')" class="px-2.5 py-1 rounded bg-cyber-cyan/10 hover:bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/30 transition text-[11px] flex items-center gap-1 font-bold">
+            <i data-lucide="flame" class="w-3 h-3"></i>
+            <span>Real-Time CISA KEV (Zero-Days)</span>
+          </button>
         </div>
 
         <!-- CVE Results Grid -->
         <div id="cve-results-container" class="space-y-4 pt-1">
           <!-- Injected via JS -->
+        </div>
+
+        <!-- CVE Online Pagination / Status Bar -->
+        <div id="cve-pagination" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-cyber-border/70 text-xs font-mono">
+          <div class="text-slate-400 text-[11px]">
+            Showing <span id="cve-range-start" class="text-white font-bold">1</span>-<span id="cve-range-end" class="text-white font-bold">5</span> of <span id="cve-total-count" class="text-cyber-cyan font-bold">0</span> online vulnerabilities
+          </div>
+          <div class="flex items-center gap-1.5" id="cve-pagination-controls">
+            <!-- Injected via JS -->
+          </div>
         </div>
       </div>
     </section>
@@ -1053,6 +1086,7 @@
   </main>
 
   <!-- CYBERPUNK HUD FOOTER & CREATOR WATERMARK -->
+  <!-- CYBERPUNK HUD FOOTER & CREATOR WATERMARK -->
   <footer class="mt-auto border-t border-cyber-border/70 bg-[#090d16]/80 backdrop-blur-md py-4 px-6 text-xs font-mono text-slate-400">
     <div class="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-2">
@@ -1063,13 +1097,110 @@
       </div>
       <div class="flex items-center gap-3">
         <span class="text-slate-500">Open-Source SOC Platform by</span>
-        <a href="https://github.com/p3nr0s3/layzsoc" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyber-cyan/10 hover:bg-cyber-cyan/20 border border-cyber-cyan/30 text-cyber-cyan font-bold transition group">
+        <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyber-cyan/10 hover:bg-cyber-cyan/20 border border-cyber-cyan/30 text-cyber-cyan font-bold transition group" title="Creator GitHub Profile">
           <i data-lucide="github" class="w-3.5 h-3.5 group-hover:scale-110 transition-transform"></i>
           <span>@p3nr0s3</span>
         </a>
       </div>
     </div>
   </footer>
+
+  <!-- MODAL: ABOUT LAZYSOC PLATFORM -->
+  <div id="modal-about" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-cyber-card border border-cyber-border rounded-2xl max-w-xl w-full p-6 space-y-5 glow-cyan max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
+      <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan/25 to-blue-600/20 border border-cyber-cyan/40 flex items-center justify-center text-xl glow-cyan">
+            🦥
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2 font-mono">
+              LazySOC
+              <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30">v3.0 SOC</span>
+            </h3>
+            <p class="text-xs text-slate-400 font-mono">Zero-Effort Automated Threat Intelligence Triage & Security Workbench</p>
+          </div>
+        </div>
+        <button onclick="closeAboutModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs font-mono text-slate-300 leading-relaxed">
+        <p class="text-slate-300 font-sans text-xs">
+          LazySOC is a lightweight, high-performance Security Operations Center (SOC) workbench built for security analysts, incident responders, and threat hunters. It eliminates manual triage fatigue by aggregating threat telemetry, analyzing suspicious artifacts, and generating actionable escalation notes with zero friction.
+        </p>
+
+        <div class="space-y-2 border-t border-cyber-border/60 pt-3">
+          <span class="text-white font-bold uppercase tracking-wider text-[11px] block">Core Capabilities</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+            <div class="bg-black/40 border border-cyber-border/60 rounded-lg p-2.5 space-y-1">
+              <span class="font-bold text-cyber-cyan flex items-center gap-1.5">
+                <i data-lucide="target" class="w-3.5 h-3.5"></i> Multi-IoC Triage
+              </span>
+              <p class="text-slate-400 font-sans text-[11px]">Defangs & scores mixed IPs, domains, hashes, and URLs via VirusTotal & AbuseIPDB.</p>
+            </div>
+            <div class="bg-black/40 border border-cyber-border/60 rounded-lg p-2.5 space-y-1">
+              <span class="font-bold text-cyber-cyan flex items-center gap-1.5">
+                <i data-lucide="radar" class="w-3.5 h-3.5"></i> Network Recon
+              </span>
+              <p class="text-slate-400 font-sans text-[11px]">Passive Shodan exposure, open ports, ASN routing, reverse DNS, and host banners.</p>
+            </div>
+            <div class="bg-black/40 border border-cyber-border/60 rounded-lg p-2.5 space-y-1">
+              <span class="font-bold text-cyber-cyan flex items-center gap-1.5">
+                <i data-lucide="mail-warning" class="w-3.5 h-3.5"></i> Phishing EML Forensics
+              </span>
+              <p class="text-slate-400 font-sans text-[11px]">Hop routing inspection, SPF/DKIM/DMARC auth, payload hashes, and defanged link extractor.</p>
+            </div>
+            <div class="bg-black/40 border border-cyber-border/60 rounded-lg p-2.5 space-y-1">
+              <span class="font-bold text-cyber-cyan flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Domain Mail Health
+              </span>
+              <p class="text-slate-400 font-sans text-[11px]">Audits MX records, SPF policy mechanisms, and spoofing vulnerability posture.</p>
+            </div>
+            <div class="bg-black/40 border border-cyber-border/60 rounded-lg p-2.5 space-y-1">
+              <span class="font-bold text-cyber-cyan flex items-center gap-1.5">
+                <i data-lucide="rss" class="w-3.5 h-3.5"></i> Live Threat Feeds
+              </span>
+              <p class="text-slate-400 font-sans text-[11px]">Paginated real-time security alerts from The Hacker News, BleepingComputer, CISA, Krebs.</p>
+            </div>
+            <div class="bg-black/40 border border-cyber-border/60 rounded-lg p-2.5 space-y-1">
+              <span class="font-bold text-cyber-cyan flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Live Online CVE / NVD
+              </span>
+              <p class="text-slate-400 font-sans text-[11px]">Direct online API lookup to NIST NVD 2.0 & CISA KEV. Zero local database bloat.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-black/40 border border-cyber-border/60 rounded-lg p-3 space-y-2 text-[11px]">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Created & Developed by</span>
+            <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="text-cyber-cyan hover:underline font-bold flex items-center gap-1">
+              <i data-lucide="github" class="w-3.5 h-3.5"></i>
+              @p3nr0s3
+            </a>
+          </div>
+          <div class="flex items-center justify-between border-t border-cyber-border/40 pt-2">
+            <span class="text-slate-400">Architecture</span>
+            <span class="text-slate-200">FastAPI • Python • SQLite • TailwindCSS</span>
+          </div>
+          <div class="flex items-center justify-between border-t border-cyber-border/40 pt-2">
+            <span class="text-slate-400">Privacy & Security</span>
+            <span class="text-emerald-400 font-semibold">Local SQLite Cache • Zero telemetry leaks</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-cyber-border/70">
+        <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="text-xs font-mono text-slate-400 hover:text-cyber-cyan flex items-center gap-1.5 transition">
+          <i data-lucide="github" class="w-3.5 h-3.5"></i>
+          <span>github.com/p3nr0s3</span>
+        </a>
+        <button onclick="closeAboutModal()" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition">
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: SIEM THREAT HUNTING QUERIES -->
   <div id="modal-siem-query" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1605,6 +1736,19 @@ Content-Type: text/html; charset=UTF-8
     // SOC OPERATIONS WORKBENCH & QUERY GENERATOR
     // ==========================================
     let currentSiemTab = 'splunk';
+
+    function openAboutModal() {
+      const modal = document.getElementById('modal-about');
+      if (modal) {
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+      }
+    }
+
+    function closeAboutModal() {
+      const modal = document.getElementById('modal-about');
+      if (modal) modal.classList.add('hidden');
+    }
 
     function openSiemModal() {
       if (!currentResults.length) {
@@ -2378,10 +2522,14 @@ tags:
     }
 
     // ==========================================
-    // CYBER FEEDS (RSS)
+    // ==========================================
+    // CYBER FEEDS (RSS) WITH FULL PAGINATION
     // ==========================================
     let allFeedArticles = [];
+    let filteredFeedArticles = [];
     let activeFeedSource = 'all';
+    let feedCurrentPage = 1;
+    let feedPageSize = 9;
 
     async function fetchCyberFeeds(forceRefresh = false) {
       const container = document.getElementById('feed-articles-container');
@@ -2389,9 +2537,10 @@ tags:
       if (refreshBtn) refreshBtn.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> Loading...`;
 
       try {
-        const res = await fetch(`/api/feed?source=all&limit=45`);
+        const res = await fetch(`/api/feed?source=all&limit=60`);
         const data = await res.json();
         allFeedArticles = data.items || [];
+        feedCurrentPage = 1;
         filterFeedArticles();
       } catch (err) {
         console.error("Failed to fetch feeds:", err);
@@ -2419,6 +2568,7 @@ tags:
           btn.className = 'feed-src-btn px-3 py-1 rounded-lg bg-[#090d16] text-slate-400 border border-cyber-border hover:text-white transition';
         }
       });
+      feedCurrentPage = 1;
       filterFeedArticles();
     }
 
@@ -2438,20 +2588,104 @@ tags:
         );
       }
 
-      renderFeedCards(filtered);
+      filteredFeedArticles = filtered;
+      renderCurrentFeedPage();
     }
 
-    function renderFeedCards(articles) {
+    function changeFeedPage(newPage) {
+      const totalPages = Math.ceil(filteredFeedArticles.length / feedPageSize) || 1;
+      if (newPage < 1 || newPage > totalPages) return;
+      feedCurrentPage = newPage;
+      renderCurrentFeedPage();
+      document.getElementById('view-feed')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function changeFeedPageSize(newSize) {
+      feedPageSize = parseInt(newSize, 10) || 9;
+      feedCurrentPage = 1;
+      renderCurrentFeedPage();
+    }
+
+    function renderCurrentFeedPage() {
       const container = document.getElementById('feed-articles-container');
-      if (!articles || articles.length === 0) {
+      const paginationEl = document.getElementById('feed-pagination');
+      const totalCount = filteredFeedArticles.length;
+
+      if (!totalCount) {
         container.innerHTML = `
           <div class="col-span-full py-12 text-center text-slate-500 font-mono text-xs">
             No cyber news articles found matching the current filter.
           </div>
         `;
+        if (paginationEl) paginationEl.classList.add('hidden');
         return;
       }
 
+      const totalPages = Math.ceil(totalCount / feedPageSize);
+      if (feedCurrentPage > totalPages) feedCurrentPage = totalPages;
+
+      const startIndex = (feedCurrentPage - 1) * feedPageSize;
+      const endIndex = Math.min(startIndex + feedPageSize, totalCount);
+      const pageArticles = filteredFeedArticles.slice(startIndex, endIndex);
+
+      // Render cards
+      renderFeedCards(pageArticles, startIndex);
+
+      // Update counters
+      const startEl = document.getElementById('feed-range-start');
+      const endEl = document.getElementById('feed-range-end');
+      const totalEl = document.getElementById('feed-total-count');
+      if (startEl) startEl.innerText = startIndex + 1;
+      if (endEl) endEl.innerText = endIndex;
+      if (totalEl) totalEl.innerText = totalCount;
+
+      // Render pagination buttons
+      const controls = document.getElementById('feed-pagination-controls');
+      if (controls) {
+        let btnsHtml = `
+          <button onclick="changeFeedPage(${feedCurrentPage - 1})" ${feedCurrentPage === 1 ? 'disabled class="px-2.5 py-1 rounded bg-[#090d16] text-slate-600 border border-cyber-border cursor-not-allowed text-xs font-mono"' : 'class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition"'}>
+            Prev
+          </button>
+        `;
+
+        let startP = Math.max(1, feedCurrentPage - 2);
+        let endP = Math.min(totalPages, startP + 4);
+        if (endP - startP < 4) {
+          startP = Math.max(1, endP - 4);
+        }
+
+        if (startP > 1) {
+          btnsHtml += `<button onclick="changeFeedPage(1)" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono">1</button>`;
+          if (startP > 2) btnsHtml += `<span class="text-slate-600 text-xs px-1">...</span>`;
+        }
+
+        for (let p = startP; p <= endP; p++) {
+          if (p === feedCurrentPage) {
+            btnsHtml += `<button class="px-2.5 py-1 rounded bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/40 font-bold text-xs font-mono">${p}</button>`;
+          } else {
+            btnsHtml += `<button onclick="changeFeedPage(${p})" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition">${p}</button>`;
+          }
+        }
+
+        if (endP < totalPages) {
+          if (endP < totalPages - 1) btnsHtml += `<span class="text-slate-600 text-xs px-1">...</span>`;
+          btnsHtml += `<button onclick="changeFeedPage(${totalPages})" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono">${totalPages}</button>`;
+        }
+
+        btnsHtml += `
+          <button onclick="changeFeedPage(${feedCurrentPage + 1})" ${feedCurrentPage === totalPages ? 'disabled class="px-2.5 py-1 rounded bg-[#090d16] text-slate-600 border border-cyber-border cursor-not-allowed text-xs font-mono"' : 'class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition"'}>
+            Next
+          </button>
+        `;
+
+        controls.innerHTML = btnsHtml;
+      }
+
+      if (paginationEl) paginationEl.classList.remove('hidden');
+    }
+
+    function renderFeedCards(articles, offsetIndex = 0) {
+      const container = document.getElementById('feed-articles-container');
       const categoryColors = {
         'Vulnerability': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
         'Ransomware': 'bg-red-500/15 text-red-300 border-red-500/30',
@@ -2472,6 +2706,7 @@ tags:
         const catClass = categoryColors[a.category] || categoryColors['Cyber News'];
         const srcClass = sourceColors[a.source] || 'bg-slate-800 text-slate-300 border-slate-700';
         const cleanDate = a.pub_date ? a.pub_date.substring(0, 16) : '';
+        const globalIdx = offsetIndex + idx;
 
         return `
           <div class="bg-[#090d16] border border-cyber-border hover:border-cyber-cyan/40 rounded-xl p-4 flex flex-col justify-between space-y-3 transition-all group hover:shadow-lg">
@@ -2498,7 +2733,7 @@ tags:
             <div class="pt-3 border-t border-cyber-border/60 flex items-center justify-between text-[11px] font-mono">
               <span class="text-slate-500 text-[10px]">${cleanDate}</span>
               <div class="flex items-center gap-2">
-                <button onclick="sendArticleToTriage(${idx})" class="px-2 py-1 rounded bg-white/5 hover:bg-cyber-cyan/15 text-slate-400 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[10px] font-mono transition flex items-center gap-1" title="Extract and scan indicators found in this article">
+                <button onclick="sendArticleToTriage(${globalIdx})" class="px-2 py-1 rounded bg-white/5 hover:bg-cyber-cyan/15 text-slate-400 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[10px] font-mono transition flex items-center gap-1" title="Extract and scan indicators found in this article">
                   <i data-lucide="crosshair" class="w-3 h-3"></i>
                   <span>Scan IoCs</span>
                 </button>
@@ -2515,7 +2750,7 @@ tags:
     }
 
     function sendArticleToTriage(articleIndex) {
-      const article = allFeedArticles[articleIndex];
+      const article = filteredFeedArticles[articleIndex] || allFeedArticles[articleIndex];
       if (!article) return;
 
       const raw = `${article.title}\n${article.summary}\n${article.link}`;
@@ -2526,31 +2761,45 @@ tags:
     }
 
     // ==========================================
-    // CVE & NVD VULNERABILITY INTELLIGENCE
+    // LIVE ONLINE CVE & NIST NVD INTELLIGENCE (NO LOCAL DB)
     // ==========================================
     let currentCveData = [];
+    let cveCurrentPage = 1;
+    let cvePageSize = 5;
 
     async function fetchCveIntel(query = "") {
       const container = document.getElementById('cve-results-container');
       const btn = document.getElementById('btn-search-cve');
-      if (btn) btn.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> Loading...`;
+      const paginationEl = document.getElementById('cve-pagination');
+
+      if (btn) btn.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> Live Query...`;
+      if (paginationEl) paginationEl.classList.add('hidden');
+
+      container.innerHTML = `
+        <div class="py-12 text-center text-cyber-cyan font-mono text-xs space-y-2">
+          <div class="w-6 h-6 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div>Querying official NIST NVD 2.0 API & CISA KEV endpoints online in real time...</div>
+          <div class="text-[10px] text-slate-500">Live online search &bull; Zero local database footprint</div>
+        </div>
+      `;
 
       try {
-        const url = query ? `/api/cve?query=${encodeURIComponent(query)}` : '/api/cve';
+        const url = query ? `/api/cve?query=${encodeURIComponent(query)}&limit=30` : '/api/cve?limit=25';
         const res = await fetch(url);
         const data = await res.json();
         currentCveData = data.items || [];
-        renderCveCards(currentCveData, query);
+        cveCurrentPage = 1;
+        renderCvePage(query);
       } catch (err) {
         console.error("Failed to query CVE:", err);
         container.innerHTML = `
           <div class="py-8 text-center text-red-400 font-mono text-xs">
-            Failed to query NIST NVD. Please try again or check your query.
+            Failed to connect to NIST NVD / CISA online APIs. Please verify internet connection.
           </div>
         `;
       } finally {
         if (btn) {
-          btn.innerHTML = `<i data-lucide="search" class="w-3.5 h-3.5"></i> <span>Search</span>`;
+          btn.innerHTML = `<i data-lucide="search" class="w-3.5 h-3.5"></i> <span>Live Search</span>`;
           lucide.createIcons();
         }
       }
@@ -2567,17 +2816,79 @@ tags:
       fetchCveIntel(cveId);
     }
 
-    function renderCveCards(items, query) {
+    function changeCvePage(newPage) {
+      const totalPages = Math.ceil(currentCveData.length / cvePageSize) || 1;
+      if (newPage < 1 || newPage > totalPages) return;
+      cveCurrentPage = newPage;
+      renderCvePage();
+      document.getElementById('view-cve')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderCvePage(query = "") {
       const container = document.getElementById('cve-results-container');
-      if (!items || items.length === 0) {
+      const paginationEl = document.getElementById('cve-pagination');
+      const totalCount = currentCveData.length;
+
+      if (!totalCount) {
         container.innerHTML = `
-          <div class="py-12 text-center text-slate-500 font-mono text-xs">
-            No vulnerabilities found matching "${query || 'default'}". Try searching by CVE ID (e.g. CVE-2024-3400) or software vendor.
+          <div class="py-12 text-center text-slate-500 font-mono text-xs space-y-1">
+            <div>No vulnerabilities found matching "${query || 'default'}".</div>
+            <div class="text-[11px] text-slate-600">Try searching by CVE ID (e.g. CVE-2024-3400) or vendor keywords (e.g. Ivanti, Palo Alto, Microsoft, Linux).</div>
           </div>
         `;
+        if (paginationEl) paginationEl.classList.add('hidden');
         return;
       }
 
+      const totalPages = Math.ceil(totalCount / cvePageSize);
+      if (cveCurrentPage > totalPages) cveCurrentPage = totalPages;
+
+      const startIndex = (cveCurrentPage - 1) * cvePageSize;
+      const endIndex = Math.min(startIndex + cvePageSize, totalCount);
+      const pageItems = currentCveData.slice(startIndex, endIndex);
+
+      // Render cards
+      renderCveCards(pageItems, startIndex);
+
+      // Update counters
+      const startEl = document.getElementById('cve-range-start');
+      const endEl = document.getElementById('cve-range-end');
+      const totalEl = document.getElementById('cve-total-count');
+      if (startEl) startEl.innerText = startIndex + 1;
+      if (endEl) endEl.innerText = endIndex;
+      if (totalEl) totalEl.innerText = totalCount;
+
+      // Controls
+      const controls = document.getElementById('cve-pagination-controls');
+      if (controls) {
+        let btnsHtml = `
+          <button onclick="changeCvePage(${cveCurrentPage - 1})" ${cveCurrentPage === 1 ? 'disabled class="px-2.5 py-1 rounded bg-[#090d16] text-slate-600 border border-cyber-border cursor-not-allowed text-xs font-mono"' : 'class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition"'}>
+            Prev
+          </button>
+        `;
+
+        for (let p = 1; p <= totalPages; p++) {
+          if (p === cveCurrentPage) {
+            btnsHtml += `<button class="px-2.5 py-1 rounded bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/40 font-bold text-xs font-mono">${p}</button>`;
+          } else {
+            btnsHtml += `<button onclick="changeCvePage(${p})" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition">${p}</button>`;
+          }
+        }
+
+        btnsHtml += `
+          <button onclick="changeCvePage(${cveCurrentPage + 1})" ${cveCurrentPage === totalPages ? 'disabled class="px-2.5 py-1 rounded bg-[#090d16] text-slate-600 border border-cyber-border cursor-not-allowed text-xs font-mono"' : 'class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition"'}>
+            Next
+          </button>
+        `;
+
+        controls.innerHTML = btnsHtml;
+      }
+
+      if (paginationEl) paginationEl.classList.remove('hidden');
+    }
+
+    function renderCveCards(items, offsetIndex = 0) {
+      const container = document.getElementById('cve-results-container');
       container.innerHTML = items.map((cve, idx) => {
         const cvssNum = parseFloat(cve.cvss || 0);
         let sevBadge = 'bg-slate-800 text-slate-400 border-slate-700';
@@ -2592,10 +2903,12 @@ tags:
           sevBadge = 'bg-blue-500/20 text-blue-400 border-blue-500/40';
         }
 
+        const globalIdx = offsetIndex + idx;
+
         return `
           <div class="bg-[#090d16] border border-cyber-border hover:border-cyber-cyan/40 rounded-xl p-5 space-y-3.5 transition-all">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border/60 pb-3">
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                 <a href="${cve.link}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold font-mono text-white hover:text-cyber-cyan transition flex items-center gap-1.5">
                   ${cve.id}
                   <i data-lucide="external-link" class="w-3.5 h-3.5 text-cyber-cyan"></i>
@@ -2604,7 +2917,8 @@ tags:
                   ${cve.severity} (CVSS ${cve.cvss})
                 </span>
                 ${cve.known_exploited ? `
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
+                    <i data-lucide="flame" class="w-3 h-3 text-rose-400"></i>
                     CISA KEV (Actively Exploited)
                   </span>
                 ` : ''}
@@ -2631,9 +2945,12 @@ tags:
             </div>
 
             <div class="flex items-center justify-between pt-2 border-t border-cyber-border/60 text-xs font-mono">
-              <span class="text-slate-500 text-[11px]">Database: ${cve.source}</span>
+              <span class="text-slate-500 text-[11px] flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Source: <span class="text-slate-300 font-semibold">${cve.source}</span>
+              </span>
               <div class="flex items-center gap-2">
-                <button onclick="sendCveToTriage(${idx})" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[11px] transition flex items-center gap-1">
+                <button onclick="sendCveToTriage(${globalIdx})" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[11px] transition flex items-center gap-1">
                   <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
                   <span>Triage Indicators</span>
                 </button>
