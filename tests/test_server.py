@@ -29,7 +29,7 @@ def test_parse_endpoint():
 def test_index_html_served():
     res = client.get("/")
     assert res.status_code == 200
-    assert "SLOTHERY" in res.text
+    assert "LazySOC" in res.text
     assert "IoC Triage" in res.text
     assert "Network Recon" in res.text
     assert "Phishing EML" in res.text

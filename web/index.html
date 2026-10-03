@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAURON // All-Seeing Threat Intelligence & SOC Surveillance</title>
+  <title>LazySOC // Zero-Effort Threat Triage & SOC Workbench</title>
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,7 +73,7 @@
       box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
     }
     .glow-green {
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 12px rgba(160, 185, 129, 0.3);
     }
     .glow-amber {
       box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
@@ -88,15 +88,15 @@
   <!-- TOP NAVIGATION BAR -->
   <header class="h-16 border-b border-cyber-border bg-[#090d16]/80 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
     <div class="flex items-center gap-3.5">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600/30 via-amber-600/20 to-orange-500/10 border border-amber-500/40 flex items-center justify-center text-xl glow-amber animate-pulse">
-        👁️
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan/25 via-blue-600/15 to-emerald-500/10 border border-cyber-cyan/35 flex items-center justify-center text-xl glow-cyan">
+        🦥
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <span class="font-extrabold text-lg tracking-wider text-white">SAURON</span>
-          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">v3.0 CTI</span>
+          <span class="font-extrabold text-lg tracking-tight text-white">LazySOC</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30">v3.0 SOC</span>
         </div>
-        <p class="text-xs text-slate-400 font-mono">THE ALL-SEEING EYE // THREAT INTELLIGENCE & SOC SURVEILLANCE</p>
+        <p class="text-xs text-slate-400 font-mono">ZERO-EFFORT THREAT TRIAGE & SOC WORKBENCH</p>
       </div>
     </div>
 
@@ -1593,11 +1593,11 @@ ${shouldTerms.join(',\n')}
   }
 }`;
       } else if (tab === 'sigma') {
-        query = `title: SAURON Auto-Generated SOC IoC Detection Rule
-id: ${Math.random().toString(36).substring(2, 10)}-sauron-auto
+        query = `title: LazySOC Auto-Generated SOC Detection Rule
+id: ${Math.random().toString(36).substring(2, 10)}-lazysoc-auto
 status: experimental
-description: Auto-generated detection rule from SAURON Threat Surveillance
-author: SAURON CTI Engine
+description: Auto-generated detection rule from LazySOC Threat Triage
+author: LazySOC Engine
 date: ${new Date().toISOString().slice(0, 10)}
 logsource:
   category: network_traffic
@@ -1676,7 +1676,7 @@ ${malicious.length > 0 ? `1. [ ] Block identified malicious IPs & domains at per
 5. [ ] Submit malicious domains and URLs to Secure Email Gateway (SEG) blacklists.` : `1. [ ] No immediate perimeter containment block required based on current threat feeds.
 2. [ ] Continue standard baseline monitoring and close ticket as False Positive / Low Risk.`}
 
-*Report generated automatically by Slothery Threat Intelligence Triage Platform.*`;
+*Report generated automatically by LazySOC Threat Triage & Investigation Platform.*`;
 
       document.getElementById('soc-ticket-output').value = note;
       document.getElementById('ticket-copy-status').innerText = "";
@@ -2099,7 +2099,7 @@ ${malicious.length > 0 ? `1. [ ] Block identified malicious IPs & domains at per
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `slothery_report.${format}`;
+      a.download = `lazysoc_report.${format}`;
       a.click();
     }
 

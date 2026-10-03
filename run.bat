@@ -1,7 +1,7 @@
 @echo off
-title Slothery - Custom Modern Web UI
+title LazySOC - Zero-Effort Threat Triage
 echo ===================================================
-echo   Starting Slothery Custom Modern Web UI...
+echo   Starting LazySOC Modern Cyber UI...
 echo ===================================================
 cd /d "%~dp0"
 call .venv\Scripts\activate.bat

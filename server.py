@@ -38,7 +38,7 @@ from core.database import (
 )
 from core.exporter import export_to_csv, export_to_json
 
-app = FastAPI(title="Slothery Threat Intelligence Triage", version="2.0.0")
+app = FastAPI(title="LazySOC Threat Triage & Investigation Platform", version="3.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -229,14 +229,14 @@ def export_results(req: ExportRequest):
         return StreamingResponse(
             iter([data]),
             media_type="application/json",
-            headers={"Content-Disposition": "attachment; filename=slothery_report.json"},
+            headers={"Content-Disposition": "attachment; filename=lazysoc_report.json"},
         )
     else:
         data = export_to_csv(req.results, defang_output=req.defang)
         return StreamingResponse(
             iter([data]),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=slothery_report.csv"},
+            headers={"Content-Disposition": "attachment; filename=lazysoc_report.csv"},
         )
 
 
@@ -244,7 +244,7 @@ def export_results(req: ExportRequest):
 def serve_index():
     index_file = WEB_DIR / "index.html"
     if not index_file.exists():
-        return HTMLResponse("<h1>Slothery Web UI file missing</h1>", status_code=404)
+        return HTMLResponse("<h1>LazySOC Web UI file missing</h1>", status_code=404)
     return HTMLResponse(index_file.read_text(encoding="utf-8"))
 
 
