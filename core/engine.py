@@ -6,6 +6,8 @@ from core.parser import IoCItem
 from core.key_manager import KeyManager
 from core.clients.virustotal import VirusTotalClient
 from core.clients.abuseipdb import AbuseIPDBClient
+from core.clients.urlhaus import URLhausClient
+from core.mail_health import MailHealthChecker
 from core.database import get_cached_ioc, save_cached_ioc, log_scan
 from core.config import CACHE_TTL_HOURS
 
@@ -20,11 +22,16 @@ def determine_verdict(
     ioc_type: str,
     vt_res: Optional[Dict[str, Any]],
     abuse_res: Optional[Dict[str, Any]],
+    urlhaus_res: Optional[Dict[str, Any]] = None,
     is_private: bool = False,
 ) -> str:
     """Calculates overall risk verdict across integrated threat providers."""
     if is_private:
         return VERDICT_UNKNOWN
+
+    # URLhaus check (immediate malicious trigger if positive threat)
+    if urlhaus_res and urlhaus_res.get("found"):
+        return VERDICT_MALICIOUS
 
     vt_mal = 0
     vt_susp = 0
@@ -67,6 +74,8 @@ class EnrichmentEngine:
         self.km = key_manager or KeyManager()
         self.vt_client = VirusTotalClient(self.km)
         self.abuse_client = AbuseIPDBClient(self.km)
+        self.urlhaus_client = URLhausClient()
+        self.mail_checker = MailHealthChecker()
 
     def scan_items(
         self,
@@ -78,9 +87,8 @@ class EnrichmentEngine:
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Processes a list of IoCItem objects.
-        Yields real-time events for Streamlit UI updates:
+        Yields real-time events:
         - {"type": "progress", "index": i, "total": total, "current": val}
-        - {"type": "throttle", "wait_seconds": s, "service": name}
         - {"type": "item_result", "data": {...}}
         - {"type": "complete", "summary": {...}}
         """
@@ -138,15 +146,20 @@ class EnrichmentEngine:
                     else:
                         unknown_count += 1
 
+                    vt_data = cached.get("vt_data")
+                    abuse_data = cached.get("abuse_data")
+
                     item_dict = {
                         "ioc": val,
                         "type": ioc_type,
                         "verdict": verdict,
                         "notes": "Retrieved from local cache",
-                        "vt_stats": self._format_vt_summary(cached.get("vt_data")),
-                        "abuse_score": self._format_abuse_summary(cached.get("abuse_data")),
-                        "vt_data": cached.get("vt_data"),
-                        "abuse_data": cached.get("abuse_data"),
+                        "vt_stats": self._format_vt_summary(vt_data),
+                        "abuse_score": self._format_abuse_summary(abuse_data),
+                        "vt_data": vt_data,
+                        "abuse_data": abuse_data,
+                        "mail_health": vt_data.get("mail_health") if isinstance(vt_data, dict) else None,
+                        "urlhaus_data": vt_data.get("urlhaus_data") if isinstance(vt_data, dict) else None,
                         "is_cached": True,
                         "updated_at": cached.get("updated_at"),
                     }
@@ -157,24 +170,23 @@ class EnrichmentEngine:
             # 3. Live External Queries
             vt_res = None
             abuse_res = None
+            urlhaus_res = None
+            mail_res = None
 
-            # For IPs: Query AbuseIPDB and VirusTotal
+            # For IPs
             if ioc_type in ("ipv4", "ipv6"):
-                # AbuseIPDB
                 abuse_res = self._query_with_throttle(
                     lambda: self.abuse_client.check_ip(val),
                     service_name="AbuseIPDB",
                     auto_throttle=auto_throttle,
                 )
-
-                # VirusTotal
                 vt_res = self._query_with_throttle(
                     lambda: self.vt_client.check_ip(val),
                     service_name="VirusTotal",
                     auto_throttle=auto_throttle,
                 )
 
-            # For Hashes: Query VirusTotal
+            # For Hashes
             elif ioc_type in ("md5", "sha1", "sha256"):
                 vt_res = self._query_with_throttle(
                     lambda: self.vt_client.check_hash(val),
@@ -182,8 +194,29 @@ class EnrichmentEngine:
                     auto_throttle=auto_throttle,
                 )
 
+            # For Domains
+            elif ioc_type == "domain":
+                vt_res = self._query_with_throttle(
+                    lambda: self.vt_client.check_domain(val),
+                    service_name="VirusTotal",
+                    auto_throttle=auto_throttle,
+                )
+                # URLhaus host lookup
+                urlhaus_res = self.urlhaus_client.check_host(val)
+                # Mail health audit
+                mail_res = self.mail_checker.check_domain(val)
+
+            # For URLs
+            elif ioc_type == "url":
+                vt_res = self._query_with_throttle(
+                    lambda: self.vt_client.check_url(val),
+                    service_name="VirusTotal",
+                    auto_throttle=auto_throttle,
+                )
+                urlhaus_res = self.urlhaus_client.check_url(val)
+
             # Calculate verdict
-            verdict = determine_verdict(ioc_type, vt_res, abuse_res, item.is_private)
+            verdict = determine_verdict(ioc_type, vt_res, abuse_res, urlhaus_res, item.is_private)
             if verdict == VERDICT_MALICIOUS:
                 malicious_count += 1
             elif verdict == VERDICT_SUSPICIOUS:
@@ -193,16 +226,25 @@ class EnrichmentEngine:
             else:
                 unknown_count += 1
 
+            # Embed extra data in vt_res container for caching
+            cache_vt = dict(vt_res) if vt_res else {}
+            if mail_res:
+                cache_vt["mail_health"] = mail_res
+            if urlhaus_res:
+                cache_vt["urlhaus_data"] = urlhaus_res
+
             # Prepare detail item
             item_dict = {
                 "ioc": val,
                 "type": ioc_type,
                 "verdict": verdict,
-                "notes": self._generate_notes(vt_res, abuse_res),
+                "notes": self._generate_notes(ioc_type, vt_res, abuse_res, urlhaus_res, mail_res),
                 "vt_stats": self._format_vt_summary(vt_res),
                 "abuse_score": self._format_abuse_summary(abuse_res),
                 "vt_data": vt_res,
                 "abuse_data": abuse_res,
+                "urlhaus_data": urlhaus_res,
+                "mail_health": mail_res,
                 "is_cached": False,
             }
 
@@ -212,7 +254,7 @@ class EnrichmentEngine:
                     ioc_value=val,
                     ioc_type=ioc_type,
                     verdict=verdict,
-                    vt_data=vt_res,
+                    vt_data=cache_vt,
                     abuse_data=abuse_res,
                     ttl_hours=ttl_hours,
                 )
@@ -257,7 +299,6 @@ class EnrichmentEngine:
 
             if res.get("error_type") == "THROTTLED" and auto_throttle:
                 wait_sec = res.get("wait_seconds", 60)
-                # Yield throttle notification by sleeping
                 time.sleep(min(wait_sec, 65))
                 waits += 1
                 continue
@@ -298,23 +339,45 @@ class EnrichmentEngine:
 
     def _generate_notes(
         self,
+        ioc_type: str,
         vt_res: Optional[Dict[str, Any]],
         abuse_res: Optional[Dict[str, Any]],
+        urlhaus_res: Optional[Dict[str, Any]] = None,
+        mail_res: Optional[Dict[str, Any]] = None,
     ) -> str:
         notes = []
+
+        # URLhaus notes
+        if urlhaus_res and urlhaus_res.get("found"):
+            if ioc_type == "url":
+                notes.append(f"URLhaus: {urlhaus_res.get('threat')} ({urlhaus_res.get('url_status')})")
+            else:
+                notes.append(f"URLhaus: {urlhaus_res.get('url_count')} malicious URLs on host")
+
+        # VT notes
         if vt_res and vt_res.get("success"):
             if vt_res.get("malicious", 0) > 0:
-                notes.append(f"VT flagged by {vt_res.get('malicious')} engines")
+                notes.append(f"VT flagged: {vt_res.get('malicious')} engines")
             if vt_res.get("threat_label") and vt_res.get("threat_label") != "Clean / Unclassified":
                 notes.append(f"Threat: {vt_res.get('threat_label')}")
+            if vt_res.get("registrar") and vt_res.get("registrar") != "Unknown":
+                notes.append(f"Registrar: {vt_res.get('registrar')}")
             if vt_res.get("as_owner") and vt_res.get("as_owner") != "Unknown":
                 notes.append(f"ASN: {vt_res.get('as_owner')}")
 
+        # AbuseIPDB notes
         if abuse_res and abuse_res.get("success"):
             data = abuse_res.get("data", {})
             isp = data.get("isp")
             country = data.get("country_name")
             if isp and isp != "Unknown":
                 notes.append(f"ISP: {isp} ({country})")
+
+        # Mail health notes for domains
+        if mail_res:
+            m_rating = mail_res.get("rating")
+            d_pol = mail_res.get("dmarc", {}).get("policy", "none")
+            mx_prov = mail_res.get("mx", {}).get("provider", "No MX")
+            notes.append(f"Mail: {mx_prov} | DMARC: {d_pol} ({m_rating})")
 
         return "; ".join(notes) if notes else "No threat activity reported"

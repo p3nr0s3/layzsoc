@@ -19,6 +19,7 @@ from core.key_manager import (
 )
 from core.clients.virustotal import VirusTotalClient
 from core.clients.abuseipdb import AbuseIPDBClient
+from core.mail_health import MailHealthChecker
 from core.engine import (
     EnrichmentEngine,
     VERDICT_MALICIOUS,
@@ -49,6 +50,7 @@ km = KeyManager()
 engine = EnrichmentEngine(km)
 vt_client = VirusTotalClient(km)
 abuse_client = AbuseIPDBClient(km)
+mail_checker = MailHealthChecker()
 
 WEB_DIR = BASE_DIR / "web"
 WEB_DIR.mkdir(parents=True, exist_ok=True)
@@ -96,6 +98,15 @@ def parse_indicators(req: Dict[str, str]):
         "total": len(items),
         "items": [item.to_dict() for item in items],
     }
+
+
+@app.get("/api/mail-health")
+def check_mail_health(domain: str):
+    """Audits MX, SPF, DMARC, and email spoofing posture for a domain."""
+    clean_domain = domain.strip().lower()
+    if not clean_domain:
+        raise HTTPException(status_code=400, detail="Domain cannot be empty.")
+    return mail_checker.check_domain(clean_domain)
 
 
 @app.post("/api/scan")

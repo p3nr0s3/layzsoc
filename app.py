@@ -18,6 +18,7 @@ from core.key_manager import (
 )
 from core.clients.virustotal import VirusTotalClient
 from core.clients.abuseipdb import AbuseIPDBClient
+from core.mail_health import MailHealthChecker
 from core.engine import (
     EnrichmentEngine,
     VERDICT_MALICIOUS,
@@ -51,6 +52,7 @@ if css_file.exists():
 # Initialize singletons & session state
 km = KeyManager()
 engine = EnrichmentEngine(km)
+mail_checker = MailHealthChecker()
 
 if "scan_results" not in st.session_state:
     st.session_state.scan_results = []
@@ -65,18 +67,16 @@ if "raw_input_text" not in st.session_state:
 SAMPLE_IOCS = """# Malicious and Defanged Indicators (Sample)
 118[.]25[.]6[.]39
 185.220.101.5
-hxxps://141[.]98[.]11[.]11/malware
-# Clean public DNS
+hxxps://malware-drop[.]xyz/payload.exe
+attacker-c2[.]online
+# Clean public DNS & Domains
 1.1.1.1
-8[.]8[.]8[.]8
+google.com
 # Local / Private RFC1918
 192.168.1.105
-10[.]0[.]0[.]1
 # Malware file hashes (WannaCry & Emotet samples)
 ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
 84c82835a5d21bbcf75a61706d8ab549
-# Clean Notepad.exe SHA256 (Windows)
-90757a3e6f9cdde117183e8b4e72323a8e9e7f80509a7b9ef8487b3a4a8d0526
 """
 
 # ==========================================
@@ -217,8 +217,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab_scan, tab_cache, tab_diagnostics = st.tabs([
+tab_scan, tab_mail, tab_cache, tab_diagnostics = st.tabs([
     "🎯 IoC Scanner",
+    "🛡️ Mail Health Check",
     "💾 Local Cache & History",
     "📊 API Health & Quotas",
 ])
@@ -235,8 +236,8 @@ with tab_scan:
             "Paste Raw / Defanged Indicators or Logs",
             value=st.session_state.raw_input_text,
             height=160,
-            placeholder="Paste mixed indicators here...\ne.g. 1[.]1[.]1[.]1\n185.220.101.5\ned01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222\nhxxp://badsite[.]com",
-            help="Supports IPv4, IPv6, MD5, SHA1, SHA256. Automatically removes defang characters like [.] and hxxp.",
+            placeholder="Paste mixed indicators here...\ne.g. 1[.]1[.]1[.]1\n185.220.101.5\ned01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222\nattacker-c2[.]online\nhxxps://malware-drop[.]xyz/payload.exe",
+            help="Supports IPv4, IPv6, MD5, SHA1, SHA256, Domains, URLs. Automatically removes defang characters like [.] and hxxp.",
         )
 
         col_sample, col_clear = st.columns([1, 1])
@@ -257,7 +258,7 @@ with tab_scan:
         uploaded_file = st.file_uploader(
             "Upload .txt or .csv file",
             type=["txt", "csv"],
-            help="Upload a file containing IP addresses and file hashes.",
+            help="Upload a file containing IPs, hashes, domains, or URLs.",
         )
         if uploaded_file is not None:
             file_bytes = uploaded_file.read()
@@ -275,16 +276,20 @@ with tab_scan:
     if parsed_items:
         ip_count = sum(1 for x in parsed_items if x.ioc_type in ("ipv4", "ipv6"))
         hash_count = sum(1 for x in parsed_items if x.ioc_type in ("md5", "sha1", "sha256"))
+        dom_count = sum(1 for x in parsed_items if x.ioc_type == "domain")
+        url_count = sum(1 for x in parsed_items if x.ioc_type == "url")
         private_count = sum(1 for x in parsed_items if x.is_private)
 
         st.markdown(
             f"""
-            <div style="display:flex; gap:10px; margin: 10px 0 16px 0; align-items:center;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin: 10px 0 16px 0; align-items:center;">
                 <span style="font-size:0.8rem; color:#94a3b8; font-weight:600;">DETECTED:</span>
-                <span class="badge badge-clean"><span class="badge-dot"></span>{ip_count} IPs</span>
-                <span class="badge badge-suspicious"><span class="badge-dot"></span>{hash_count} Hashes</span>
+                {f'<span class="badge badge-clean"><span class="badge-dot"></span>{ip_count} IPs</span>' if ip_count else ''}
+                {f'<span class="badge badge-suspicious"><span class="badge-dot"></span>{hash_count} Hashes</span>' if hash_count else ''}
+                {f'<span class="badge" style="background:rgba(168,85,247,0.15); color:#d8b4fe; border:1px solid rgba(168,85,247,0.35);"><span class="badge-dot" style="background:#a855f7;"></span>{dom_count} Domains</span>' if dom_count else ''}
+                {f'<span class="badge" style="background:rgba(6,182,212,0.15); color:#a5f3fc; border:1px solid rgba(6,182,212,0.35);"><span class="badge-dot" style="background:#06b6d4;"></span>{url_count} URLs</span>' if url_count else ''}
                 {f'<span class="badge badge-unknown"><span class="badge-dot"></span>{private_count} Private IPs</span>' if private_count else ''}
-                <span style="font-size:0.75rem; color:#64748b; font-family:'JetBrains Mono'; margin-left:auto;">Total: {len(parsed_items)} items</span>
+                <span style="font-size:0.75rem; color:#64748b; font-family:\'JetBrains Mono\'; margin-left:auto;">Total: {len(parsed_items)} items</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -484,6 +489,41 @@ with tab_scan:
                             unsafe_allow_html=True,
                         )
 
+                    # URLhaus telemetry
+                    urlhaus_data = chosen_item.get("urlhaus_data")
+                    if urlhaus_data and urlhaus_data.get("found"):
+                        st.markdown(
+                            f"""
+                            <div style="background:#111622; border:1px solid rgba(239,68,68,0.4); border-radius:8px; padding:12px; margin-bottom:10px;">
+                                <div style="font-weight:600; color:#ef4444; margin-bottom:6px;">abuse.ch URLhaus Telemetry</div>
+                                <div style="font-size:0.85rem;">Status: <b style="color:#ef4444;">{urlhaus_data.get('url_status', 'FLAGGED').upper()}</b></div>
+                                <div style="font-size:0.85rem;">Threat: <b>{urlhaus_data.get('threat', 'Malware Download')}</b></div>
+                                {f"<div style='font-size:0.85rem;'>Tags: {', '.join(urlhaus_data.get('tags', []))}</div>" if urlhaus_data.get('tags') else ''}
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                    # Mail Health telemetry for domains
+                    mail_health = chosen_item.get("mail_health")
+                    if mail_health:
+                        r_color = "#10b981" if mail_health["rating"] == "PROTECTED" else ("#f59e0b" if mail_health["rating"] == "PARTIALLY_PROTECTED" else "#ef4444")
+                        st.markdown(
+                            f"""
+                            <div style="background:#111622; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px; margin-bottom:10px;">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span style="font-weight:600; color:#00f2fe;">Mail Health & Spoof Posture</span>
+                                    <span style="font-weight:bold; color:{r_color};">Score: {mail_health['score']}/100</span>
+                                </div>
+                                <div style="font-size:0.85rem; margin-top:4px;">MX Provider: <b>{mail_health.get('mx', {}).get('provider', 'None')}</b></div>
+                                <div style="font-size:0.85rem;">SPF Status: <b>{mail_health.get('spf', {}).get('status', 'MISSING')}</b></div>
+                                <div style="font-size:0.85rem;">DMARC Policy: <b>{mail_health.get('dmarc', {}).get('policy', 'none').upper()}</b></div>
+                                <div style="font-size:0.8rem; color:{r_color}; margin-top:2px;">{mail_health['verdict']}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
                     # VirusTotal telemetry
                     vt_data = chosen_item.get("vt_data")
                     if vt_data and vt_data.get("success") and not vt_data.get("not_found"):
@@ -495,6 +535,7 @@ with tab_scan:
                                 <div style="font-size:0.85rem;">Detections: <span style="color:#ef4444; font-weight:bold;">{stats.get('malicious', 0)} malicious</span>, <span style="color:#f59e0b;">{stats.get('suspicious', 0)} suspicious</span></div>
                                 <div style="font-size:0.85rem;">Harmless / Undetected: {stats.get('harmless', 0)} / {stats.get('undetected', 0)}</div>
                                 {f"<div style='font-size:0.85rem;'>Threat Classification: <b>{vt_data.get('threat_label')}</b></div>" if vt_data.get('threat_label') else ''}
+                                {f"<div style='font-size:0.85rem;'>Registrar: <b>{vt_data.get('registrar')}</b></div>" if vt_data.get('registrar') else ''}
                                 {f"<div style='font-size:0.85rem;'>File Type: <b>{vt_data.get('file_type')}</b> (Size: {vt_data.get('size')} bytes)</div>" if vt_data.get('size') else ''}
                             </div>
                             """,
@@ -504,6 +545,72 @@ with tab_scan:
                 # Raw JSON expander
                 with st.expander("📄 Raw API Payloads"):
                     st.json(chosen_item)
+
+# ------------------------------------------
+# TAB 2: MAIL HEALTH & SPOOF POSTURE
+# ------------------------------------------
+with tab_mail:
+    st.markdown("#### 🛡️ Email Deliverability & Anti-Spoofing Audit")
+    st.caption("Inspect MX records, SPF mechanism, and DMARC enforcement policies to identify email spoofing risks.")
+
+    col_m_input, col_m_btn = st.columns([4, 1])
+    with col_m_input:
+        mail_domain = st.text_input("Target Domain", placeholder="e.g. google.com, microsoft.com, yourdomain.com", label_visibility="collapsed")
+    with col_m_btn:
+        run_mail = st.button("Audit Domain", type="primary", use_container_width=True)
+
+    if run_mail and mail_domain:
+        with st.spinner(f"Auditing DNS records for {mail_domain}..."):
+            m_res = mail_checker.check_domain(mail_domain)
+
+            m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+            with m_col1:
+                st.metric("Security Score", f"{m_res['score']} / 100")
+            with m_col2:
+                r_label = m_res["rating"]
+                st.metric("Spoof Posture", r_label)
+            with m_col3:
+                st.metric("Mail Provider", m_res.get("mx", {}).get("provider", "None"))
+            with m_col4:
+                st.metric("DMARC Policy", m_res.get("dmarc", {}).get("policy", "none").upper())
+
+            st.markdown("---")
+            c_mx, c_spf, c_dmarc = st.columns(3)
+
+            with c_mx:
+                st.markdown(f"**MX Exchangers ({m_res.get('mx', {}).get('count', 0)})**")
+                mx_recs = m_res.get("mx", {}).get("records", [])
+                if mx_recs:
+                    for rec in mx_recs:
+                        st.code(f"[{rec['priority']}] {rec['host']}", language="text")
+                else:
+                    st.caption("No MX records configured.")
+
+            with c_spf:
+                st.markdown(f"**SPF Record ({m_res.get('spf', {}).get('status', 'MISSING')})**")
+                spf_val = m_res.get("spf", {}).get("record")
+                if spf_val:
+                    st.code(spf_val, language="text")
+                    st.caption(f"Mechanism: {m_res.get('spf', {}).get('mechanism')}")
+                else:
+                    st.error("No SPF record found. Domain is vulnerable to spoofing!")
+
+            with c_dmarc:
+                st.markdown(f"**DMARC Policy ({m_res.get('dmarc', {}).get('policy', 'none').upper()})**")
+                dmarc_val = m_res.get("dmarc", {}).get("record")
+                if dmarc_val:
+                    st.code(dmarc_val, language="text")
+                    st.caption(m_res.get("dmarc", {}).get("details", ""))
+                else:
+                    st.error("No DMARC record found. Direct impersonation is possible!")
+
+            if m_res.get("issues"):
+                st.markdown("---")
+                st.markdown("**Security Findings & Recommendations**")
+                for issue in m_res["issues"]:
+                    st.markdown(f"- ⚠️ {issue}")
+            else:
+                st.success("All email authentication protocols (MX, SPF, DMARC) are optimally configured!")
 
 # ------------------------------------------
 # TAB 2: LOCAL CACHE & HISTORY

@@ -4,6 +4,7 @@ import re
 import ipaddress
 import csv
 import io
+from urllib.parse import urlparse
 from typing import List, Dict, Set, Optional, Tuple
 
 # Regex patterns
@@ -16,6 +17,22 @@ RE_IPV4 = re.compile(
 RE_MD5 = re.compile(r"\b[a-fA-F0-9]{32}\b")
 RE_SHA1 = re.compile(r"\b[a-fA-F0-9]{40}\b")
 RE_SHA256 = re.compile(r"\b[a-fA-F0-9]{64}\b")
+
+# URL pattern
+RE_URL = re.compile(r"\b(?:https?://|ftp://)[^\s<>\"'{}|\\^`\[\]]+\b", re.IGNORECASE)
+
+# Domain pattern (excluding common non-domain file extensions)
+COMMON_EXTENSIONS = {
+    "exe", "dll", "zip", "rar", "tar", "gz", "7z", "pdf", "txt", "docx",
+    "xlsx", "pptx", "png", "jpg", "jpeg", "gif", "svg", "bin", "sh", "bat",
+    "py", "js", "html", "css", "json", "xml", "csv", "log", "iso", "apk"
+}
+
+RE_DOMAIN = re.compile(
+    r"\b(?!(?:https?://))([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+"
+    r"([a-zA-Z]{2,24})\b",
+    re.IGNORECASE
+)
 
 # Defang replacements
 DEFANG_REPLACEMENTS = [
@@ -41,8 +58,10 @@ def defang_string(text: str) -> str:
 
 def refang_string(ioc: str, ioc_type: str) -> str:
     """Intentionally defang an IoC for safe display / export if desired."""
-    if ioc_type in ("ipv4", "ipv6"):
+    if ioc_type in ("ipv4", "ipv6", "domain"):
         return ioc.replace(".", "[.]").replace(":", "[:]")
+    elif ioc_type == "url":
+        return ioc.replace("http://", "hxxp://").replace("https://", "hxxps://").replace(".", "[.]")
     return ioc
 
 
@@ -84,7 +103,7 @@ class IoCItem:
     def __init__(self, raw: str, value: str, ioc_type: str, is_private: bool = False):
         self.raw = raw
         self.value = value
-        self.ioc_type = ioc_type  # 'ipv4', 'ipv6', 'md5', 'sha1', 'sha256'
+        self.ioc_type = ioc_type  # 'ipv4', 'ipv6', 'md5', 'sha1', 'sha256', 'domain', 'url'
         self.is_private = is_private
 
     def to_dict(self) -> Dict[str, any]:
@@ -109,21 +128,31 @@ class IoCItem:
 
 def parse_raw_text(text: str) -> List[IoCItem]:
     """
-    Extracts all supported IoCs (IPs and Hashes) from raw text.
+    Extracts all supported IoCs (IPs, Hashes, Domains, URLs) from raw text.
     Handles defanging, deduplication, and classification.
     """
     if not text:
         return []
 
-    # First normalize and defang the entire text
     cleaned_text = defang_string(text)
 
     found_items: List[IoCItem] = []
     seen: Set[Tuple[str, str]] = set()
 
-    # 1. Extract Hashes first (longest to shortest to prevent sub-string collision)
-    # SHA-256
-    sha256_matches = RE_SHA256.findall(cleaned_text)
+    # 1. Extract URLs first
+    url_matches = RE_URL.findall(cleaned_text)
+    for u in url_matches:
+        u_clean = u.rstrip(".,;)\"'>]")
+        key = (u_clean.lower(), "url")
+        if key not in seen:
+            seen.add(key)
+            found_items.append(IoCItem(raw=u, value=u_clean, ioc_type="url"))
+
+    # Mask out extracted URLs to avoid double-matching their hosts as separate domains
+    masked_urls = RE_URL.sub(" ", cleaned_text)
+
+    # 2. Extract Hashes (longest to shortest)
+    sha256_matches = RE_SHA256.findall(masked_urls)
     for h in sha256_matches:
         val = h.lower()
         key = (val, "sha256")
@@ -131,11 +160,9 @@ def parse_raw_text(text: str) -> List[IoCItem]:
             seen.add(key)
             found_items.append(IoCItem(raw=h, value=val, ioc_type="sha256"))
 
-    # Mask out found sha256 matches so shorter hash regexes don't match substrings
-    masked_text = RE_SHA256.sub(" " * 64, cleaned_text)
+    masked_hashes = RE_SHA256.sub(" " * 64, masked_urls)
 
-    # SHA-1
-    sha1_matches = RE_SHA1.findall(masked_text)
+    sha1_matches = RE_SHA1.findall(masked_hashes)
     for h in sha1_matches:
         val = h.lower()
         key = (val, "sha1")
@@ -143,10 +170,9 @@ def parse_raw_text(text: str) -> List[IoCItem]:
             seen.add(key)
             found_items.append(IoCItem(raw=h, value=val, ioc_type="sha1"))
 
-    masked_text = RE_SHA1.sub(" " * 40, masked_text)
+    masked_hashes = RE_SHA1.sub(" " * 40, masked_hashes)
 
-    # MD5
-    md5_matches = RE_MD5.findall(masked_text)
+    md5_matches = RE_MD5.findall(masked_hashes)
     for h in md5_matches:
         val = h.lower()
         key = (val, "md5")
@@ -154,7 +180,7 @@ def parse_raw_text(text: str) -> List[IoCItem]:
             seen.add(key)
             found_items.append(IoCItem(raw=h, value=val, ioc_type="md5"))
 
-    # 2. Extract IPv4
+    # 3. Extract IPv4
     ipv4_matches = RE_IPV4.findall(cleaned_text)
     for ip in ipv4_matches:
         if is_valid_ipv4(ip):
@@ -170,7 +196,22 @@ def parse_raw_text(text: str) -> List[IoCItem]:
                     )
                 )
 
-    # 3. Extract IPv6 candidates from lines or tokens
+    # 4. Extract Domains
+    domain_matches = RE_DOMAIN.finditer(masked_urls)
+    for match in domain_matches:
+        dom = match.group(0).lower().rstrip(".,;)\"'>]")
+        tld = match.group(2).lower()
+        
+        # Skip if ends with a common file extension or looks like an IP
+        if tld in COMMON_EXTENSIONS or is_valid_ipv4(dom):
+            continue
+
+        key = (dom, "domain")
+        if key not in seen:
+            seen.add(key)
+            found_items.append(IoCItem(raw=match.group(0), value=dom, ioc_type="domain"))
+
+    # 5. Extract IPv6 candidates
     tokens = re.split(r"[\s,;\"\']+", cleaned_text)
     for tok in tokens:
         tok_clean = tok.strip("[](){}<>\"':")
@@ -203,7 +244,6 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> List[IoCItem]:
 
     lower_name = filename.lower()
     if lower_name.endswith(".csv"):
-        # Process CSV lines/cells
         extracted_text = []
         try:
             reader = csv.reader(io.StringIO(content))
@@ -211,6 +251,6 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> List[IoCItem]:
                 extracted_text.extend(row)
             content = " \n ".join(extracted_text)
         except Exception:
-            pass  # Fall back to raw text extraction
+            pass
 
     return parse_raw_text(content)

@@ -60,3 +60,27 @@ def test_parse_raw_text_mixed():
     assert item_map["118.25.6.39"].is_private is False
     assert item_map["84c82835a5d21bbcf75a61706d8ab549"].ioc_type == "md5"
     assert item_map["ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222"].ioc_type == "sha256"
+
+
+def test_parse_domain_and_url():
+    text = """
+    Phishing campaign detected:
+    URL: hxxps://secure-login[.]phish-portal[.]xyz/verify?id=102
+    C2 Domain: bad-attacker[.]online
+    Legit site: google.com
+    File: malware.exe (should NOT be detected as domain)
+    """
+    items = parse_raw_text(text)
+    item_map = {i.value: i for i in items}
+
+    assert "https://secure-login.phish-portal.xyz/verify?id=102" in item_map
+    assert item_map["https://secure-login.phish-portal.xyz/verify?id=102"].ioc_type == "url"
+
+    assert "bad-attacker.online" in item_map
+    assert item_map["bad-attacker.online"].ioc_type == "domain"
+
+    assert "google.com" in item_map
+    assert item_map["google.com"].ioc_type == "domain"
+
+    # malware.exe should be skipped because .exe is a binary extension
+    assert "malware.exe" not in item_map

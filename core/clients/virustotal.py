@@ -1,6 +1,7 @@
 """VirusTotal v3 API client with automatic key rotation and rate-limit handling."""
 
 import time
+import base64
 import requests
 from typing import Dict, Any, Optional, Tuple
 from core.config import VIRUSTOTAL_API_URL, RATE_LIMIT_COOLDOWN_SECONDS
@@ -207,6 +208,97 @@ class VirusTotalClient:
             "size": attrs.get("size", 0),
             "flagged_vendors": flagged_vendors[:10],
             "first_submission_date": attrs.get("first_submission_date"),
+            "last_analysis_date": attrs.get("last_analysis_date"),
+        }
+
+    def check_domain(self, domain: str) -> Dict[str, Any]:
+        """Queries VirusTotal for a domain report."""
+        res = self._execute_request(f"domains/{domain}")
+        if not res.get("success"):
+            return res
+
+        data = res.get("data")
+        if not data:
+            return {
+                "success": True,
+                "not_found": True,
+                "stats": {"malicious": 0, "suspicious": 0, "harmless": 0, "undetected": 0},
+                "categories": {},
+                "registrar": "Unknown",
+                "reputation": 0,
+            }
+
+        attrs = data.get("attributes", {})
+        stats = attrs.get("last_analysis_stats", {})
+        results = attrs.get("last_analysis_results", {})
+
+        flagged_vendors = []
+        for engine, report in results.items():
+            cat = report.get("category", "")
+            if cat in ("malicious", "suspicious"):
+                flagged_vendors.append({
+                    "engine": engine,
+                    "category": cat,
+                    "result": report.get("result", "flagged"),
+                })
+
+        return {
+            "success": True,
+            "not_found": False,
+            "stats": stats,
+            "malicious": stats.get("malicious", 0),
+            "suspicious": stats.get("suspicious", 0),
+            "harmless": stats.get("harmless", 0),
+            "undetected": stats.get("undetected", 0),
+            "categories": attrs.get("categories", {}),
+            "registrar": attrs.get("registrar", "Unknown"),
+            "reputation": attrs.get("reputation", 0),
+            "flagged_vendors": flagged_vendors[:10],
+            "last_analysis_date": attrs.get("last_analysis_date"),
+        }
+
+    def check_url(self, url: str) -> Dict[str, Any]:
+        """Queries VirusTotal for a URL report using base64 URL ID."""
+        url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
+        res = self._execute_request(f"urls/{url_id}")
+        if not res.get("success"):
+            return res
+
+        data = res.get("data")
+        if not data:
+            return {
+                "success": True,
+                "not_found": True,
+                "stats": {"malicious": 0, "suspicious": 0, "harmless": 0, "undetected": 0},
+                "categories": {},
+                "reputation": 0,
+            }
+
+        attrs = data.get("attributes", {})
+        stats = attrs.get("last_analysis_stats", {})
+        results = attrs.get("last_analysis_results", {})
+
+        flagged_vendors = []
+        for engine, report in results.items():
+            cat = report.get("category", "")
+            if cat in ("malicious", "suspicious"):
+                flagged_vendors.append({
+                    "engine": engine,
+                    "category": cat,
+                    "result": report.get("result", "flagged"),
+                })
+
+        return {
+            "success": True,
+            "not_found": False,
+            "stats": stats,
+            "malicious": stats.get("malicious", 0),
+            "suspicious": stats.get("suspicious", 0),
+            "harmless": stats.get("harmless", 0),
+            "undetected": stats.get("undetected", 0),
+            "categories": attrs.get("categories", {}),
+            "reputation": attrs.get("reputation", 0),
+            "flagged_vendors": flagged_vendors[:10],
             "last_analysis_date": attrs.get("last_analysis_date"),
         }
 

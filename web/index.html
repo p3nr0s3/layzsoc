@@ -37,6 +37,7 @@
               red: '#ef4444',
               amber: '#f59e0b',
               green: '#10b981',
+              purple: '#a855f7',
               slate: '#64748b',
             }
           }
@@ -77,6 +78,9 @@
     .glow-amber {
       box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
     }
+    .glow-purple {
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased custom-scrollbar">
@@ -90,9 +94,9 @@
       <div>
         <div class="flex items-center gap-2">
           <span class="font-extrabold text-lg tracking-tight text-white">SLOTHERY</span>
-          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/25">v2.0</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/25">v2.1</span>
         </div>
-        <p class="text-xs text-slate-400 font-mono">IoC THREAT ENRICHMENT & KEY ROTATION ENGINE</p>
+        <p class="text-xs text-slate-400 font-mono">THREAT INTELLIGENCE & MAIL HEALTH POSTURE</p>
       </div>
     </div>
 
@@ -101,6 +105,10 @@
       <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
         <i data-lucide="target" class="w-3.5 h-3.5"></i>
         <span>IoC Triage</span>
+      </button>
+      <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="mail-check" class="w-3.5 h-3.5"></i>
+        <span>Mail Health</span>
       </button>
       <button onclick="switchTab('keys')" id="tab-btn-keys" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-slate-400 hover:text-white">
         <i data-lucide="key" class="w-3.5 h-3.5"></i>
@@ -116,7 +124,7 @@
     <div class="flex items-center gap-3">
       <div id="pool-status-indicator" class="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="text-slate-300">Pools Active</span>
+        <span class="text-slate-300">Checking...</span>
       </div>
     </div>
   </header>
@@ -137,7 +145,7 @@
           <div class="flex items-center justify-between">
             <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
               <i data-lucide="terminal" class="w-4 h-4 text-cyber-cyan"></i>
-              Paste Raw / Defanged Indicators or Logs
+              Paste Mixed Indicators (IPs, Hashes, Domains, URLs)
             </label>
             <div class="flex items-center gap-2">
               <button onclick="loadSampleData()" class="px-2.5 py-1 text-xs font-medium rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border flex items-center gap-1.5 transition">
@@ -154,7 +162,7 @@
             id="ioc-input"
             oninput="handleInputDebounce()"
             rows="6" 
-            placeholder="Paste mixed indicators here...&#10;e.g. 1[.]1[.]1[.]1&#10;185.220.101.5&#10;ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222&#10;hxxps://malicious-domain[.]ru/c2"
+            placeholder="Paste mixed indicators here...&#10;e.g. 1[.]1[.]1[.]1&#10;185.220.101.5&#10;hxxps://evil-phish[.]xyz/login&#10;malicious-c2[.]online&#10;ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222"
             class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-sm font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan transition custom-scrollbar"
           ></textarea>
 
@@ -310,7 +318,7 @@
                   <th class="py-3 px-4">Indicator</th>
                   <th class="py-3 px-4">Type</th>
                   <th class="py-3 px-4">VirusTotal v3</th>
-                  <th class="py-3 px-4">AbuseIPDB v2</th>
+                  <th class="py-3 px-4">AbuseIPDB / URLhaus</th>
                   <th class="py-3 px-4">Telemetry Notes</th>
                   <th class="py-3 px-4 text-center">Inspect</th>
                 </tr>
@@ -327,11 +335,140 @@
     </section>
 
     <!-- ============================================================
-         TAB 2: API KEY POOLS
+         TAB 2: MAIL HEALTH & SPOOF POSTURE
+         ============================================================ -->
+    <section id="view-mail" class="hidden space-y-6">
+      
+      <!-- Mail Audit Input Card -->
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-cyber-cyan"></i>
+              Email Deliverability & Anti-Spoofing Audit
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Audits MX records, SPF syntax, and DMARC enforcement policies</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1">
+            <i data-lucide="globe" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+            <input 
+              type="text" 
+              id="mail-domain-input" 
+              placeholder="Enter domain (e.g. google.com, microsoft.com, yourcompany.com)..."
+              class="w-full pl-9 pr-3 py-2.5 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan"
+              onkeydown="if(event.key === 'Enter') runMailHealthCheck()"
+            >
+          </div>
+          <button 
+            onclick="runMailHealthCheck()" 
+            class="px-5 py-2.5 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
+          >
+            <i data-lucide="search" class="w-4 h-4"></i>
+            Audit Domain
+          </button>
+        </div>
+      </div>
+
+      <!-- Mail Audit Result Card -->
+      <div id="mail-health-results" class="hidden space-y-6">
+        
+        <!-- Score Banner -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Security Score</div>
+            <div class="flex items-baseline gap-2 mt-2">
+              <span id="mail-score" class="text-3xl font-mono font-bold text-cyber-cyan">0</span>
+              <span class="text-slate-500 font-mono text-sm">/ 100</span>
+            </div>
+          </div>
+
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Spoof Posture</div>
+            <div id="mail-rating-badge" class="mt-2 text-sm font-bold font-mono">
+              <!-- Rating injected -->
+            </div>
+          </div>
+
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Mail Provider</div>
+            <div id="mail-provider" class="text-sm font-mono font-bold text-white mt-2">-</div>
+          </div>
+
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">DMARC Policy</div>
+            <div id="mail-dmarc-policy" class="text-sm font-mono font-bold text-cyber-cyan mt-2">-</div>
+          </div>
+
+        </div>
+
+        <!-- Detailed Protocol Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- MX Card -->
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
+                <i data-lucide="server" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                MX Exchangers
+              </span>
+              <span id="mail-mx-count" class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-slate-300">0 records</span>
+            </div>
+            <div id="mail-mx-list" class="space-y-1.5 text-xs font-mono text-slate-300">
+              <!-- Injected -->
+            </div>
+          </div>
+
+          <!-- SPF Card -->
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
+                <i data-lucide="shield" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                SPF Record
+              </span>
+              <span id="mail-spf-badge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold">-</span>
+            </div>
+            <div id="mail-spf-text" class="text-xs font-mono text-slate-300 break-all bg-[#090d16] p-2.5 rounded border border-cyber-border">
+              <!-- Injected -->
+            </div>
+          </div>
+
+          <!-- DMARC Card -->
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
+                <i data-lucide="lock" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                DMARC Enforcement
+              </span>
+              <span id="mail-dmarc-badge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold">-</span>
+            </div>
+            <div id="mail-dmarc-text" class="text-xs font-mono text-slate-300 break-all bg-[#090d16] p-2.5 rounded border border-cyber-border">
+              <!-- Injected -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Findings / Recommendations -->
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-2">
+          <h4 class="text-xs font-bold text-slate-300 font-mono uppercase">Security Recommendations & Issues</h4>
+          <ul id="mail-issues-list" class="list-disc list-inside text-xs font-mono space-y-1 text-slate-400">
+            <!-- Injected -->
+          </ul>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================================
+         TAB 3: API KEY POOLS
          ============================================================ -->
     <section id="view-keys" class="hidden space-y-6">
       
-      <!-- Key Stats Header -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         <!-- VT Pool -->
@@ -383,7 +520,7 @@
     </section>
 
     <!-- ============================================================
-         TAB 3: CACHE & AUDIT
+         TAB 4: CACHE & AUDIT
          ============================================================ -->
     <section id="view-cache" class="hidden space-y-6">
       <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
@@ -479,18 +616,16 @@
     const SAMPLE_TEXT = `# Malicious and Defanged Indicators (Sample)
 118[.]25[.]6[.]39
 185.220.101.5
-hxxps://141[.]98[.]11[.]11/malware
-# Clean public DNS
+hxxps://malware-drop[.]xyz/payload.exe
+attacker-c2[.]online
+# Clean public DNS & Domains
 1.1.1.1
-8[.]8[.]8[.]8
+google.com
 # Local / Private RFC1918
 192.168.1.105
-10[.]0[.]0[.]1
 # Malware file hashes (WannaCry & Emotet)
 ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
-84c82835a5d21bbcf75a61706d8ab549
-# Clean Notepad.exe SHA256 (Windows)
-90757a3e6f9cdde117183e8b4e72323a8e9e7f80509a7b9ef8487b3a4a8d0526`;
+84c82835a5d21bbcf75a61706d8ab549`;
 
     document.addEventListener("DOMContentLoaded", () => {
       lucide.createIcons();
@@ -498,16 +633,23 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
     });
 
     function switchTab(tabId) {
-      ['triage', 'keys', 'cache'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.add('hidden');
-        document.getElementById(`tab-btn-${t}`).classList.remove('bg-cyber-cyan/15', 'text-cyber-cyan', 'border', 'border-cyber-cyan/30', 'glow-cyan');
-        document.getElementById(`tab-btn-${t}`).classList.add('text-slate-400');
+      ['triage', 'mail', 'keys', 'cache'].forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (view) view.classList.add('hidden');
+        if (btn) {
+          btn.classList.remove('bg-cyber-cyan/15', 'text-cyber-cyan', 'border', 'border-cyber-cyan/30', 'glow-cyan');
+          btn.classList.add('text-slate-400');
+        }
       });
 
-      document.getElementById(`view-${tabId}`).classList.remove('hidden');
+      const activeView = document.getElementById(`view-${tabId}`);
       const activeBtn = document.getElementById(`tab-btn-${tabId}`);
-      activeBtn.classList.add('bg-cyber-cyan/15', 'text-cyber-cyan', 'border', 'border-cyber-cyan/30', 'glow-cyan');
-      activeBtn.classList.remove('text-slate-400');
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.add('bg-cyber-cyan/15', 'text-cyber-cyan', 'border', 'border-cyber-cyan/30', 'glow-cyan');
+        activeBtn.classList.remove('text-slate-400');
+      }
 
       if (tabId === 'keys') fetchKeys();
       if (tabId === 'cache') fetchCache();
@@ -559,12 +701,16 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
 
       const ipCount = items.filter(i => i.type === 'ipv4' || i.type === 'ipv6').length;
       const hashCount = items.filter(i => ['md5', 'sha1', 'sha256'].includes(i.type)).length;
+      const domCount = items.filter(i => i.type === 'domain').length;
+      const urlCount = items.filter(i => i.type === 'url').length;
       const privCount = items.filter(i => i.is_private).length;
 
       container.innerHTML = `
         <span class="text-xs text-slate-400 font-mono font-bold mr-1">DETECTED:</span>
-        <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">● ${ipCount} IPs</span>
-        <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30">● ${hashCount} Hashes</span>
+        ${ipCount ? `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">● ${ipCount} IPs</span>` : ''}
+        ${hashCount ? `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30">● ${hashCount} Hashes</span>` : ''}
+        ${domCount ? `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">● ${domCount} Domains</span>` : ''}
+        ${urlCount ? `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">● ${urlCount} URLs</span>` : ''}
         ${privCount ? `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-500/15 text-slate-300 border border-slate-500/30">● ${privCount} Private</span>` : ''}
         <span class="text-[11px] font-mono text-slate-500">(${items.length} total)</span>
       `;
@@ -605,7 +751,7 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
       progressBox.classList.remove('hidden');
       scanBtn.disabled = true;
       progressBar.style.width = '30%';
-      statusText.innerText = "Querying VirusTotal & AbuseIPDB pools...";
+      statusText.innerText = "Querying VirusTotal, AbuseIPDB, and URLhaus...";
       percentageText.innerText = "30%";
 
       try {
@@ -688,6 +834,11 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
           dotColor = "bg-emerald-400";
         }
 
+        let secondaryScore = r.abuse_score || 'N/A';
+        if (r.urlhaus_data && r.urlhaus_data.found) {
+          secondaryScore = `<span class="text-red-400 font-bold">URLhaus Flagged</span>`;
+        }
+
         return `
           <tr class="hover:bg-white/[0.02] transition">
             <td class="py-3 px-4">
@@ -696,10 +847,10 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
                 ${r.verdict}
               </span>
             </td>
-            <td class="py-3 px-4 font-bold text-white">${r.ioc}</td>
+            <td class="py-3 px-4 font-bold text-white max-w-sm truncate">${r.ioc}</td>
             <td class="py-3 px-4 text-slate-400 uppercase">${r.type}</td>
             <td class="py-3 px-4 text-slate-300">${r.vt_stats || 'N/A'}</td>
-            <td class="py-3 px-4 text-slate-300">${r.abuse_score || 'N/A'}</td>
+            <td class="py-3 px-4 text-slate-300">${secondaryScore}</td>
             <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${r.notes || '-'}</td>
             <td class="py-3 px-4 text-center">
               <button onclick='openInspectDrawer("${r.ioc}")' class="p-1 rounded hover:bg-cyber-cyan/15 text-slate-400 hover:text-cyber-cyan transition">
@@ -721,6 +872,7 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
       document.getElementById('inspect-subtitle').innerText = `${item.type.toUpperCase()} • Verdict: ${item.verdict.toUpperCase()}`;
 
       const content = document.getElementById('inspect-content');
+      
       let abuseHtml = '';
       if (item.abuse_data && item.abuse_data.success) {
         const ad = item.abuse_data.data;
@@ -731,7 +883,37 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
             <div>Total Reports: <span class="text-white font-bold">${ad.total_reports}</span></div>
             <div>ISP: <span class="text-white">${ad.isp}</span> (${ad.country_name})</div>
             <div>Domain: <span class="text-white">${ad.domain || 'N/A'}</span></div>
-            <div>Usage: <span class="text-white">${ad.usage_type || 'N/A'}</span></div>
+          </div>
+        `;
+      }
+
+      let urlhausHtml = '';
+      if (item.urlhaus_data && item.urlhaus_data.found) {
+        const uh = item.urlhaus_data;
+        urlhausHtml = `
+          <div class="bg-[#090d16] border border-red-500/40 rounded-lg p-3 space-y-1.5 glow-red">
+            <div class="font-bold text-red-400 uppercase text-[11px]">abuse.ch URLhaus Telemetry</div>
+            <div>Status: <span class="text-white font-bold uppercase">${uh.url_status || 'FLAGGED'}</span></div>
+            <div>Threat: <span class="text-red-300 font-bold">${uh.threat || 'Malware Distribution'}</span></div>
+            ${uh.tags && uh.tags.length ? `<div>Tags: <span class="text-slate-300">${uh.tags.join(', ')}</span></div>` : ''}
+          </div>
+        `;
+      }
+
+      let mailHtml = '';
+      if (item.mail_health) {
+        const mh = item.mail_health;
+        let ratingColor = mh.rating === 'PROTECTED' ? 'text-emerald-400' : (mh.rating === 'PARTIALLY_PROTECTED' ? 'text-amber-400' : 'text-red-400');
+        mailHtml = `
+          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-cyber-cyan uppercase text-[11px]">Mail Health & Spoof Posture</span>
+              <span class="font-bold ${ratingColor}">Score: ${mh.score}/100</span>
+            </div>
+            <div>MX Provider: <span class="text-white font-bold">${mh.mx?.provider || 'None'}</span></div>
+            <div>SPF Status: <span class="text-slate-200">${mh.spf?.status || 'MISSING'}</span> (${mh.spf?.mechanism || '-'})</div>
+            <div>DMARC Policy: <span class="text-slate-200 font-bold uppercase">${mh.dmarc?.policy || 'MISSING'}</span></div>
+            <div class="text-[11px] ${ratingColor}">${mh.verdict}</div>
           </div>
         `;
       }
@@ -746,13 +928,15 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
             <div>Suspicious Detections: <span class="text-amber-400 font-bold">${stats.suspicious || 0}</span></div>
             <div>Harmless / Undetected: ${stats.harmless || 0} / ${stats.undetected || 0}</div>
             ${item.vt_data.threat_label ? `<div>Threat Family: <span class="text-white font-bold">${item.vt_data.threat_label}</span></div>` : ''}
-            ${item.vt_data.file_type ? `<div>File Type: <span class="text-white">${item.vt_data.file_type}</span></div>` : ''}
+            ${item.vt_data.registrar ? `<div>Registrar: <span class="text-white">${item.vt_data.registrar}</span></div>` : ''}
           </div>
         `;
       }
 
       content.innerHTML = `
         ${abuseHtml}
+        ${urlhausHtml}
+        ${mailHtml}
         ${vtHtml}
         <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3">
           <div class="font-bold text-slate-400 uppercase text-[11px] mb-1">Raw API Payload</div>
@@ -765,6 +949,73 @@ ed01ebf83434a16f6003bc90ab3a145b81db813363f49e64bc87da54a07a1222
 
     function closeDrawer() {
       document.getElementById('drawer-inspect').classList.add('hidden');
+    }
+
+    // Mail health tab logic
+    async function runMailHealthCheck() {
+      const input = document.getElementById('mail-domain-input');
+      const domain = input.value.trim();
+      if (!domain) return;
+
+      try {
+        const res = await fetch(`/api/mail-health?domain=${encodeURIComponent(domain)}`);
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.detail || "Mail health check failed");
+          return;
+        }
+
+        const data = await res.json();
+        document.getElementById('mail-health-results').classList.remove('hidden');
+
+        document.getElementById('mail-score').innerText = data.score;
+        const ratingBadge = document.getElementById('mail-rating-badge');
+        if (data.rating === 'PROTECTED') {
+          ratingBadge.className = 'mt-2 text-sm font-bold font-mono text-emerald-400';
+          ratingBadge.innerText = '● PROTECTED';
+        } else if (data.rating === 'PARTIALLY_PROTECTED') {
+          ratingBadge.className = 'mt-2 text-sm font-bold font-mono text-amber-400';
+          ratingBadge.innerText = '● PARTIALLY PROTECTED';
+        } else {
+          ratingBadge.className = 'mt-2 text-sm font-bold font-mono text-red-400';
+          ratingBadge.innerText = '● VULNERABLE TO SPOOFING';
+        }
+
+        document.getElementById('mail-provider').innerText = data.mx?.provider || 'None';
+        document.getElementById('mail-dmarc-policy').innerText = (data.dmarc?.policy || 'none').toUpperCase();
+
+        // MX records
+        document.getElementById('mail-mx-count').innerText = `${data.mx?.count || 0} records`;
+        const mxList = document.getElementById('mail-mx-list');
+        if (data.mx?.records && data.mx.records.length) {
+          mxList.innerHTML = data.mx.records.map(r => `<div>[${r.priority}] ${r.host}</div>`).join('');
+        } else {
+          mxList.innerHTML = `<span class="text-slate-500">No MX records configured.</span>`;
+        }
+
+        // SPF
+        const spfBadge = document.getElementById('mail-spf-badge');
+        spfBadge.innerText = data.spf?.status || 'MISSING';
+        spfBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded font-bold ${data.spf?.has_spf ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`;
+        document.getElementById('mail-spf-text').innerText = data.spf?.record || 'No SPF record found.';
+
+        // DMARC
+        const dmarcBadge = document.getElementById('mail-dmarc-badge');
+        dmarcBadge.innerText = (data.dmarc?.policy || 'MISSING').toUpperCase();
+        dmarcBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded font-bold ${data.dmarc?.policy === 'reject' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`;
+        document.getElementById('mail-dmarc-text').innerText = data.dmarc?.record || 'No DMARC record found.';
+
+        // Issues
+        const issuesList = document.getElementById('mail-issues-list');
+        if (data.issues && data.issues.length) {
+          issuesList.innerHTML = data.issues.map(i => `<li>${i}</li>`).join('');
+        } else {
+          issuesList.innerHTML = `<li class="text-emerald-400">All email security protocols (MX, SPF, DMARC) are optimally configured!</li>`;
+        }
+
+      } catch (err) {
+        alert("Failed to check mail health: " + err);
+      }
     }
 
     async function downloadExport(format) {

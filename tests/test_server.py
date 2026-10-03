@@ -31,3 +31,12 @@ def test_index_html_served():
     assert res.status_code == 200
     assert "SLOTHERY" in res.text
     assert "IoC Triage" in res.text
+
+
+def test_mail_health_endpoint():
+    res = client.get("/api/mail-health?domain=google.com")
+    assert res.status_code == 200
+    data = res.json()
+    assert "score" in data
+    assert "rating" in data
+    assert "dmarc" in data
