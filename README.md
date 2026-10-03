@@ -1,6 +1,5 @@
-# 🦥 
-# LazySOC 
-## // Threat Intelligence Triage & Security Operations Workbench
+# 🦥 LazySOC 
+## Threat Intelligence Triage & Security Operations Workbench
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
