@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LazySOC // Zero-Effort Threat Triage & SOC Workbench</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦥</text></svg>">
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -154,31 +155,31 @@
 
     <!-- TABS NAVIGATION (7 TABS) - Gracefully scrolls horizontally on narrow or split screens -->
     <nav class="flex items-center gap-1 p-1 bg-[#0d121e] border border-cyber-border rounded-xl overflow-x-auto custom-scrollbar flex-nowrap order-3 lg:order-2 w-full lg:w-auto max-w-full">
-      <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
+      <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
         <i data-lucide="target" class="w-3.5 h-3.5"></i>
         <span>IoC Triage</span>
       </button>
-      <button onclick="switchTab('recon')" id="tab-btn-recon" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('recon')" id="tab-btn-recon" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="radar" class="w-3.5 h-3.5"></i>
         <span>Network Recon</span>
       </button>
-      <button onclick="switchTab('eml')" id="tab-btn-eml" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('eml')" id="tab-btn-eml" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="mail-warning" class="w-3.5 h-3.5"></i>
         <span>Phishing EML</span>
       </button>
-      <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
         <span>Mail Health</span>
       </button>
-      <button onclick="switchTab('feed')" id="tab-btn-feed" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('feed')" id="tab-btn-feed" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="rss" class="w-3.5 h-3.5"></i>
         <span>Cyber Feeds</span>
       </button>
-      <button onclick="switchTab('cve')" id="tab-btn-cve" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('cve')" id="tab-btn-cve" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
         <span>CVE / NVD</span>
       </button>
-      <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+      <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
         <span>Cache</span>
       </button>
@@ -187,20 +188,20 @@
     <!-- RIGHT STATUS BADGES, ABOUT, THEME PICKER & GITHUB WATERMARK -->
     <div class="flex items-center gap-2 flex-shrink-0 order-2 lg:order-3 ml-auto lg:ml-0">
       <!-- ABOUT MENU BUTTON -->
-      <button onclick="openAboutModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyber-card hover:bg-white/10 border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition" title="About LazySOC Platform">
+      <button onclick="openAboutModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyber-card hover:bg-white/10 border border-cyber-border text-xs font-mono font-bold text-slate-300 hover:text-white transition" title="About LazySOC Platform">
         <i data-lucide="info" class="w-3.5 h-3.5 text-cyber-cyan"></i>
         <span class="hidden sm:inline">About</span>
       </button>
 
       <!-- GITHUB PROFILE BUTTON -->
-      <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition group" title="Creator GitHub Profile">
+      <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-xs font-mono font-bold text-slate-300 hover:text-white transition group" title="Creator GitHub Profile">
         <i data-lucide="github" class="w-3.5 h-3.5 text-cyber-cyan group-hover:scale-110 transition-transform"></i>
-        <span class="hidden sm:inline font-bold">@p3nr0s3</span>
+        <span class="hidden sm:inline">@p3nr0s3</span>
       </a>
 
       <!-- THEME SELECTOR DROPDOWN -->
       <div class="relative">
-        <button onclick="toggleThemeDropdown(event)" id="theme-btn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition">
+        <button onclick="toggleThemeDropdown(event)" id="theme-btn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border text-xs font-mono font-bold text-slate-300 hover:text-white transition">
           <i data-lucide="palette" class="w-3.5 h-3.5 text-cyber-cyan"></i>
           <span id="theme-name" class="hidden sm:inline">Cyberpunk</span>
           <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
@@ -224,7 +225,7 @@
         </div>
       </div>
 
-      <div id="pool-status-indicator" class="flex items-center gap-2 text-xs font-mono px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
+      <div id="pool-status-indicator" class="flex items-center gap-2 text-xs font-mono font-bold px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span class="text-slate-300 hidden sm:inline">Checking...</span>
       </div>
