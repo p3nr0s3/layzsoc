@@ -1,42 +1,84 @@
-# 🦥 Slothery // IoC Threat Intelligence & Triage
+# 🦥 LazySOC // Threat Intelligence Triage & Security Operations Workbench
 
-A high-resilience **Indicator of Compromise (IoC)** security triage and threat intelligence dashboard. Built for analysts who need fast, structured enrichment of **IP addresses** and **file hashes** without hitting rate-limit brick walls.
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v3-38bdf8.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Creator](https://img.shields.io/badge/Author-@p3nr0s3-00f2fe.svg?logo=github&logoColor=white)](https://github.com/p3nr0s3)
 
----
-
-## ✨ Features
-
-- **Multi-Key Rotation Pool**: Add multiple free-tier API keys for **VirusTotal (v3)** and **AbuseIPDB (v2)**. Slothery load-balances requests across keys and automatically rotates to the next healthy key on HTTP 429 rate limits.
-- **Smart Throttling**: When all configured keys hit per-minute quotas (e.g. VirusTotal 4 req/min limit), Slothery smoothly pauses with a real-time countdown timer until the earliest reset window, then seamlessly resumes execution.
-- **Unified Smart Input**: Paste raw logs, threat bulletins, or defanged indicators (`1[.]1[.]1[.]1`, `hxxps://...`, hashes). Automatically extracts, normalizes, deduplicates, and flags private/RFC1918 IPs. Supports drag-and-drop `.txt` and `.csv` files.
-- **Local SQLite Caching**: Automatically caches results with configurable TTL (default 24h) to prevent burning API quota on repeat lookups.
-- **Minimalist Cyber Aesthetic**: Dark-themed, high-contrast dashboard with custom monospace telemetry badges, live progress bars, summary metric cards, and expandable vendor breakdowns.
-- **Defanged Export**: Export triage findings directly to **CSV** or **JSON**, with an option to keep indicators defanged for safe sharing.
+**LazySOC** is a high-performance, dark-mode cybersecurity workbench built for SOC analysts, incident responders, and threat hunters. It eliminates repetitive manual triage by combining automated threat intelligence enrichment, live network reconnaissance, deep email forensics, real-time cyber news feeds, and live online vulnerability lookup into a single zero-friction dashboard.
 
 ---
 
-## 🚀 Quickstart
+## ⚡ Core Capabilities
 
-### 1. Prerequisites
-- Python 3.10+ (tested on Python 3.14)
+### 🎯 1. Multi-IoC Triage & Risk Scoring
+- **Smart Defanger & Parser**: Paste unstructured threat bulletins, firewall logs, or defanged indicators (`1[.]1[.]1[.]1`, `hxxps://evil[.]com`, hashes). Automatically extracts, normalizes, deduplicates, and classifies IPv4/IPv6, domains, URLs, and MD5/SHA1/SHA256 hashes.
+- **Multi-Key API Rotation Pool**: Add multiple free-tier API keys for **VirusTotal (v3)** and **AbuseIPDB (v2)**. LazySOC load-balances requests across keys and automatically fails over on HTTP 429 rate limits.
+- **Smart Cooldown & Countdown**: Smoothly pauses with a live countdown timer when quotas are reached, resuming execution automatically without dropping jobs.
+- **Threat Hunting Query Generator**: One-click generation of ready-to-run queries for **Splunk SPL**, **Microsoft Sentinel KQL**, **CrowdStrike Falcon**, **OpenSearch**, **Sigma YAML**, and **Firewall CLI** (iptables/Palo Alto).
+- **Clean Incident Escalation Note**: Generates clean, standardized SOC incident handover documentation (Executive Summary, Technical Findings, and Immediate Recommendations).
 
-### 2. Setup Virtual Environment
-```powershell
+### 📡 2. Active & Passive Network Recon
+- Query any IP or domain for live infrastructure intelligence:
+  - Reverse DNS (PTR) records & geolocation
+  - ASN & ISP network routing telemetry
+  - Passive Shodan exposure (open ports, protocols, HTTP headers, TLS certificate details, and active host vulnerabilities).
+
+### 🎣 3. Deep Phishing & EML Forensics
+- Upload `.eml` or `.msg` files or paste raw RFC 822 email headers.
+- Visual **Hop-by-Hop Transmission Delay Analyzer** with geolocation and delay timing.
+- Cryptographic authentication posture audit (**SPF, DKIM, DMARC**).
+- Automated attachment hash extraction (MD5/SHA256) and defanged hyperlink harvester.
+
+### 🛡️ 4. Domain Mail Health & Spoofing Posture
+- Audit any domain's email security configuration.
+- Checks MX records, SPF syntax, DMARC policy enforcement (`reject`, `quarantine`, `none`), and flags domain spoofing vulnerability risks.
+
+### 📰 5. Paginated Live Cyber Threat Feeds (RSS)
+- Real-time aggregations from top cybersecurity publishers:
+  - **The Hacker News**
+  - **BleepingComputer**
+  - **CISA Security Advisories**
+  - **Krebs on Security**
+- **Interactive Pagination**: Browse articles with page controls, adjustable page sizes (6, 9, 12, 18, 30), and category/source filters.
+- **One-Click Triage**: Transfer extracted article contents directly into the triage scanner.
+
+### 🚨 6. Live Online CVE & NIST NVD Intelligence (Zero Local Database)
+- **100% Real-Time & Online**: Directly queries the official **NIST NVD 2.0 API** and **CISA Known Exploited Vulnerabilities (KEV)** catalog.
+- Zero local database bloat — search by CVE ID (e.g. `CVE-2024-3400`) or vendor keywords (Ivanti, Palo Alto, Microsoft, Linux).
+- Live CVSS v3.1 impact scores, severity levels, CWE weakness types, and CVSS vector metrics.
+
+### 🎨 7. Analyst Themes & Split-Screen Responsive UI
+- 5 Cyberpunk-inspired themes: **Cyberpunk Cyan**, **Matrix Green**, **Dracula Violet**, **Crimson Alert**, and **Nordic Frost**.
+- Responsive split-screen navbar that adapts seamlessly when browser windows are tiled side-by-side.
+
+---
+
+## 🚀 Quickstart Guide
+
+### 1. Clone & Setup Environment
+
+```bash
+git clone https://github.com/p3nr0s3/layzsoc.git
+cd layzsoc
+
 # Create virtual environment
 python -m venv .venv
 
-# Activate virtual environment
-# On Windows:
+# Activate on Windows:
 .venv\Scripts\activate
-# On Linux/macOS:
+# Activate on Linux/macOS:
 source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Configure API Keys (Optional)
-You can configure keys directly in the web UI sidebar, or create a `.env` file:
+### 2. Configure Environment (Optional)
+
+Create a `.env` file in the root directory:
+
 ```env
 # VirusTotal Free API Keys (comma-separated for key rotation)
 VIRUSTOTAL_API_KEYS=your_vt_key_1,your_vt_key_2
@@ -44,62 +86,81 @@ VIRUSTOTAL_API_KEYS=your_vt_key_1,your_vt_key_2
 # AbuseIPDB Free API Keys (comma-separated for key rotation)
 ABUSEIPDB_API_KEYS=your_abuse_key_1,your_abuse_key_2
 
+# Security lock: set to false in production to prevent web UI modification of API keys
+ALLOW_KEY_MANAGEMENT=false
+
 # Cache TTL (hours)
 CACHE_TTL_HOURS=24
 ```
 
-### 4. Launch Dashboard
+### 3. Launch LazySOC
 
-You have **two UI experiences** available:
-
-#### Option A: Bespoke Modern Web App (Recommended)
-A dedicated, custom-styled single-page application with real-time reactive indicator pills, telemetry inspection drawer, glowing cybersecurity metrics, and zero generic framework chrome:
-```powershell
+```bash
 python server.py
 ```
+
 Open your browser at **`http://localhost:8000`**.
 
-#### Option B: Revamped Streamlit Dashboard
-The Streamlit dashboard with all Streamlit chrome (Deploy button, hamburger menu, banners) stripped and restyled with custom segmented control tabs and glowing dark themes:
-```powershell
-streamlit run app.py
-```
-Open your browser at **`http://localhost:8501`**.
+---
+
+## 🌐 Deploying to Render.com / Cloud Platforms
+
+LazySOC is optimized for zero-configuration cloud deployment:
+
+1. Connect your GitHub repository (`p3nr0s3/layzsoc`) to **Render.com** (Web Service).
+2. Set the build and start commands:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python server.py`
+3. Add environment variables under **Environment**:
+   - `VIRUSTOTAL_API_KEYS`: your API key(s)
+   - `ABUSEIPDB_API_KEYS`: your API key(s)
+   - `ALLOW_KEY_MANAGEMENT`: `false` (locks sensitive key endpoints)
+   - `PORT`: `8000` (or leave default assigned by host)
 
 ---
 
-## 🧪 Running Tests
+## 🧪 Testing
 
-Slothery includes a pytest test suite verifying defanging, regex extraction, key rotation, cooldown math, and SQLite cache roundtrips:
+LazySOC includes a comprehensive test suite covering parser regexes, key rotation algorithms, cooldown mechanics, database cache transactions, and API endpoints:
 
-```powershell
-.venv\Scripts\python.exe -m pytest -v
+```bash
+pytest -v
 ```
 
 ---
 
-## 📁 Project Architecture
+## 📁 Repository Structure
 
 ```
-d:/Projects/slothery/
-├── app.py                   # Streamlit web application & analyst UI
-├── requirements.txt         # Project dependencies
-├── .env.example             # Configuration template
-├── static/
-│   └── styles.css           # Minimalist cyber CSS styles
+lazysoc/
+├── server.py              # FastAPI application server & REST endpoints
+├── requirements.txt       # Python dependencies
+├── .env.example           # Environment variable template
+├── web/
+│   └── index.html         # Responsive Cyberpunk SPA dashboard
 ├── core/
-│   ├── config.py            # Global settings & constants
-│   ├── parser.py            # Unified defanger & regex parser
-│   ├── key_manager.py       # Key rotation pool & rate-limit tracker
-│   ├── database.py          # SQLite cache & scan audit log
-│   ├── clients/
-│   │   ├── virustotal.py    # VirusTotal v3 client
-│   │   └── abuseipdb.py     # AbuseIPDB v2 client
-│   ├── engine.py            # Batch lookup orchestrator & verdicts
-│   └── exporter.py          # CSV and JSON export utilities
-└── tests/
-    ├── test_parser.py       # Defanging & extraction tests
-    ├── test_key_manager.py  # Rotation & cooldown tests
-    ├── test_database.py     # SQLite cache tests
-    └── test_engine.py       # Verdicts & export tests
+│   ├── config.py          # Application configuration & constants
+│   ├── parser.py          # Unified defanger & regex extractor
+│   ├── key_manager.py     # Rate-limit tracker & API key rotation pool
+│   ├── database.py        # Local SQLite cache & audit history
+│   ├── engine.py          # Scan orchestrator, verdicts & SIEM logic
+│   ├── feed.py            # Real-time RSS cyber threat news aggregator
+│   ├── cve.py             # Live online NIST NVD & CISA KEV client
+│   ├── recon.py           # Shodan, DNS & network recon module
+│   ├── email_analyzer.py  # RFC 822 / EML header & phishing analyzer
+│   ├── mail_checker.py    # DNS MX, SPF & DMARC posture auditor
+│   ├── exporter.py        # CSV and JSON report generation
+│   └── clients/
+│       ├── virustotal.py  # VirusTotal v3 API client
+│       └── abuseipdb.py   # AbuseIPDB v2 API client
+└── tests/                 # Unit & integration test suite
 ```
+
+---
+
+## 👤 Author & Credits
+
+Developed by **[@p3nr0s3](https://github.com/p3nr0s3)**.
+
+Designed for analysts who want clean, fast security triage without vendor lock-in or manual spreadsheet fatigue.
