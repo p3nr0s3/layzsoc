@@ -107,10 +107,12 @@ def test_index_html_hides_key_management():
     assert 'id="tab-btn-keys"' not in res.text
     assert 'id="view-keys"' not in res.text
     assert "removeKey(" not in res.text
-    # Verify theme picker & feed tab exist
+    # Verify theme picker, feed tab, cve tab & footer watermark exist
     assert 'id="theme-btn"' in res.text
     assert 'id="tab-btn-feed"' in res.text
-    assert 'id="view-feed"' in res.text
+    assert 'id="tab-btn-cve"' in res.text
+    assert 'id="view-cve"' in res.text
+    assert '@p3nr0s3' in res.text
 
 
 def test_cyber_feed_endpoint():
@@ -121,4 +123,17 @@ def test_cyber_feed_endpoint():
     assert "sources" in data
     assert "items" in data
     assert isinstance(data["items"], list)
+
+
+def test_cve_endpoint():
+    res = client.get("/api/cve")
+    assert res.status_code == 200
+    data = res.json()
+    assert "items" in data
+    assert len(data["items"]) > 0
+    first = data["items"][0]
+    assert "id" in first
+    assert "cvss" in first
+    assert "severity" in first
+
 

@@ -99,9 +99,15 @@
     }
     body {
       background-color: var(--color-bg);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -15%, rgba(var(--color-accent-rgb, 0, 242, 254), 0.15), transparent 75%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 100% 100%, 36px 36px, 36px 36px;
       color: #f1f5f9;
       font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+      min-height: 100vh;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -137,7 +143,7 @@
 <body class="min-h-screen flex flex-col antialiased custom-scrollbar">
 
   <!-- TOP NAVIGATION BAR -->
-  <header class="h-16 border-b border-cyber-border bg-[#090d16]/80 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
+  <header class="h-16 border-b border-cyber-border bg-[#090d16]/85 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
     <div class="flex items-center gap-3.5">
       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan/25 via-blue-600/15 to-emerald-500/10 border border-cyber-cyan/35 flex items-center justify-center text-xl glow-cyan">
         🦥
@@ -147,11 +153,18 @@
           <span class="font-extrabold text-lg tracking-tight text-white">LazySOC</span>
           <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30">v3.0 SOC</span>
         </div>
-        <p class="text-xs text-slate-400 font-mono">ZERO-EFFORT THREAT TRIAGE & SOC WORKBENCH</p>
+        <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+          <span>ZERO-EFFORT THREAT TRIAGE & SOC WORKBENCH</span>
+          <span class="text-slate-600 hidden sm:inline">•</span>
+          <a href="https://github.com/p3nr0s3/layzsoc" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1 text-slate-400 hover:text-cyber-cyan transition font-semibold">
+            <i data-lucide="github" class="w-3 h-3"></i>
+            <span>@p3nr0s3</span>
+          </a>
+        </div>
       </div>
     </div>
 
-    <!-- TABS NAVIGATION (6 TABS) -->
+    <!-- TABS NAVIGATION (7 TABS) -->
     <nav class="flex items-center gap-1 p-1 bg-[#0d121e] border border-cyber-border rounded-xl">
       <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
         <i data-lucide="target" class="w-3.5 h-3.5"></i>
@@ -173,14 +186,24 @@
         <i data-lucide="rss" class="w-3.5 h-3.5"></i>
         <span>Cyber Feeds</span>
       </button>
+      <button onclick="switchTab('cve')" id="tab-btn-cve" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+        <span>CVE / NVD</span>
+      </button>
       <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
         <span>Cache</span>
       </button>
     </nav>
 
-    <!-- RIGHT STATUS BADGES & THEME PICKER -->
-    <div class="flex items-center gap-3">
+    <!-- RIGHT STATUS BADGES & THEME PICKER & GITHUB WATERMARK -->
+    <div class="flex items-center gap-2.5">
+      <!-- GITHUB WATERMARK BUTTON -->
+      <a href="https://github.com/p3nr0s3/layzsoc" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition group" title="View Source & Star on GitHub">
+        <i data-lucide="github" class="w-3.5 h-3.5 text-cyber-cyan group-hover:scale-110 transition-transform"></i>
+        <span class="hidden xl:inline font-bold">p3nr0s3</span>
+      </a>
+
       <!-- THEME SELECTOR DROPDOWN -->
       <div class="relative">
         <button onclick="toggleThemeDropdown(event)" id="theme-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyber-card border border-cyber-border text-xs font-mono text-slate-300 hover:text-white transition">
@@ -214,8 +237,8 @@
     </div>
   </header>
 
-  <!-- MAIN WRAPPER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+  <!-- MAIN WRAPPER (Full responsive wide-screen layout) -->
+  <main class="flex-1 max-w-[1520px] w-full mx-auto p-6 xl:p-8 space-y-6">
 
     <!-- ============================================================
          TAB 1: TRIAGE SCANNER
@@ -939,6 +962,57 @@
     </section>
 
     <!-- ============================================================
+         TAB 6: CVE & NVD VULNERABILITY INTELLIGENCE
+         ============================================================ -->
+    <section id="view-cve" class="hidden space-y-6">
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-5">
+        <!-- Header & Search Controls -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyber-border/70 pb-4">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="shield-alert" class="w-4 h-4 text-cyber-cyan"></i>
+              NIST NVD & CVE Vulnerability Intelligence
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">National Vulnerability Database (NVD) official CVSS metrics, exploits & impact analysis</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Search Bar -->
+            <div class="relative w-72">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input 
+                type="text" 
+                id="cve-search-input" 
+                onkeydown="if(event.key==='Enter') executeCveSearch()" 
+                placeholder="Search CVE ID or Vendor (e.g. CVE-2024-3400)..." 
+                class="w-full bg-[#090d16] border border-cyber-border rounded-lg pl-8 pr-3 py-1.5 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyber-cyan transition"
+              >
+            </div>
+            <!-- Search Button -->
+            <button onclick="executeCveSearch()" id="btn-search-cve" class="px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i>
+              <span>Search</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Trending Pills -->
+        <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
+          <span class="text-slate-400 text-[11px] font-bold uppercase">Trending 0-Days:</span>
+          <button onclick="quickCveLookup('CVE-2024-3400')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Palo Alto (CVE-2024-3400)</button>
+          <button onclick="quickCveLookup('CVE-2024-21887')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Ivanti Connect (CVE-2024-21887)</button>
+          <button onclick="quickCveLookup('CVE-2023-4966')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Citrix Bleed (CVE-2023-4966)</button>
+          <button onclick="quickCveLookup('CVE-2021-44228')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Log4Shell (CVE-2021-44228)</button>
+        </div>
+
+        <!-- CVE Results Grid -->
+        <div id="cve-results-container" class="space-y-4 pt-1">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
          CACHE & AUDIT
          ============================================================ -->
     <section id="view-cache" class="hidden space-y-6">
@@ -977,6 +1051,25 @@
     </section>
 
   </main>
+
+  <!-- CYBERPUNK HUD FOOTER & CREATOR WATERMARK -->
+  <footer class="mt-auto border-t border-cyber-border/70 bg-[#090d16]/80 backdrop-blur-md py-4 px-6 text-xs font-mono text-slate-400">
+    <div class="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-sm">🦥</span>
+        <span class="font-bold text-white tracking-wide">LazySOC v3.0</span>
+        <span class="text-slate-600">|</span>
+        <span class="text-slate-400">Zero-Effort Automated Threat Intelligence Triage & SOC Workbench</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-slate-500">Open-Source SOC Platform by</span>
+        <a href="https://github.com/p3nr0s3/layzsoc" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyber-cyan/10 hover:bg-cyber-cyan/20 border border-cyber-cyan/30 text-cyber-cyan font-bold transition group">
+          <i data-lucide="github" class="w-3.5 h-3.5 group-hover:scale-110 transition-transform"></i>
+          <span>@p3nr0s3</span>
+        </a>
+      </div>
+    </div>
+  </footer>
 
   <!-- MODAL: SIEM THREAT HUNTING QUERIES -->
   <div id="modal-siem-query" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1124,7 +1217,7 @@ Content-Type: text/html; charset=UTF-8
     });
 
     function switchTab(tabId) {
-      ['triage', 'recon', 'eml', 'mail', 'feed', 'cache'].forEach(t => {
+      ['triage', 'recon', 'eml', 'mail', 'feed', 'cve', 'cache'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (view) view.classList.add('hidden');
@@ -1143,6 +1236,7 @@ Content-Type: text/html; charset=UTF-8
       }
 
       if (tabId === 'feed') fetchCyberFeeds();
+      if (tabId === 'cve') fetchCveIntel();
       if (tabId === 'cache') fetchCache();
       lucide.createIcons();
     }
@@ -2426,6 +2520,140 @@ tags:
 
       const raw = `${article.title}\n${article.summary}\n${article.link}`;
       document.getElementById('ioc-input').value = raw;
+      switchTab('triage');
+      handleInputDebounce();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==========================================
+    // CVE & NVD VULNERABILITY INTELLIGENCE
+    // ==========================================
+    let currentCveData = [];
+
+    async function fetchCveIntel(query = "") {
+      const container = document.getElementById('cve-results-container');
+      const btn = document.getElementById('btn-search-cve');
+      if (btn) btn.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> Loading...`;
+
+      try {
+        const url = query ? `/api/cve?query=${encodeURIComponent(query)}` : '/api/cve';
+        const res = await fetch(url);
+        const data = await res.json();
+        currentCveData = data.items || [];
+        renderCveCards(currentCveData, query);
+      } catch (err) {
+        console.error("Failed to query CVE:", err);
+        container.innerHTML = `
+          <div class="py-8 text-center text-red-400 font-mono text-xs">
+            Failed to query NIST NVD. Please try again or check your query.
+          </div>
+        `;
+      } finally {
+        if (btn) {
+          btn.innerHTML = `<i data-lucide="search" class="w-3.5 h-3.5"></i> <span>Search</span>`;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    function executeCveSearch() {
+      const q = document.getElementById('cve-search-input')?.value.trim();
+      fetchCveIntel(q);
+    }
+
+    function quickCveLookup(cveId) {
+      const input = document.getElementById('cve-search-input');
+      if (input) input.value = cveId;
+      fetchCveIntel(cveId);
+    }
+
+    function renderCveCards(items, query) {
+      const container = document.getElementById('cve-results-container');
+      if (!items || items.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center text-slate-500 font-mono text-xs">
+            No vulnerabilities found matching "${query || 'default'}". Try searching by CVE ID (e.g. CVE-2024-3400) or software vendor.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map((cve, idx) => {
+        const cvssNum = parseFloat(cve.cvss || 0);
+        let sevBadge = 'bg-slate-800 text-slate-400 border-slate-700';
+
+        if (cvssNum >= 9.0) {
+          sevBadge = 'bg-red-500/20 text-red-400 border-red-500/40 glow-red';
+        } else if (cvssNum >= 7.0) {
+          sevBadge = 'bg-amber-500/20 text-amber-400 border-amber-500/40 glow-amber';
+        } else if (cvssNum >= 4.0) {
+          sevBadge = 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40';
+        } else if (cvssNum > 0) {
+          sevBadge = 'bg-blue-500/20 text-blue-400 border-blue-500/40';
+        }
+
+        return `
+          <div class="bg-[#090d16] border border-cyber-border hover:border-cyber-cyan/40 rounded-xl p-5 space-y-3.5 transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border/60 pb-3">
+              <div class="flex items-center gap-3">
+                <a href="${cve.link}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold font-mono text-white hover:text-cyber-cyan transition flex items-center gap-1.5">
+                  ${cve.id}
+                  <i data-lucide="external-link" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                </a>
+                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold border ${sevBadge}">
+                  ${cve.severity} (CVSS ${cve.cvss})
+                </span>
+                ${cve.known_exploited ? `
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                    CISA KEV (Actively Exploited)
+                  </span>
+                ` : ''}
+              </div>
+
+              <div class="text-[11px] font-mono text-slate-500">
+                Published: <span class="text-slate-300">${cve.published || 'N/A'}</span>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">
+              ${cve.description || 'No description provided by NIST.'}
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs font-mono">
+              <div class="bg-black/30 border border-cyber-border/60 rounded-lg p-2.5">
+                <span class="text-slate-400 text-[10px] uppercase font-bold block mb-1">CWE Weakness Type</span>
+                <span class="text-slate-200 text-[11px]">${cve.cwe}</span>
+              </div>
+              <div class="bg-black/30 border border-cyber-border/60 rounded-lg p-2.5">
+                <span class="text-slate-400 text-[10px] uppercase font-bold block mb-1">CVSS Vector String</span>
+                <span class="text-slate-400 text-[10px] break-all select-all font-mono">${cve.vector || 'Not Available'}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-cyber-border/60 text-xs font-mono">
+              <span class="text-slate-500 text-[11px]">Database: ${cve.source}</span>
+              <div class="flex items-center gap-2">
+                <button onclick="sendCveToTriage(${idx})" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[11px] transition flex items-center gap-1">
+                  <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                  <span>Triage Indicators</span>
+                </button>
+                <a href="${cve.link}" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-md bg-cyber-cyan/15 text-cyber-cyan hover:bg-cyber-cyan/25 border border-cyber-cyan/30 text-[11px] font-bold transition flex items-center gap-1">
+                  <span>View in NVD</span>
+                  <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function sendCveToTriage(idx) {
+      const cve = currentCveData[idx];
+      if (!cve) return;
+      document.getElementById('ioc-input').value = `${cve.id}\n${cve.description}`;
       switchTab('triage');
       handleInputDebounce();
       window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -39,6 +39,7 @@ from core.database import (
 )
 from core.exporter import export_to_csv, export_to_json
 from core.feed import get_cyber_news
+from core.cve import query_cve
 
 app = FastAPI(title="LazySOC Threat Triage & Investigation Platform", version="3.0.0")
 
@@ -259,6 +260,12 @@ def export_results(req: ExportRequest):
 def get_cyber_feed_endpoint(source: str = "all", limit: int = 40):
     """Fetches real-time cyber security news & threat advisories."""
     return get_cyber_news(source=source, limit=limit)
+
+
+@app.get("/api/cve")
+def get_cve_endpoint(query: Optional[str] = None, limit: int = 15):
+    """Searches NIST NVD and vulnerability databases for CVE details."""
+    return query_cve(search=query, limit=limit)
 
 
 @app.get("/", response_class=HTMLResponse)
