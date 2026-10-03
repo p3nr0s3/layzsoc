@@ -1,5 +1,6 @@
 """FastAPI Server for Slothery Custom Web Interface."""
 
+import os
 import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
@@ -182,8 +183,16 @@ async def upload_file(file: UploadFile = File(...)):
     }
 
 
+ALLOW_KEY_MANAGEMENT = os.environ.get("ALLOW_KEY_MANAGEMENT", "false").lower() in ("true", "1", "yes")
+
+
 @app.post("/api/keys")
 def add_api_key(req: KeyRequest):
+    if not ALLOW_KEY_MANAGEMENT:
+        raise HTTPException(
+            status_code=403,
+            detail="Key modification via Web API is locked. Manage keys securely via Environment Variables or server config."
+        )
     ok, msg = km.add_key(req.service, req.key)
     if not ok:
         raise HTTPException(status_code=400, detail=msg)
@@ -192,6 +201,11 @@ def add_api_key(req: KeyRequest):
 
 @app.delete("/api/keys")
 def remove_api_key(service: str, key: str):
+    if not ALLOW_KEY_MANAGEMENT:
+        raise HTTPException(
+            status_code=403,
+            detail="Key removal via Web API is locked. API keys are protected on the server."
+        )
     ok = km.remove_key(service, key)
     return {"success": ok}
 

@@ -118,10 +118,6 @@
         <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
         <span>Mail Health</span>
       </button>
-      <button onclick="switchTab('keys')" id="tab-btn-keys" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
-        <i data-lucide="key" class="w-3.5 h-3.5"></i>
-        <span>API Keys</span>
-      </button>
       <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="database" class="w-3.5 h-3.5"></i>
         <span>Cache</span>
@@ -794,62 +790,7 @@
     </section>
 
     <!-- ============================================================
-         TAB 5: API KEY POOLS
-         ============================================================ -->
-    <section id="view-keys" class="hidden space-y-6">
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- VT Pool -->
-        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
-          <div class="flex items-center justify-between border-b border-cyber-border/60 pb-3">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                <i data-lucide="shield" class="w-4 h-4"></i>
-              </div>
-              <div>
-                <h3 class="text-sm font-bold text-white">VirusTotal v3 Key Pool</h3>
-                <p class="text-[11px] font-mono text-slate-400">Rate limit: 4 req/min, 500 req/day</p>
-              </div>
-            </div>
-            <button onclick="openAddKeyModal('virustotal')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 transition">
-              + Add Key
-            </button>
-          </div>
-
-          <div id="vt-keys-list" class="space-y-2">
-            <!-- Injected via JS -->
-          </div>
-        </div>
-
-        <!-- AbuseIPDB Pool -->
-        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
-          <div class="flex items-center justify-between border-b border-cyber-border/60 pb-3">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-              </div>
-              <div>
-                <h3 class="text-sm font-bold text-white">AbuseIPDB v2 Key Pool</h3>
-                <p class="text-[11px] font-mono text-slate-400">Daily limit: 1,000 queries/day</p>
-              </div>
-            </div>
-            <button onclick="openAddKeyModal('abuseipdb')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 transition">
-              + Add Key
-            </button>
-          </div>
-
-          <div id="abuse-keys-list" class="space-y-2">
-            <!-- Injected via JS -->
-          </div>
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- ============================================================
-         TAB 6: CACHE & AUDIT
+         CACHE & AUDIT
          ============================================================ -->
     <section id="view-cache" class="hidden space-y-6">
       <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
@@ -887,38 +828,6 @@
     </section>
 
   </main>
-
-  <!-- MODAL: ADD KEY -->
-  <div id="modal-add-key" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-cyber-card border border-cyber-border rounded-xl max-w-md w-full p-6 space-y-4 glow-cyan">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="key" class="w-4 h-4 text-cyber-cyan"></i>
-          Add API Key to Pool
-        </h3>
-        <button onclick="closeAddKeyModal()" class="text-slate-400 hover:text-white">✕</button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block text-slate-400 font-mono mb-1">Target Service</label>
-          <select id="modal-key-service" class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-2 text-slate-200">
-            <option value="virustotal">VirusTotal v3</option>
-            <option value="abuseipdb">AbuseIPDB v2</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-slate-400 font-mono mb-1">API Key Token</label>
-          <input type="password" id="modal-key-value" placeholder="Paste your API key here..." class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-2 font-mono text-slate-200">
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-2 pt-2 border-t border-cyber-border">
-        <button onclick="closeAddKeyModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancel</button>
-        <button onclick="submitNewKey()" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition">Add Key</button>
-      </div>
-    </div>
-  </div>
 
   <!-- MODAL: SIEM THREAT HUNTING QUERIES -->
   <div id="modal-siem-query" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1065,7 +974,7 @@ Content-Type: text/html; charset=UTF-8
     });
 
     function switchTab(tabId) {
-      ['triage', 'recon', 'eml', 'mail', 'keys', 'cache'].forEach(t => {
+      ['triage', 'recon', 'eml', 'mail', 'cache'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (view) view.classList.add('hidden');
@@ -1083,7 +992,6 @@ Content-Type: text/html; charset=UTF-8
         activeBtn.classList.remove('text-slate-400');
       }
 
-      if (tabId === 'keys') fetchKeys();
       if (tabId === 'cache') fetchCache();
       lucide.createIcons();
     }
@@ -2104,79 +2012,7 @@ ${malicious.length > 0 ? `1. [ ] Block identified malicious IPs & domains at per
     }
 
     // ==========================================
-    // TAB 5: KEY MANAGEMENT
-    // ==========================================
-    async function fetchKeys() {
-      const res = await fetch('/api/status');
-      const data = await res.json();
-      
-      renderKeyList('vt-keys-list', data.services.virustotal, 'virustotal');
-      renderKeyList('abuse-keys-list', data.services.abuseipdb, 'abuseipdb');
-      lucide.createIcons();
-    }
-
-    function renderKeyList(containerId, keys, service) {
-      const container = document.getElementById(containerId);
-      if (!keys || keys.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500 font-mono py-2">No API keys configured.</div>`;
-        return;
-      }
-
-      container.innerHTML = keys.map(k => `
-        <div class="flex items-center justify-between p-2.5 bg-[#090d16] border border-cyber-border rounded-lg font-mono text-xs">
-          <div>
-            <span class="font-bold text-white">${k.key_masked}</span>
-            <span class="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold ${k.status === 'ACTIVE' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${k.status}</span>
-            <div class="text-[10px] text-slate-500 mt-0.5">Queries: ${k.total_queries} | Errors: ${k.errors}</div>
-          </div>
-          <button onclick="removeKey('${service}', '${k.key_raw}')" class="text-slate-500 hover:text-red-400 transition p-1">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
-        </div>
-      `).join('');
-    }
-
-    function openAddKeyModal(service) {
-      document.getElementById('modal-key-service').value = service;
-      document.getElementById('modal-key-value').value = '';
-      document.getElementById('modal-add-key').classList.remove('hidden');
-    }
-
-    function closeAddKeyModal() {
-      document.getElementById('modal-add-key').classList.add('hidden');
-    }
-
-    async function submitNewKey() {
-      const service = document.getElementById('modal-key-service').value;
-      const key = document.getElementById('modal-key-value').value.trim();
-      if (!key) return;
-
-      try {
-        const res = await fetch('/api/keys', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ service, key })
-        });
-        if (res.ok) {
-          closeAddKeyModal();
-          fetchKeys();
-        } else {
-          const err = await res.json();
-          alert(err.detail || "Error adding key");
-        }
-      } catch (e) {
-        alert("Failed to add key: " + e);
-      }
-    }
-
-    async function removeKey(service, key) {
-      if (!confirm("Remove this API key from the pool?")) return;
-      await fetch(`/api/keys?service=${service}&key=${encodeURIComponent(key)}`, { method: 'DELETE' });
-      fetchKeys();
-    }
-
-    // ==========================================
-    // TAB 6: CACHE MANAGEMENT
+    // CACHE MANAGEMENT
     // ==========================================
     async function fetchCache() {
       const res = await fetch('/api/cache');
@@ -2210,10 +2046,13 @@ ${malicious.length > 0 ? `1. [ ] Block identified malicious IPs & domains at per
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
-        const totalKeys = (data.pools.virustotal.total || 0) + (data.pools.abuseipdb.total || 0);
+        const vtActive = (data.pools.virustotal && data.pools.virustotal.active > 0);
+        const abuseActive = (data.pools.abuseipdb && data.pools.abuseipdb.active > 0);
+        const isOnline = vtActive || abuseActive;
+        
         document.getElementById('pool-status-indicator').innerHTML = `
-          <span class="w-2 h-2 rounded-full ${totalKeys > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
-          <span class="text-slate-300">${totalKeys} Keys Configured</span>
+          <span class="w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
+          <span class="text-slate-300 font-semibold">${isOnline ? 'Threat Intel Online' : 'Threat Intel Offline'}</span>
         `;
       } catch (e) {
         console.error("Status fetch failed", e);

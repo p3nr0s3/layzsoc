@@ -79,3 +79,31 @@ def test_analyze_eml_endpoint():
     assert data["risk_verdict"] == "PHISHING / MALICIOUS"
     assert data["risk_score"] >= 60
     assert len(data["alerts"]) > 0
+
+
+def test_key_endpoints_locked_by_default():
+    # Attempting to add key via API should be blocked (403)
+    res_add = client.post("/api/keys", json={"service": "virustotal", "key": "malicious_attempt"})
+    assert res_add.status_code == 403
+
+    # Attempting to delete key via API should be blocked (403)
+    res_del = client.delete("/api/keys?service=virustotal&key=somekey")
+    assert res_del.status_code == 403
+
+
+def test_status_endpoint_never_leaks_raw_keys():
+    res = client.get("/api/status")
+    assert res.status_code == 200
+    data = res.json()
+    for service, key_list in data.get("services", {}).items():
+        for k in key_list:
+            assert "key_raw" not in k, f"Raw API key was leaked in status for service {service}!"
+            assert "key_masked" in k
+
+
+def test_index_html_hides_key_management():
+    res = client.get("/")
+    assert res.status_code == 200
+    assert 'id="tab-btn-keys"' not in res.text
+    assert 'id="view-keys"' not in res.text
+    assert "removeKey(" not in res.text

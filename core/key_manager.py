@@ -314,7 +314,6 @@ class KeyManager:
                 entry.is_available(now)
                 rem_cooldown = entry.get_remaining_cooldown(now)
                 result.append({
-                    "key_raw": entry.key,
                     "key_masked": mask_key(entry.key),
                     "status": entry.status,
                     "total_queries": entry.total_queries,
