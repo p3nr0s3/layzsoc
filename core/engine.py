@@ -8,6 +8,7 @@ from core.clients.virustotal import VirusTotalClient
 from core.clients.abuseipdb import AbuseIPDBClient
 from core.clients.urlhaus import URLhausClient
 from core.mail_health import MailHealthChecker
+from core.recon import resolve_ptr
 from core.database import get_cached_ioc, save_cached_ioc, log_scan
 from core.config import CACHE_TTL_HOURS
 
@@ -16,6 +17,8 @@ VERDICT_MALICIOUS = "Malicious"
 VERDICT_SUSPICIOUS = "Suspicious"
 VERDICT_CLEAN = "Clean"
 VERDICT_UNKNOWN = "Unknown"
+
+DEFAULT_PROVIDERS = ["virustotal", "abuseipdb", "urlhaus", "mail_health", "reverse_dns"]
 
 
 def determine_verdict(
@@ -80,6 +83,7 @@ class EnrichmentEngine:
     def scan_items(
         self,
         items: List[IoCItem],
+        providers: Optional[List[str]] = None,
         use_cache: bool = True,
         ttl_hours: int = CACHE_TTL_HOURS,
         skip_private_ips: bool = True,
@@ -92,6 +96,7 @@ class EnrichmentEngine:
         - {"type": "item_result", "data": {...}}
         - {"type": "complete", "summary": {...}}
         """
+        enabled = set(p.lower() for p in (providers if providers is not None else DEFAULT_PROVIDERS))
         total = len(items)
         results: List[Dict[str, Any]] = []
 
@@ -121,6 +126,7 @@ class EnrichmentEngine:
                     "notes": "Private / Loopback / Bogon IP (RFC 1918)",
                     "vt_stats": "N/A",
                     "abuse_score": "N/A",
+                    "ptr": "Private / Local",
                     "details": {
                         "is_private": True,
                         "description": "Private address spaces are not routable on the public internet.",
@@ -154,10 +160,11 @@ class EnrichmentEngine:
                         "type": ioc_type,
                         "verdict": verdict,
                         "notes": "Retrieved from local cache",
-                        "vt_stats": self._format_vt_summary(vt_data),
-                        "abuse_score": self._format_abuse_summary(abuse_data),
+                        "vt_stats": self._format_vt_summary(vt_data) if "virustotal" in enabled else "Disabled",
+                        "abuse_score": self._format_abuse_summary(abuse_data) if "abuseipdb" in enabled else "Disabled",
                         "vt_data": vt_data,
                         "abuse_data": abuse_data,
+                        "ptr": vt_data.get("ptr") if isinstance(vt_data, dict) else None,
                         "mail_health": vt_data.get("mail_health") if isinstance(vt_data, dict) else None,
                         "urlhaus_data": vt_data.get("urlhaus_data") if isinstance(vt_data, dict) else None,
                         "is_cached": True,
@@ -172,48 +179,57 @@ class EnrichmentEngine:
             abuse_res = None
             urlhaus_res = None
             mail_res = None
+            ptr_res = None
 
             # For IPs
             if ioc_type in ("ipv4", "ipv6"):
-                abuse_res = self._query_with_throttle(
-                    lambda: self.abuse_client.check_ip(val),
-                    service_name="AbuseIPDB",
-                    auto_throttle=auto_throttle,
-                )
-                vt_res = self._query_with_throttle(
-                    lambda: self.vt_client.check_ip(val),
-                    service_name="VirusTotal",
-                    auto_throttle=auto_throttle,
-                )
+                if "abuseipdb" in enabled:
+                    abuse_res = self._query_with_throttle(
+                        lambda: self.abuse_client.check_ip(val),
+                        service_name="AbuseIPDB",
+                        auto_throttle=auto_throttle,
+                    )
+                if "virustotal" in enabled:
+                    vt_res = self._query_with_throttle(
+                        lambda: self.vt_client.check_ip(val),
+                        service_name="VirusTotal",
+                        auto_throttle=auto_throttle,
+                    )
+                if "reverse_dns" in enabled:
+                    ptr_res = resolve_ptr(val)
 
             # For Hashes
             elif ioc_type in ("md5", "sha1", "sha256"):
-                vt_res = self._query_with_throttle(
-                    lambda: self.vt_client.check_hash(val),
-                    service_name="VirusTotal",
-                    auto_throttle=auto_throttle,
-                )
+                if "virustotal" in enabled:
+                    vt_res = self._query_with_throttle(
+                        lambda: self.vt_client.check_hash(val),
+                        service_name="VirusTotal",
+                        auto_throttle=auto_throttle,
+                    )
 
             # For Domains
             elif ioc_type == "domain":
-                vt_res = self._query_with_throttle(
-                    lambda: self.vt_client.check_domain(val),
-                    service_name="VirusTotal",
-                    auto_throttle=auto_throttle,
-                )
-                # URLhaus host lookup
-                urlhaus_res = self.urlhaus_client.check_host(val)
-                # Mail health audit
-                mail_res = self.mail_checker.check_domain(val)
+                if "virustotal" in enabled:
+                    vt_res = self._query_with_throttle(
+                        lambda: self.vt_client.check_domain(val),
+                        service_name="VirusTotal",
+                        auto_throttle=auto_throttle,
+                    )
+                if "urlhaus" in enabled:
+                    urlhaus_res = self.urlhaus_client.check_host(val)
+                if "mail_health" in enabled:
+                    mail_res = self.mail_checker.check_domain(val)
 
             # For URLs
             elif ioc_type == "url":
-                vt_res = self._query_with_throttle(
-                    lambda: self.vt_client.check_url(val),
-                    service_name="VirusTotal",
-                    auto_throttle=auto_throttle,
-                )
-                urlhaus_res = self.urlhaus_client.check_url(val)
+                if "virustotal" in enabled:
+                    vt_res = self._query_with_throttle(
+                        lambda: self.vt_client.check_url(val),
+                        service_name="VirusTotal",
+                        auto_throttle=auto_throttle,
+                    )
+                if "urlhaus" in enabled:
+                    urlhaus_res = self.urlhaus_client.check_url(val)
 
             # Calculate verdict
             verdict = determine_verdict(ioc_type, vt_res, abuse_res, urlhaus_res, item.is_private)
@@ -228,6 +244,8 @@ class EnrichmentEngine:
 
             # Embed extra data in vt_res container for caching
             cache_vt = dict(vt_res) if vt_res else {}
+            if ptr_res:
+                cache_vt["ptr"] = ptr_res
             if mail_res:
                 cache_vt["mail_health"] = mail_res
             if urlhaus_res:
@@ -238,13 +256,14 @@ class EnrichmentEngine:
                 "ioc": val,
                 "type": ioc_type,
                 "verdict": verdict,
-                "notes": self._generate_notes(ioc_type, vt_res, abuse_res, urlhaus_res, mail_res),
-                "vt_stats": self._format_vt_summary(vt_res),
-                "abuse_score": self._format_abuse_summary(abuse_res),
+                "notes": self._generate_notes(ioc_type, vt_res, abuse_res, urlhaus_res, mail_res, ptr_res),
+                "vt_stats": self._format_vt_summary(vt_res) if "virustotal" in enabled else "Disabled",
+                "abuse_score": self._format_abuse_summary(abuse_res) if "abuseipdb" in enabled else "Disabled",
                 "vt_data": vt_res,
                 "abuse_data": abuse_res,
                 "urlhaus_data": urlhaus_res,
                 "mail_health": mail_res,
+                "ptr": ptr_res,
                 "is_cached": False,
             }
 
@@ -344,8 +363,13 @@ class EnrichmentEngine:
         abuse_res: Optional[Dict[str, Any]],
         urlhaus_res: Optional[Dict[str, Any]] = None,
         mail_res: Optional[Dict[str, Any]] = None,
+        ptr_res: Optional[str] = None,
     ) -> str:
         notes = []
+
+        # PTR note
+        if ptr_res and ptr_res not in ("Private / Local", "No PTR hostname configured"):
+            notes.append(f"PTR: {ptr_res}")
 
         # URLhaus notes
         if urlhaus_res and urlhaus_res.get("found"):

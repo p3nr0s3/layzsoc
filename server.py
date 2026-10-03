@@ -1,7 +1,7 @@
 """FastAPI Server for Slothery Custom Web Interface."""
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +20,8 @@ from core.key_manager import (
 from core.clients.virustotal import VirusTotalClient
 from core.clients.abuseipdb import AbuseIPDBClient
 from core.mail_health import MailHealthChecker
+from core.recon import perform_recon
+from core.email_analyzer import EmailAnalyzer
 from core.engine import (
     EnrichmentEngine,
     VERDICT_MALICIOUS,
@@ -51,6 +53,7 @@ engine = EnrichmentEngine(km)
 vt_client = VirusTotalClient(km)
 abuse_client = AbuseIPDBClient(km)
 mail_checker = MailHealthChecker()
+email_analyzer = EmailAnalyzer()
 
 WEB_DIR = BASE_DIR / "web"
 WEB_DIR.mkdir(parents=True, exist_ok=True)
@@ -59,6 +62,7 @@ WEB_DIR.mkdir(parents=True, exist_ok=True)
 # Models
 class ScanRequest(BaseModel):
     raw_text: str
+    providers: Optional[List[str]] = None
     use_cache: bool = True
     ttl_hours: int = CACHE_TTL_HOURS
     skip_private_ips: bool = True
@@ -121,6 +125,7 @@ def run_scan(req: ScanRequest):
 
     for event in engine.scan_items(
         items=items,
+        providers=req.providers,
         use_cache=req.use_cache,
         ttl_hours=req.ttl_hours,
         skip_private_ips=req.skip_private_ips,
@@ -142,6 +147,27 @@ def run_scan(req: ScanRequest):
             "unknown": sum(1 for r in results if r["verdict"] == VERDICT_UNKNOWN),
         },
     }
+
+
+@app.get("/api/recon")
+def network_recon_endpoint(target: str):
+    """Network recon for IP or domain: WHOIS/RDAP, Reverse DNS (PTR), Geolocation & ASN."""
+    tgt = target.strip()
+    if not tgt:
+        raise HTTPException(status_code=400, detail="Target cannot be empty.")
+    return perform_recon(tgt)
+
+
+@app.post("/api/analyze-eml")
+async def analyze_eml_endpoint(file: Optional[UploadFile] = File(None), raw_text: Optional[str] = Form(None)):
+    """Analyzes .eml file or raw email header text for phishing and spoofing indicators."""
+    if file:
+        content = await file.read()
+        return email_analyzer.analyze(content, filename=file.filename or "email.eml")
+    elif raw_text:
+        return email_analyzer.analyze(raw_text.encode("utf-8", errors="ignore"), filename="pasted_headers.eml")
+    else:
+        raise HTTPException(status_code=400, detail="Provide either a file or raw_text.")
 
 
 @app.post("/api/upload")
@@ -223,4 +249,8 @@ def serve_index():
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+    is_dev = os.environ.get("ENV", "development") == "development"
+    uvicorn.run("server:app", host=host, port=port, reload=is_dev)

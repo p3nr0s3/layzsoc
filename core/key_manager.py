@@ -264,6 +264,7 @@ class KeyManager:
                 if entry.key == key:
                     entry.total_queries += 1
                     entry.status = STATUS_ACTIVE
+                    self._save_keys()
                     break
 
     def mark_rate_limited(

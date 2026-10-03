@@ -13,7 +13,9 @@ __pycache__/
 # Local databases & keys
 *.db
 *.sqlite3
-data/cache.db
+data/*.db
+data/*.sqlite3
+data/keys.json
 keys.json
 .env
 
