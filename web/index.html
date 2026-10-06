@@ -232,8 +232,8 @@
     </div>
   </header>
 
-  <!-- MAIN WRAPPER (Full responsive wide-screen layout) -->
-  <main class="flex-1 max-w-[1520px] w-full mx-auto p-6 xl:p-8 space-y-6">
+  <!-- MAIN WRAPPER (Full responsive wide-screen & mobile layout) -->
+  <main class="flex-1 max-w-[1520px] w-full mx-auto p-3.5 sm:p-6 xl:p-8 space-y-4 sm:space-y-6">
 
     <!-- ============================================================
          TAB 1: TRIAGE SCANNER
@@ -241,12 +241,12 @@
     <section id="view-triage" class="space-y-6">
       
       <!-- INPUT GRID (8 cols left, 4 cols right, aligned stretch) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
         
         <!-- TEXT INPUT & PROVIDER CONTROLS (8 cols) -->
-        <div class="lg:col-span-8 bg-cyber-card border border-cyber-border rounded-xl p-5 flex flex-col justify-between space-y-4">
+        <div class="lg:col-span-8 bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-5 flex flex-col justify-between space-y-4">
           <div class="space-y-4">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
                 <i data-lucide="terminal" class="w-4 h-4 text-cyber-cyan"></i>
                 Paste Mixed Indicators (IPs, Hashes, Domains, URLs)
@@ -289,14 +289,14 @@
           </div>
 
           <!-- DETECTED PILLS & ENGINE CONTROLS ALIGNED SEJAJAR WITH ENRICH INDICATORS -->
-          <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-cyber-border/60">
-            <div id="detected-pills" class="flex flex-wrap items-center gap-2">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-cyber-border/60">
+            <div id="detected-pills" class="flex flex-wrap items-center gap-1.5">
               <span class="text-xs text-slate-500 font-mono">Awaiting input...</span>
             </div>
             
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
               <!-- Quick Engine Options (Disejajarkan dengan tombol Enrich) -->
-              <div class="flex items-center gap-2.5 bg-[#090d16] border border-cyber-border px-3 py-1.5 rounded-lg text-xs font-mono">
+              <div class="flex flex-wrap items-center justify-between sm:justify-start gap-2 bg-[#090d16] border border-cyber-border px-2.5 py-1.5 rounded-lg text-xs font-mono">
                 <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white" title="Use SQLite Local Cache to save quota">
                   <input type="checkbox" id="cfg-cache" checked class="w-3.5 h-3.5 accent-cyber-cyan rounded">
                   <span>SQLite Cache</span>
@@ -318,7 +318,7 @@
                 id="btn-scan" 
                 onclick="startScan()"
                 disabled
-                class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-blue-600 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyber-cyan/25 active:scale-95"
+                class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyber-cyan to-blue-600 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyber-cyan/25 active:scale-95"
               >
                 <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
                 <span>Enrich Indicators</span>
@@ -380,44 +380,44 @@
       <div id="results-section" class="hidden space-y-6">
 
         <!-- METRICS COUNTER CARDS -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+          <div class="col-span-2 sm:col-span-1 bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Total Checked</div>
             <div id="metric-total" class="text-2xl font-mono font-bold text-cyber-cyan mt-1">0</div>
           </div>
-          <div class="bg-cyber-card border border-red-500/25 rounded-xl p-4 glow-red">
+          <div class="bg-cyber-card border border-red-500/25 rounded-xl p-3.5 sm:p-4 glow-red">
             <div class="text-[11px] font-mono text-red-400 font-bold uppercase">Malicious</div>
             <div id="metric-malicious" class="text-2xl font-mono font-bold text-red-400 mt-1">0</div>
           </div>
-          <div class="bg-cyber-card border border-amber-500/25 rounded-xl p-4 glow-amber">
+          <div class="bg-cyber-card border border-amber-500/25 rounded-xl p-3.5 sm:p-4 glow-amber">
             <div class="text-[11px] font-mono text-amber-400 font-bold uppercase">Suspicious</div>
             <div id="metric-suspicious" class="text-2xl font-mono font-bold text-amber-400 mt-1">0</div>
           </div>
-          <div class="bg-cyber-card border border-emerald-500/25 rounded-xl p-4 glow-green">
+          <div class="bg-cyber-card border border-emerald-500/25 rounded-xl p-3.5 sm:p-4 glow-green">
             <div class="text-[11px] font-mono text-emerald-400 font-bold uppercase">Clean</div>
             <div id="metric-clean" class="text-2xl font-mono font-bold text-emerald-400 mt-1">0</div>
           </div>
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Unknown / Local</div>
             <div id="metric-unknown" class="text-2xl font-mono font-bold text-slate-400 mt-1">0</div>
           </div>
         </div>
 
         <!-- CONTROLS & EXPORTS BAR -->
-        <div class="flex flex-wrap items-center justify-between gap-4 bg-cyber-card border border-cyber-border rounded-xl p-3.5">
-          <div class="flex items-center gap-3">
-            <div class="relative">
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-cyber-card border border-cyber-border rounded-xl p-3 sm:p-3.5">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
+            <div class="relative w-full sm:w-64">
               <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-2.5"></i>
               <input 
                 type="text" 
                 id="search-filter" 
                 oninput="renderResultsTable()" 
                 placeholder="Filter by indicator, vendor, ASN..."
-                class="pl-9 pr-3 py-1.5 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan w-64"
+                class="w-full pl-9 pr-3 py-1.5 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan"
               >
             </div>
             
-            <select id="verdict-filter" onchange="renderResultsTable()" class="py-1.5 px-3 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 focus:outline-none focus:border-cyber-cyan">
+            <select id="verdict-filter" onchange="renderResultsTable()" class="w-full sm:w-auto py-1.5 px-3 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 focus:outline-none focus:border-cyber-cyan">
               <option value="ALL">All Verdicts</option>
               <option value="Malicious">Malicious Only</option>
               <option value="Suspicious">Suspicious Only</option>
@@ -426,28 +426,30 @@
             </select>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2 justify-between sm:justify-end">
             <!-- SOC Operations Utilities -->
-            <button onclick="openSiemModal()" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition glow-cyan">
+            <button onclick="openSiemModal()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition glow-cyan" title="SIEM Hunting Queries">
               <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
-              SIEM Hunting Queries
+              <span class="hidden sm:inline">SIEM Hunting Queries</span>
+              <span class="sm:hidden">SIEM Queries</span>
             </button>
-            <button onclick="openSocTicketModal()" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 hover:bg-purple-500/25 flex items-center gap-1.5 transition glow-purple">
+            <button onclick="openSocTicketModal()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 hover:bg-purple-500/25 flex items-center gap-1.5 transition glow-purple" title="SOC Incident Note">
               <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
-              SOC Incident Note
+              <span class="hidden sm:inline">SOC Incident Note</span>
+              <span class="sm:hidden">SOC Note</span>
             </button>
 
             <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer mx-1">
               <input type="checkbox" id="export-defang" checked class="w-3.5 h-3.5 accent-cyber-cyan rounded">
               <span class="font-mono text-[11px]">Defang [.]</span>
             </label>
-            <button onclick="downloadExport('csv')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition">
+            <button onclick="downloadExport('csv')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
-              CSV
+              <span>CSV</span>
             </button>
-            <button onclick="downloadExport('json')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition">
+            <button onclick="downloadExport('json')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition">
               <i data-lucide="file-json" class="w-3.5 h-3.5"></i>
-              JSON
+              <span>JSON</span>
             </button>
           </div>
         </div>
@@ -484,8 +486,8 @@
     <section id="view-recon" class="hidden space-y-6">
       
       <!-- Recon Input Card -->
-      <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <i data-lucide="radar" class="w-4 h-4 text-cyber-cyan"></i>
@@ -493,14 +495,14 @@
             </h3>
             <p class="text-xs text-slate-400 font-mono mt-0.5">Lookup IP Geolocation, ASN, Reverse DNS (PTR), and ICANN RDAP domain registration</p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <button onclick="setReconSample('8.8.8.8')" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border transition">8.8.8.8 (Google)</button>
             <button onclick="setReconSample('1.1.1.1')" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border transition">1.1.1.1 (Cloudflare)</button>
             <button onclick="setReconSample('github.com')" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border transition">github.com</button>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
           <div class="relative flex-1">
             <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
             <input 
@@ -514,7 +516,7 @@
           <button 
             id="btn-recon"
             onclick="runRecon()" 
-            class="px-5 py-2.5 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
+            class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
           >
             <i data-lucide="zap" class="w-4 h-4"></i>
             Investigate
@@ -526,8 +528,8 @@
       <div id="recon-results" class="hidden space-y-6">
         
         <!-- Summary Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Investigated Target</div>
             <div id="recon-stat-target" class="text-base font-mono font-bold text-white mt-1 truncate">-</div>
             <div id="recon-stat-type" class="text-[10px] font-mono text-cyber-cyan uppercase mt-0.5">-</div>
@@ -644,12 +646,12 @@
               class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan transition custom-scrollbar"
             ></textarea>
             
-            <div class="flex items-center justify-end gap-2">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
               <button onclick="clearEmlInput()" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition">Clear</button>
               <button 
                 id="btn-eml-analyze"
                 onclick="runEmlAnalysis()" 
-                class="px-5 py-2 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
+                class="w-full sm:w-auto justify-center px-5 py-2 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
               >
                 <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
                 Analyze Email
@@ -664,8 +666,8 @@
       <div id="eml-results" class="hidden space-y-6">
         
         <!-- Score & Status Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+          <div class="col-span-2 sm:col-span-1 bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Phishing Risk Score</div>
             <div class="flex items-baseline gap-2 mt-1">
               <span id="eml-risk-score" class="text-2xl font-mono font-bold text-white">0</span>
@@ -789,7 +791,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
           <div class="relative flex-1">
             <i data-lucide="globe" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
             <input 
@@ -802,7 +804,7 @@
           </div>
           <button 
             onclick="runMailHealthCheck()" 
-            class="px-5 py-2.5 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
+            class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
           >
             <i data-lucide="search" class="w-4 h-4"></i>
             Audit Domain
@@ -814,9 +816,9 @@
       <div id="mail-health-results" class="hidden space-y-6">
         
         <!-- Score Banner -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Security Score</div>
             <div class="flex items-baseline gap-2 mt-2">
               <span id="mail-score" class="text-3xl font-mono font-bold text-cyber-cyan">0</span>
@@ -824,19 +826,19 @@
             </div>
           </div>
 
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Spoof Posture</div>
             <div id="mail-rating-badge" class="mt-2 text-sm font-bold font-mono">
               <!-- Rating injected -->
             </div>
           </div>
 
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Mail Provider</div>
             <div id="mail-provider" class="text-sm font-mono font-bold text-white mt-2">-</div>
           </div>
 
-          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col justify-between">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4 flex flex-col justify-between">
             <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">DMARC Policy</div>
             <div id="mail-dmarc-policy" class="text-sm font-mono font-bold text-cyber-cyan mt-2">-</div>
           </div>
@@ -844,7 +846,7 @@
         </div>
 
         <!-- Detailed Protocol Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           
           <!-- MX Card -->
           <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
@@ -917,9 +919,9 @@
             <p class="text-xs text-slate-400 font-mono mt-0.5">Real-time alerts, vulnerability advisories & news from top security publishers</p>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             <!-- Search Filter -->
-            <div class="relative w-64">
+            <div class="relative w-full sm:w-64">
               <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
               <input 
                 type="text" 
@@ -930,7 +932,7 @@
               >
             </div>
             <!-- Refresh Button -->
-            <button onclick="fetchCyberFeeds(true)" id="btn-refresh-feed" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
+            <button onclick="fetchCyberFeeds(true)" id="btn-refresh-feed" class="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
               <span>Refresh</span>
             </button>
@@ -956,15 +958,15 @@
 
         <!-- Feed Pagination Bar -->
         <div id="feed-pagination" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-cyber-border/70 text-xs font-mono">
-          <div class="text-slate-400 text-[11px]">
+          <div class="text-slate-400 text-[11px] text-center sm:text-left">
             Showing <span id="feed-range-start" class="text-white font-bold">1</span>-<span id="feed-range-end" class="text-white font-bold">9</span> of <span id="feed-total-count" class="text-cyber-cyan font-bold">0</span> articles
           </div>
 
-          <div class="flex items-center gap-1.5" id="feed-pagination-controls">
+          <div class="flex flex-wrap items-center justify-center gap-1.5" id="feed-pagination-controls">
             <!-- Injected dynamically via JS: Prev, Page buttons, Next -->
           </div>
 
-          <div class="flex items-center gap-2 text-[11px] text-slate-400">
+          <div class="flex items-center justify-center sm:justify-end gap-2 text-[11px] text-slate-400">
             <span>Per page:</span>
             <select id="feed-page-size" onchange="changeFeedPageSize(this.value)" class="bg-[#090d16] border border-cyber-border rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-cyber-cyan">
               <option value="6">6</option>
@@ -996,9 +998,9 @@
             <p class="text-xs text-slate-400 font-mono mt-0.5">Direct live online query to NIST NVD 2.0 & CISA Known Exploited Vulnerabilities catalog (Zero local database required)</p>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             <!-- Search Bar -->
-            <div class="relative w-72">
+            <div class="relative w-full sm:w-72">
               <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
               <input 
                 type="text" 
@@ -1009,7 +1011,7 @@
               >
             </div>
             <!-- Search Button -->
-            <button onclick="executeCveSearch()" id="btn-search-cve" class="px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
+            <button onclick="executeCveSearch()" id="btn-search-cve" class="w-full sm:w-auto justify-center px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
               <i data-lucide="search" class="w-3.5 h-3.5"></i>
               <span>Live Search</span>
             </button>
@@ -1036,10 +1038,10 @@
 
         <!-- CVE Online Pagination / Status Bar -->
         <div id="cve-pagination" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-cyber-border/70 text-xs font-mono">
-          <div class="text-slate-400 text-[11px]">
+          <div class="text-slate-400 text-[11px] text-center sm:text-left">
             Showing <span id="cve-range-start" class="text-white font-bold">1</span>-<span id="cve-range-end" class="text-white font-bold">5</span> of <span id="cve-total-count" class="text-cyber-cyan font-bold">0</span> online vulnerabilities
           </div>
-          <div class="flex items-center gap-1.5" id="cve-pagination-controls">
+          <div class="flex flex-wrap items-center justify-center gap-1.5" id="cve-pagination-controls">
             <!-- Injected via JS -->
           </div>
         </div>
@@ -1087,14 +1089,13 @@
   </main>
 
   <!-- CYBERPUNK HUD FOOTER & CREATOR WATERMARK -->
-  <!-- CYBERPUNK HUD FOOTER & CREATOR WATERMARK -->
-  <footer class="mt-auto border-t border-cyber-border/70 bg-[#090d16]/80 backdrop-blur-md py-4 px-6 text-xs font-mono text-slate-400">
-    <div class="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
+  <footer class="mt-auto border-t border-cyber-border/70 bg-[#090d16]/80 backdrop-blur-md py-4 px-4 sm:px-6 text-xs font-mono text-slate-400">
+    <div class="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
         <span class="text-sm">🦥</span>
         <span class="font-bold text-white tracking-wide">LazySOC v3.0</span>
-        <span class="text-slate-600">|</span>
-        <span class="text-slate-400">Zero-Effort Automated Threat Intelligence Triage & SOC Workbench</span>
+        <span class="hidden sm:inline text-slate-600">|</span>
+        <span class="text-slate-400 text-[11px] sm:text-xs">Zero-Effort Automated Threat Intelligence Triage & SOC Workbench</span>
       </div>
       <div class="flex items-center gap-3">
         <span class="text-slate-500">Open-Source SOC Platform by</span>
@@ -1107,11 +1108,11 @@
   </footer>
 
   <!-- MODAL: ABOUT LAZYSOC PLATFORM -->
-  <div id="modal-about" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-cyber-card border border-cyber-border rounded-2xl max-w-xl w-full p-6 space-y-5 glow-cyan max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
+  <div id="modal-about" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-cyber-card border border-cyber-border rounded-2xl max-w-xl w-full p-4 sm:p-6 space-y-4 sm:space-y-5 glow-cyan max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
       <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan/25 to-blue-600/20 border border-cyber-cyan/40 flex items-center justify-center text-xl glow-cyan">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyber-cyan/25 to-blue-600/20 border border-cyber-cyan/40 flex items-center justify-center text-xl glow-cyan flex-shrink-0">
             🦥
           </div>
           <div>
@@ -1119,10 +1120,10 @@
               LazySOC
               <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30">v3.0 SOC</span>
             </h3>
-            <p class="text-xs text-slate-400 font-mono">Zero-Effort Automated Threat Intelligence Triage & Security Workbench</p>
+            <p class="text-[11px] sm:text-xs text-slate-400 font-mono">Zero-Effort Automated Threat Intelligence Triage & Security Workbench</p>
           </div>
         </div>
-        <button onclick="closeAboutModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition text-lg">✕</button>
+        <button onclick="closeAboutModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition text-lg flex-shrink-0">✕</button>
       </div>
 
       <div class="space-y-4 text-xs font-mono text-slate-300 leading-relaxed">
@@ -1191,12 +1192,12 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t border-cyber-border/70">
+      <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5 pt-2 border-t border-cyber-border/70">
         <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="text-xs font-mono text-slate-400 hover:text-cyber-cyan flex items-center gap-1.5 transition">
           <i data-lucide="github" class="w-3.5 h-3.5"></i>
           <span>github.com/p3nr0s3</span>
         </a>
-        <button onclick="closeAboutModal()" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition">
+        <button onclick="closeAboutModal()" class="w-full sm:w-auto px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition text-center">
           Got it
         </button>
       </div>
@@ -1204,8 +1205,8 @@
   </div>
 
   <!-- MODAL: SIEM THREAT HUNTING QUERIES -->
-  <div id="modal-siem-query" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-cyber-card border border-cyber-border rounded-xl max-w-2xl w-full p-6 space-y-4 glow-cyan max-h-[85vh] flex flex-col">
+  <div id="modal-siem-query" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-cyber-card border border-cyber-border rounded-xl max-w-2xl w-full p-4 sm:p-6 space-y-4 glow-cyan max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
         <div>
           <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -1219,24 +1220,24 @@
 
       <!-- Syntax Tabs -->
       <div class="flex items-center gap-1.5 p-1 bg-[#090d16] border border-cyber-border rounded-lg text-xs font-mono overflow-x-auto custom-scrollbar">
-        <button onclick="switchSiemTab('splunk')" id="siem-tab-splunk" class="px-3 py-1 rounded font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30">Splunk SPL</button>
-        <button onclick="switchSiemTab('sentinel')" id="siem-tab-sentinel" class="px-3 py-1 rounded text-slate-400 hover:text-white">Sentinel KQL</button>
-        <button onclick="switchSiemTab('crowdstrike')" id="siem-tab-crowdstrike" class="px-3 py-1 rounded text-slate-400 hover:text-white">CrowdStrike</button>
-        <button onclick="switchSiemTab('opensearch')" id="siem-tab-opensearch" class="px-3 py-1 rounded text-slate-400 hover:text-white">OpenSearch</button>
-        <button onclick="switchSiemTab('sigma')" id="siem-tab-sigma" class="px-3 py-1 rounded text-slate-400 hover:text-white">Sigma YAML</button>
-        <button onclick="switchSiemTab('firewall')" id="siem-tab-firewall" class="px-3 py-1 rounded text-slate-400 hover:text-white">Firewall CLI</button>
+        <button onclick="switchSiemTab('splunk')" id="siem-tab-splunk" class="px-3 py-1 rounded font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 whitespace-nowrap">Splunk SPL</button>
+        <button onclick="switchSiemTab('sentinel')" id="siem-tab-sentinel" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Sentinel KQL</button>
+        <button onclick="switchSiemTab('crowdstrike')" id="siem-tab-crowdstrike" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">CrowdStrike</button>
+        <button onclick="switchSiemTab('opensearch')" id="siem-tab-opensearch" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">OpenSearch</button>
+        <button onclick="switchSiemTab('sigma')" id="siem-tab-sigma" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Sigma YAML</button>
+        <button onclick="switchSiemTab('firewall')" id="siem-tab-firewall" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Firewall CLI</button>
       </div>
 
       <!-- Query Output Box -->
-      <div class="relative flex-1 min-h-[220px]">
-        <textarea id="siem-query-output" readonly class="w-full h-full min-h-[200px] p-3 text-xs font-mono text-slate-200 bg-[#070a10] border border-cyber-border rounded-lg focus:outline-none custom-scrollbar select-all"></textarea>
+      <div class="relative flex-1 min-h-[200px]">
+        <textarea id="siem-query-output" readonly class="w-full h-full min-h-[180px] p-3 text-xs font-mono text-slate-200 bg-[#070a10] border border-cyber-border rounded-lg focus:outline-none custom-scrollbar select-all"></textarea>
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t border-cyber-border">
-        <span id="siem-copy-status" class="text-[11px] font-mono text-emerald-400"></span>
-        <div class="flex items-center gap-2">
-          <button onclick="closeSiemModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Close</button>
-          <button onclick="copySiemQuery()" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition flex items-center gap-1.5">
+      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-cyber-border">
+        <span id="siem-copy-status" class="text-[11px] font-mono text-emerald-400 text-center sm:text-left"></span>
+        <div class="flex items-center gap-2 justify-end">
+          <button onclick="closeSiemModal()" class="w-full sm:w-auto px-3 py-1.5 text-xs text-slate-400 hover:text-white">Close</button>
+          <button onclick="copySiemQuery()" class="w-full sm:w-auto justify-center px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition flex items-center gap-1.5">
             <i data-lucide="copy" class="w-3.5 h-3.5"></i>
             Copy Hunting Query
           </button>
@@ -1246,8 +1247,8 @@
   </div>
 
   <!-- MODAL: SOC INCIDENT TICKET & ESCALATION NOTE -->
-  <div id="modal-soc-ticket" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-cyber-card border border-cyber-border rounded-xl max-w-2xl w-full p-6 space-y-4 glow-purple max-h-[85vh] flex flex-col">
+  <div id="modal-soc-ticket" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-cyber-card border border-cyber-border rounded-xl max-w-2xl w-full p-4 sm:p-6 space-y-4 glow-purple max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
         <div>
           <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -1260,15 +1261,15 @@
       </div>
 
       <!-- Incident Note Output Box -->
-      <div class="relative flex-1 min-h-[280px]">
-        <textarea id="soc-ticket-output" readonly class="w-full h-full min-h-[260px] p-3 text-xs font-mono text-slate-200 bg-[#070a10] border border-cyber-border rounded-lg focus:outline-none custom-scrollbar select-all"></textarea>
+      <div class="relative flex-1 min-h-[220px]">
+        <textarea id="soc-ticket-output" readonly class="w-full h-full min-h-[200px] p-3 text-xs font-mono text-slate-200 bg-[#070a10] border border-cyber-border rounded-lg focus:outline-none custom-scrollbar select-all"></textarea>
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t border-cyber-border">
-        <span id="ticket-copy-status" class="text-[11px] font-mono text-emerald-400"></span>
-        <div class="flex items-center gap-2">
-          <button onclick="closeSocTicketModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Close</button>
-          <button onclick="copySocTicket()" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition flex items-center gap-1.5">
+      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-cyber-border">
+        <span id="ticket-copy-status" class="text-[11px] font-mono text-emerald-400 text-center sm:text-left"></span>
+        <div class="flex items-center gap-2 justify-end">
+          <button onclick="closeSocTicketModal()" class="w-full sm:w-auto px-3 py-1.5 text-xs text-slate-400 hover:text-white">Close</button>
+          <button onclick="copySocTicket()" class="w-full sm:w-auto justify-center px-4 py-1.5 text-xs font-bold rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition flex items-center gap-1.5">
             <i data-lucide="copy" class="w-3.5 h-3.5"></i>
             Copy Incident Note
           </button>
@@ -1279,7 +1280,7 @@
 
   <!-- DRAWER: INSPECT TELEMETRY -->
   <div id="drawer-inspect" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
-    <div class="bg-cyber-card border-l border-cyber-border w-full max-w-xl h-full p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+    <div class="bg-cyber-card border-l border-cyber-border w-full max-w-xl h-full p-4 sm:p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
       <div class="flex items-center justify-between border-b border-cyber-border/80 pb-3">
         <div>
           <h3 id="inspect-title" class="text-sm font-mono font-bold text-white">Indicator Deep Dive</h3>
@@ -2945,12 +2946,12 @@ tags:
               </div>
             </div>
 
-            <div class="flex items-center justify-between pt-2 border-t border-cyber-border/60 text-xs font-mono">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pt-2 border-t border-cyber-border/60 text-xs font-mono">
               <span class="text-slate-500 text-[11px] flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 Source: <span class="text-slate-300 font-semibold">${cve.source}</span>
               </span>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                 <button onclick="sendCveToTriage(${globalIdx})" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[11px] transition flex items-center gap-1">
                   <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
                   <span>Triage Indicators</span>
