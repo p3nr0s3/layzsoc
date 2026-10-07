@@ -156,4 +156,60 @@ def test_cve_vendor_search_and_pagination():
     assert "has_more" in data2
 
 
+def test_containment_generator():
+    sample_iocs = [
+        {"indicator": "185.220.101.5", "type": "ipv4", "verdict": "MALICIOUS"},
+        {"indicator": "attacker-c2.online", "type": "domain", "verdict": "MALICIOUS"},
+        {"indicator": "84c82835a5d21bbcf75a61706d8ab549", "type": "md5", "verdict": "MALICIOUS"}
+    ]
+    res = client.post("/api/containment", json={"iocs": sample_iocs})
+    assert res.status_code == 200
+    data = res.json()
+    assert "scripts" in data
+    scripts = data["scripts"]
+    assert "powershell" in scripts
+    assert "185.220.101.5" in scripts["powershell"]
+    assert "linux" in scripts
+    assert "iptables" in scripts["linux"]
+    assert "fortigate" in scripts
+    assert "cisco" in scripts
+    assert "paloalto" in scripts
+    assert "mikrotik" in scripts
+    assert "edr" in scripts
+
+
+def test_trace_url_endpoint():
+    res = client.post("/api/trace-url", json={"url": "https://example.com"})
+    assert res.status_code == 200
+    data = res.json()
+    assert "final_url" in data
+    assert "hops" in data
+    assert isinstance(data["hops"], list)
+    assert len(data["hops"]) > 0
+
+
+def test_deobfuscator_endpoint():
+    # Test PowerShell Encoded Command (Write-Host "LazySOC") in UTF-16LE base64
+    import base64
+    ps_cmd = 'Write-Host "LazySOC"'
+    b64_enc = base64.b64encode(ps_cmd.encode("utf-16le")).decode()
+    payload = f"powershell.exe -NoP -enc {b64_enc}"
+
+    res = client.post("/api/deobfuscate", json={"payload": payload})
+    assert res.status_code == 200
+    data = res.json()
+    assert "powershell" in data
+    assert len(data["powershell"]) > 0
+    assert "Write-Host" in data["powershell"][0]["decoded_command"]
+
+    # Test Hex and ROT13
+    hex_payload = "48656c6c6f"  # "Hello"
+    res2 = client.post("/api/deobfuscate", json={"payload": hex_payload})
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert data2.get("hex_decoded") == "Hello"
+    assert data2.get("rot13") == "48656p6p6s"
+
+
+
 

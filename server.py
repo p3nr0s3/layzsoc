@@ -40,6 +40,9 @@ from core.database import (
 from core.exporter import export_to_csv, export_to_json
 from core.feed import get_cyber_news
 from core.cve import query_cve
+from core.containment import generate_containment_rules
+from core.url_tracer import trace_url_redirects
+from core.deobfuscator import deobfuscate_payload
 
 app = FastAPI(title="LazySOC Threat Triage & Investigation Platform", version="3.0.0")
 
@@ -81,6 +84,20 @@ class ExportRequest(BaseModel):
     results: List[Dict[str, Any]]
     format: str = "csv"  # 'csv' or 'json'
     defang: bool = True
+
+
+class ContainmentRequest(BaseModel):
+    iocs: List[Dict[str, Any]]
+    comment: Optional[str] = "LazySOC Incident Containment"
+
+
+class TraceUrlRequest(BaseModel):
+    url: str
+    max_hops: Optional[int] = 8
+
+
+class DeobfuscateRequest(BaseModel):
+    payload: str
 
 
 @app.get("/api/status")
@@ -266,6 +283,30 @@ def get_cyber_feed_endpoint(source: str = "all", limit: int = 40):
 def get_cve_endpoint(query: Optional[str] = None, limit: int = 30, page: int = 1):
     """Searches NIST NVD and vulnerability databases for CVE details with latest-first pagination."""
     return query_cve(search=query, limit=limit, page=page)
+
+
+@app.post("/api/containment")
+def generate_containment_endpoint(req: ContainmentRequest):
+    """Generates instant blocklist and containment scripts for multiple firewall and EDR platforms."""
+    return generate_containment_rules(req.iocs, custom_comment=req.comment or "LazySOC Incident Containment")
+
+
+@app.post("/api/trace-url")
+def trace_url_endpoint(req: TraceUrlRequest):
+    """Traces URL redirect chain safely and passively, evaluating domain age and SSL certificates."""
+    url = req.url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="URL cannot be empty.")
+    return trace_url_redirects(url, max_hops=req.max_hops or 8)
+
+
+@app.post("/api/deobfuscate")
+def deobfuscate_endpoint(req: DeobfuscateRequest):
+    """De-obfuscates PowerShell commands, base64, hex, and percent-encoded payloads."""
+    payload = req.payload.strip()
+    if not payload:
+        raise HTTPException(status_code=400, detail="Payload cannot be empty.")
+    return deobfuscate_payload(payload)
 
 
 @app.get("/", response_class=HTMLResponse)
