@@ -54,15 +54,16 @@
 - 5 Cyberpunk-inspired themes: **Cyberpunk Cyan**, **Matrix Green**, **Dracula Violet**, **Crimson Alert**, and **Nordic Frost**.
 - Responsive split-screen navbar that adapts seamlessly when browser windows are tiled side-by-side.
 
-### 🛑 8. 1-Click Containment & Firewall Blocklist Generator
-- Instant automated generation of containment and blocking rules directly from triaged malicious/suspicious indicators:
-  - **Windows Defender Firewall** (PowerShell `New-NetFirewallRule`)
-  - **Linux** (`iptables -A INPUT -j DROP` and `ufw insert 1 deny`)
-  - **FortiGate CLI** (address objects, groups, and IPv4 policy drop rules)
-  - **Cisco ASA** (`object network` and `access-list OUTSIDE-IN extended deny`)
-  - **Palo Alto PAN-OS** (set address / address-group CLI commands)
-  - **MikroTik RouterOS** (`/ip firewall address-list` drop rules)
-  - **EDR & Defender Hash Ban** (PowerShell indicators and MD5/SHA256 deny lists)
+### 📋 8. Interactive SOC Playbooks & Incident Checklist
+- **NIST SP 800-61r2 & MITRE ATT&CK Aligned**: Structured standard operating procedures for the 5 most common enterprise threats:
+  - **Phishing & Business Email Compromise (BEC)** (`T1566`, `T1586`)
+  - **Ransomware & Destructive Malware** (`T1486`, `T1489`)
+  - **Compromised Account & Credential Access / ATO** (`T1078`, `T1110`)
+  - **C2 Beaconing & Data Exfiltration** (`T1071`, `T1041`)
+  - **Web Exploit & Webshell Outbreak** (`T1190`, `T1505.003`)
+- **Phase-by-Phase Interactive Checklist**: Track tasks across **Identification**, **Containment**, **Eradication**, and **Recovery** with real-time percentage progress bar.
+- **Ready-to-Run Remediation Snippets**: 1-click copy remediation CLI commands for PowerShell, M365 Exchange, iptables, Azure AD, and EDR agents.
+- **Audit Handover Report**: One-click generation of Markdown incident handover notes containing completed checklist tasks, triage IoCs, and timestamps ready for Jira, ServiceNow, Slack, or TheHive.
 
 ### 🔗 9. Safe URL Redirect Tracer & Domain Age Inspector
 - **Safe & Passive**: Uses lightweight HTTP header inspection (`stream=True`, zero executable downloads) to trace complex URL redirection hops (301, 302, 307, 308).

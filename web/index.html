@@ -188,6 +188,10 @@
           <i data-lucide="mail-warning" class="w-4 h-4 flex-shrink-0"></i>
           <span>Phishing EML</span>
         </button>
+        <button onclick="openPlaybookModal()" class="w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/20 text-left" title="Incident Playbooks & Checklist">
+          <i data-lucide="book-open-check" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
+          <span>SOC Playbooks</span>
+        </button>
       </div>
 
       <!-- GROUP 2: DEEP ANALYSIS & FORENSICS -->
@@ -506,10 +510,10 @@
 
           <div class="flex flex-wrap items-center gap-2 justify-between sm:justify-end">
             <!-- SOC Operations Utilities -->
-            <button onclick="openContainmentModal()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 flex items-center gap-1.5 transition glow-red" title="Containment & Firewall Blocklists">
-              <i data-lucide="shield-ban" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Containment Rules</span>
-              <span class="sm:hidden">Blocklist</span>
+            <button onclick="openPlaybookModal()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 flex items-center gap-1.5 transition glow-amber" title="Interactive SOC Incident Playbooks & Checklist">
+              <i data-lucide="book-open-check" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">SOC Playbooks</span>
+              <span class="sm:hidden">Playbooks</span>
             </button>
             <button onclick="openSiemModal()" class="flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition glow-cyan" title="SIEM Hunting Queries">
               <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
@@ -1517,46 +1521,92 @@
     </div>
   </div>
 
-  <!-- MODAL: CONTAINMENT & FIREWALL BLOCKLIST GENERATOR -->
-  <div id="modal-containment" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-cyber-card border border-rose-500/30 rounded-xl max-w-3xl w-full p-4 sm:p-6 space-y-4 glow-red max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
-        <div>
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
-            <i data-lucide="shield-ban" class="w-4 h-4 text-rose-400"></i>
-            1-Click Threat Containment & Firewall Blocklist Generator
-          </h3>
-          <p class="text-[11px] font-mono text-slate-400 mt-0.5">Automated containment rules for host isolation, edge firewalls & EDR ban</p>
+  <!-- MODAL: INTERACTIVE SOC INCIDENT PLAYBOOKS & CHECKLIST -->
+  <div id="modal-soc-playbook" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-cyber-card border border-amber-500/30 rounded-2xl max-w-4xl w-full p-4 sm:p-6 space-y-4 glow-amber max-h-[92vh] flex flex-col">
+      
+      <!-- HEADER -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyber-border/70 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 glow-amber flex-shrink-0">
+            <i data-lucide="book-open-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2 font-mono">
+              SOC Incident Response Playbooks
+              <span id="pb-active-severity-badge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">HIGH</span>
+            </h3>
+            <p class="text-[11px] font-mono text-slate-400 mt-0.5">Interactive SOP checklists mapped to NIST SP 800-61r2 & MITRE ATT&CK</p>
+          </div>
         </div>
-        <button onclick="closeContainmentModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+
+        <!-- PLAYBOOK PICKER & CLOSE -->
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <select id="playbook-select" onchange="loadSelectedPlaybook(this.value)" class="bg-[#090d16] border border-cyber-border rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-cyber-cyan focus:outline-none focus:border-cyber-cyan">
+            <option value="phishing">🎣 Phishing & BEC Attack</option>
+            <option value="ransomware">💀 Ransomware & Destructive Malware</option>
+            <option value="credential_theft">🔑 Compromised Account (ATO)</option>
+            <option value="c2_exfil">📡 C2 Beaconing & Exfiltration</option>
+            <option value="web_exploit">🌐 Web Exploit & Webshell</option>
+          </select>
+          <button onclick="closePlaybookModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
+        </div>
       </div>
 
-      <!-- Platform Syntax Tabs -->
-      <div class="flex items-center gap-1.5 p-1 bg-[#090d16] border border-cyber-border rounded-lg text-xs font-mono overflow-x-auto custom-scrollbar">
-        <button onclick="switchContainmentTab('powershell')" id="containment-tab-powershell" class="px-3 py-1 rounded font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 whitespace-nowrap">Windows Firewall</button>
-        <button onclick="switchContainmentTab('linux')" id="containment-tab-linux" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Linux iptables / UFW</button>
-        <button onclick="switchContainmentTab('fortigate')" id="containment-tab-fortigate" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">FortiGate CLI</button>
-        <button onclick="switchContainmentTab('cisco')" id="containment-tab-cisco" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Cisco ASA</button>
-        <button onclick="switchContainmentTab('paloalto')" id="containment-tab-paloalto" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Palo Alto</button>
-        <button onclick="switchContainmentTab('mikrotik')" id="containment-tab-mikrotik" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">MikroTik RouterOS</button>
-        <button onclick="switchContainmentTab('edr')" id="containment-tab-edr" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">EDR Hash Ban</button>
+      <!-- ACTIVE PLAYBOOK META & PROGRESS BAR -->
+      <div class="bg-[#090d16] border border-cyber-border rounded-xl p-3 sm:p-4 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+          <div>
+            <div id="pb-active-title" class="text-white font-bold text-sm">Phishing & Business Email Compromise (BEC)</div>
+            <div id="pb-active-desc" class="text-[11px] text-slate-400 mt-0.5">Standard operating procedure for triaging suspicious emails.</div>
+          </div>
+          <div class="flex items-center gap-2 text-right">
+            <span id="pb-progress-badge" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              0 / 9 Completed (0%)
+            </span>
+          </div>
+        </div>
+
+        <!-- PROGRESS BAR TRACK -->
+        <div class="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden border border-cyber-border/60">
+          <div id="pb-progress-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <!-- PHASE FILTER CHIPS -->
+        <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-cyber-border/40 text-xs font-mono">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-slate-500 text-[11px] mr-1">Phase:</span>
+            <button onclick="setPlaybookPhaseFilter('all')" id="pb-filter-all" class="px-2 py-0.5 rounded text-[11px] font-bold bg-white/10 text-white border border-cyber-border">All</button>
+            <button onclick="setPlaybookPhaseFilter('Identification')" id="pb-filter-id" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Identification</button>
+            <button onclick="setPlaybookPhaseFilter('Containment')" id="pb-filter-cont" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Containment</button>
+            <button onclick="setPlaybookPhaseFilter('Eradication')" id="pb-filter-erad" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Eradication</button>
+            <button onclick="setPlaybookPhaseFilter('Recovery')" id="pb-filter-rec" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Recovery</button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="selectAllPlaybookTasks()" class="text-[11px] text-cyber-cyan hover:underline">Select All</button>
+            <span class="text-slate-600">|</span>
+            <button onclick="resetPlaybookTasks()" class="text-[11px] text-slate-400 hover:text-white">Reset</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Script Output Box -->
-      <div class="relative flex-1 min-h-[220px]">
-        <textarea id="containment-script-output" readonly class="w-full h-full min-h-[200px] p-3 text-xs font-mono text-slate-200 bg-[#070a10] border border-cyber-border rounded-lg focus:outline-none custom-scrollbar select-all"></textarea>
+      <!-- CHECKLIST TASKS LIST -->
+      <div id="playbook-tasks-container" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 min-h-[260px] max-h-[46vh]">
+        <!-- Injected via JS -->
       </div>
 
-      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-cyber-border">
-        <span id="containment-copy-status" class="text-[11px] font-mono text-emerald-400 text-center sm:text-left"></span>
+      <!-- FOOTER ACTIONS -->
+      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-cyber-border">
+        <span id="pb-copy-status" class="text-[11px] font-mono text-emerald-400 text-center sm:text-left"></span>
         <div class="flex items-center gap-2 justify-end">
-          <button onclick="closeContainmentModal()" class="w-full sm:w-auto px-3 py-1.5 text-xs text-slate-400 hover:text-white">Close</button>
-          <button onclick="copyContainmentScript()" class="w-full sm:w-auto justify-center px-4 py-1.5 text-xs font-bold rounded-lg bg-rose-500 text-white hover:bg-rose-600 transition flex items-center gap-1.5">
-            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-            Copy Containment Script
+          <button onclick="closePlaybookModal()" class="w-full sm:w-auto px-3.5 py-1.5 text-xs font-mono text-slate-400 hover:text-white">Close</button>
+          <button onclick="exportPlaybookHandover()" class="w-full sm:w-auto justify-center px-4 py-2 text-xs font-mono font-bold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition flex items-center gap-1.5 glow-amber">
+            <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+            <span>Export Handover Report</span>
           </button>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -2372,88 +2422,314 @@ tags:
     }
 
     // ==========================================
-    // SOC 1-CLICK CONTAINMENT & FIREWALL GENERATOR
+    // INTERACTIVE SOC PLAYBOOKS & INCIDENT CHECKLIST
     // ==========================================
-    let currentContainmentPlatform = 'powershell';
-    let containmentRuleCache = null;
+    let availablePlaybooks = [];
+    let currentPlaybookId = 'phishing';
+    let currentPlaybookData = null;
+    let completedTasksMap = {}; // { playbookId: Set(taskId) }
+    let activePhaseFilter = 'all';
 
-    async function openContainmentModal() {
-      if (!currentResults || !currentResults.length) {
-        alert("Please run a scan or paste indicators first to generate containment rules.");
+    async function openPlaybookModal(preferredId = null) {
+      const modal = document.getElementById('modal-soc-playbook');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+
+      try {
+        if (!availablePlaybooks || !availablePlaybooks.length) {
+          const res = await fetch('/api/playbooks');
+          if (res.ok) {
+            const data = await res.json();
+            availablePlaybooks = data.playbooks || [];
+            
+            // Populate select box if available
+            const selectEl = document.getElementById('playbook-select');
+            if (selectEl && availablePlaybooks.length) {
+              selectEl.innerHTML = availablePlaybooks.map(pb => {
+                const iconMap = {
+                  'phishing': '🎣',
+                  'ransomware': '💀',
+                  'credential_theft': '🔑',
+                  'c2_exfil': '📡',
+                  'web_exploit': '🌐'
+                };
+                const icon = iconMap[pb.id] || '📋';
+                return `<option value="${pb.id}">${icon} ${pb.title}</option>`;
+              }).join('');
+            }
+          }
+        }
+
+        const targetId = preferredId || currentPlaybookId || (availablePlaybooks[0] ? availablePlaybooks[0].id : 'phishing');
+        const selectEl = document.getElementById('playbook-select');
+        if (selectEl) selectEl.value = targetId;
+
+        await loadSelectedPlaybook(targetId);
+      } catch (e) {
+        console.error("Failed to load playbooks:", e);
+      }
+    }
+
+    function closePlaybookModal() {
+      const modal = document.getElementById('modal-soc-playbook');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function loadSelectedPlaybook(id) {
+      currentPlaybookId = id;
+      const container = document.getElementById('playbook-tasks-container');
+      if (container) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-500 font-mono text-xs flex items-center justify-center gap-2">
+          <div class="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          Loading SOC Playbook procedures...
+        </div>`;
+      }
+
+      try {
+        const res = await fetch(`/api/playbooks/${id}`);
+        if (!res.ok) throw new Error("Playbook not found");
+        currentPlaybookData = await res.json();
+
+        // Update Header & Metadata
+        const titleEl = document.getElementById('pb-active-title');
+        const descEl = document.getElementById('pb-active-desc');
+        const sevBadge = document.getElementById('pb-active-severity-badge');
+
+        if (titleEl) titleEl.innerText = currentPlaybookData.title;
+        if (descEl) descEl.innerText = currentPlaybookData.description;
+        if (sevBadge) {
+          const sev = currentPlaybookData.severity || 'HIGH';
+          sevBadge.innerText = sev;
+          if (sev === 'CRITICAL') {
+            sevBadge.className = "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30";
+          } else if (sev === 'HIGH') {
+            sevBadge.className = "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30";
+          } else {
+            sevBadge.className = "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30";
+          }
+        }
+
+        if (!completedTasksMap[currentPlaybookId]) {
+          completedTasksMap[currentPlaybookId] = new Set();
+        }
+
+        renderPlaybookTasks();
+      } catch (e) {
+        if (container) {
+          container.innerHTML = `<div class="p-6 text-center text-red-400 font-mono text-xs border border-red-500/30 rounded-xl bg-red-500/10">
+            Failed to load playbook: ${e.message}
+          </div>`;
+        }
+      }
+    }
+
+    function setPlaybookPhaseFilter(phase) {
+      activePhaseFilter = phase;
+      const filters = {
+        'all': 'pb-filter-all',
+        'Identification': 'pb-filter-id',
+        'Containment': 'pb-filter-cont',
+        'Eradication': 'pb-filter-erad',
+        'Recovery': 'pb-filter-rec'
+      };
+
+      Object.entries(filters).forEach(([pName, elId]) => {
+        const btn = document.getElementById(elId);
+        if (btn) {
+          if (pName === phase) {
+            btn.className = "px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40";
+          } else {
+            btn.className = "px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white";
+          }
+        }
+      });
+
+      renderPlaybookTasks();
+    }
+
+    function renderPlaybookTasks() {
+      if (!currentPlaybookData) return;
+      const container = document.getElementById('playbook-tasks-container');
+      if (!container) return;
+
+      const tasks = currentPlaybookData.tasks || [];
+      const completedSet = completedTasksMap[currentPlaybookId] || new Set();
+
+      // Update progress bar
+      const total = tasks.length;
+      const done = completedSet.size;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      const progressBadge = document.getElementById('pb-progress-badge');
+      const progressBar = document.getElementById('pb-progress-bar');
+      if (progressBadge) {
+        progressBadge.innerText = `${done} / ${total} Completed (${pct}%)`;
+        if (pct === 100) {
+          progressBadge.className = "px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        } else {
+          progressBadge.className = "px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30";
+        }
+      }
+      if (progressBar) {
+        progressBar.style.width = `${pct}%`;
+      }
+
+      // Filter tasks
+      const filteredTasks = tasks.filter(t => activePhaseFilter === 'all' || t.phase === activePhaseFilter);
+
+      if (!filteredTasks.length) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-xs">
+          No tasks for selected phase filter: ${activePhaseFilter}
+        </div>`;
         return;
       }
 
-      const modal = document.getElementById('modal-containment');
-      if (modal) {
-        modal.classList.remove('hidden');
-        lucide.createIcons();
-      }
+      const phaseColors = {
+        'Identification': 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
+        'Containment': 'text-amber-400 bg-amber-500/10 border-amber-500/30',
+        'Eradication': 'text-rose-400 bg-rose-500/10 border-rose-500/30',
+        'Recovery': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+      };
 
-      const output = document.getElementById('containment-script-output');
-      output.value = "# Generating containment scripts from LazySOC backend engine...";
+      container.innerHTML = filteredTasks.map((task) => {
+        const isChecked = completedSet.has(task.id);
+        const pClass = phaseColors[task.phase] || 'text-slate-400 bg-slate-800 border-slate-700';
+        const cardBg = isChecked ? 'bg-[#0b141d]/70 border-emerald-500/30' : 'bg-[#090d16] border-cyber-border';
+
+        let commandBlock = '';
+        if (task.command) {
+          const escapedCmd = task.command.replace(/"/g, '&quot;');
+          commandBlock = `
+            <div class="mt-2.5 bg-[#04060a] border border-cyber-border/70 rounded-lg p-2.5 font-mono text-[11px] relative group">
+              <div class="flex items-center justify-between pb-1 text-[10px] text-slate-500 border-b border-cyber-border/40 mb-1.5">
+                <span>Remediation CLI Snippet</span>
+                <button onclick="copyPlaybookCommand(this)" data-cmd="${escapedCmd}" class="text-amber-400 hover:text-amber-300 flex items-center gap-1 transition">
+                  <i data-lucide="copy" class="w-3 h-3"></i>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <pre class="text-slate-300 overflow-x-auto custom-scrollbar whitespace-pre-wrap">${escapeHtml(task.command)}</pre>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="border rounded-xl p-3 sm:p-3.5 transition-all ${cardBg}">
+            <div class="flex items-start gap-3">
+              <input 
+                type="checkbox" 
+                id="chk-${task.id}" 
+                ${isChecked ? 'checked' : ''} 
+                onchange="togglePlaybookTask('${task.id}')"
+                class="mt-1 w-4 h-4 rounded border-cyber-border bg-[#090d16] text-amber-500 focus:ring-amber-500 focus:ring-offset-0 cursor-pointer accent-amber-500"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[10px] font-mono uppercase font-bold px-1.5 py-0.5 rounded border ${pClass}">
+                    ${task.phase}
+                  </span>
+                  ${task.mitre ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-cyber-border/50">${task.mitre}</span>` : ''}
+                  <label for="chk-${task.id}" class="text-xs sm:text-sm font-bold cursor-pointer font-mono ${isChecked ? 'text-emerald-300 line-through' : 'text-white'}">
+                    ${escapeHtml(task.title)}
+                  </label>
+                </div>
+                <p class="text-[11px] text-slate-400 font-mono mt-1 leading-relaxed">
+                  ${escapeHtml(task.description)}
+                </p>
+                ${commandBlock}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function togglePlaybookTask(taskId) {
+      if (!completedTasksMap[currentPlaybookId]) {
+        completedTasksMap[currentPlaybookId] = new Set();
+      }
+      const set = completedTasksMap[currentPlaybookId];
+      if (set.has(taskId)) {
+        set.delete(taskId);
+      } else {
+        set.add(taskId);
+      }
+      renderPlaybookTasks();
+    }
+
+    function selectAllPlaybookTasks() {
+      if (!currentPlaybookData) return;
+      if (!completedTasksMap[currentPlaybookId]) {
+        completedTasksMap[currentPlaybookId] = new Set();
+      }
+      const set = completedTasksMap[currentPlaybookId];
+      (currentPlaybookData.tasks || []).forEach(t => set.add(t.id));
+      renderPlaybookTasks();
+    }
+
+    function resetPlaybookTasks() {
+      if (!currentPlaybookData) return;
+      completedTasksMap[currentPlaybookId] = new Set();
+      renderPlaybookTasks();
+    }
+
+    function copyPlaybookCommand(buttonEl) {
+      const cmd = buttonEl.getAttribute('data-cmd');
+      if (!cmd) return;
+      navigator.clipboard.writeText(cmd);
+      const span = buttonEl.querySelector('span');
+      if (span) {
+        const orig = span.innerText;
+        span.innerText = "Copied!";
+        setTimeout(() => { span.innerText = orig; }, 2000);
+      }
+    }
+
+    async function exportPlaybookHandover() {
+      if (!currentPlaybookData) return;
+
+      const completedIds = Array.from(completedTasksMap[currentPlaybookId] || []);
+      const statusEl = document.getElementById('pb-copy-status');
+      if (statusEl) statusEl.innerText = "Generating handover audit report...";
+
+      // Pull current triage IoCs into the audit report if available
+      const iocs = (currentResults || []).map(r => r.ioc);
 
       try {
-        const iocList = currentResults.map(r => r.ioc);
-        const res = await fetch('/api/containment', {
+        const res = await fetch('/api/playbooks/report', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            iocs: iocList,
-            comment: "LazySOC Rapid Incident Containment"
+            playbook_id: currentPlaybookId,
+            completed_task_ids: completedIds,
+            analyst_name: "SOC Duty Analyst",
+            incident_id: `INC-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`,
+            notes: "Triaged and contained following standard operating procedures in LazySOC.",
+            iocs: iocs
           })
         });
 
         if (!res.ok) {
           const err = await res.json();
-          output.value = `# Error generating containment rules: ${err.detail || 'Server error'}`;
-          return;
+          throw new Error(err.detail || "Server error");
         }
 
         const data = await res.json();
-        containmentRuleCache = data.platforms || {};
-        switchContainmentTab(currentContainmentPlatform);
-      } catch (e) {
-        output.value = `# Network or execution error: ${e.message}`;
-      }
-    }
+        const markdown = data.report_markdown || "";
 
-    function closeContainmentModal() {
-      const modal = document.getElementById('modal-containment');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function switchContainmentTab(platform) {
-      currentContainmentPlatform = platform;
-      const platforms = ['powershell', 'linux', 'fortigate', 'cisco', 'paloalto', 'mikrotik', 'edr'];
-      platforms.forEach(p => {
-        const btn = document.getElementById(`containment-tab-${p}`);
-        if (btn) {
-          if (p === platform) {
-            btn.className = "px-3 py-1 rounded font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 whitespace-nowrap";
-          } else {
-            btn.className = "px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap";
-          }
+        navigator.clipboard.writeText(markdown);
+        if (statusEl) {
+          statusEl.innerText = `✓ Report copied to clipboard (${data.completed_count}/${data.total_tasks} completed)! Ready for Jira / ServiceNow / TheHive.`;
+          setTimeout(() => { statusEl.innerText = ""; }, 5000);
         }
-      });
-
-      const output = document.getElementById('containment-script-output');
-      if (containmentRuleCache && containmentRuleCache[platform]) {
-        output.value = containmentRuleCache[platform];
-      } else if (!containmentRuleCache) {
-        output.value = "# No rules available. Please click Containment Rules to generate.";
-      } else {
-        output.value = `# No specific containment syntax rules generated for ${platform}.`;
-      }
-    }
-
-    function copyContainmentScript() {
-      const text = document.getElementById('containment-script-output').value;
-      if (!text) return;
-      navigator.clipboard.writeText(text);
-      const status = document.getElementById('containment-copy-status');
-      if (status) {
-        status.innerText = "Script copied to clipboard!";
-        setTimeout(() => { status.innerText = ""; }, 2500);
+      } catch (e) {
+        if (statusEl) {
+          statusEl.innerText = `Error exporting: ${e.message}`;
+          setTimeout(() => { statusEl.innerText = ""; }, 4000);
+        }
       }
     }
 

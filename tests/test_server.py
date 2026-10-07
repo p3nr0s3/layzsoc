@@ -156,26 +156,35 @@ def test_cve_vendor_search_and_pagination():
     assert "has_more" in data2
 
 
-def test_containment_generator():
-    sample_iocs = [
-        {"indicator": "185.220.101.5", "type": "ipv4", "verdict": "MALICIOUS"},
-        {"indicator": "attacker-c2.online", "type": "domain", "verdict": "MALICIOUS"},
-        {"indicator": "84c82835a5d21bbcf75a61706d8ab549", "type": "md5", "verdict": "MALICIOUS"}
-    ]
-    res = client.post("/api/containment", json={"iocs": sample_iocs})
+def test_playbooks_endpoints():
+    res = client.get("/api/playbooks")
     assert res.status_code == 200
     data = res.json()
-    assert "scripts" in data
-    scripts = data["scripts"]
-    assert "powershell" in scripts
-    assert "185.220.101.5" in scripts["powershell"]
-    assert "linux" in scripts
-    assert "iptables" in scripts["linux"]
-    assert "fortigate" in scripts
-    assert "cisco" in scripts
-    assert "paloalto" in scripts
-    assert "mikrotik" in scripts
-    assert "edr" in scripts
+    assert "playbooks" in data
+    assert len(data["playbooks"]) >= 4
+
+    # Check specific playbook
+    res_pb = client.get("/api/playbooks/phishing")
+    assert res_pb.status_code == 200
+    pb = res_pb.json()
+    assert pb["id"] == "phishing"
+    assert "tasks" in pb
+    assert len(pb["tasks"]) > 0
+
+    # Test report generation
+    res_rep = client.post("/api/playbooks/report", json={
+        "playbook_id": "phishing",
+        "completed_task_ids": ["phish_1", "phish_2"],
+        "analyst_name": "Test Analyst",
+        "incident_id": "INC-TEST-999",
+        "iocs": ["185.220.101.5", "attacker-c2.online"]
+    })
+    assert res_rep.status_code == 200
+    rep = res_rep.json()
+    assert "report_markdown" in rep
+    assert "INC-TEST-999" in rep["report_markdown"]
+    assert "185.220.101.5" in rep["report_markdown"]
+    assert rep["completed_count"] == 2
 
 
 def test_trace_url_endpoint():

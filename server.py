@@ -40,7 +40,7 @@ from core.database import (
 from core.exporter import export_to_csv, export_to_json
 from core.feed import get_cyber_news
 from core.cve import query_cve
-from core.containment import generate_containment_rules
+from core.playbooks import get_all_playbooks, get_playbook, generate_playbook_report
 from core.url_tracer import trace_url_redirects
 from core.deobfuscator import deobfuscate_payload
 
@@ -86,9 +86,13 @@ class ExportRequest(BaseModel):
     defang: bool = True
 
 
-class ContainmentRequest(BaseModel):
-    iocs: List[Dict[str, Any]]
-    comment: Optional[str] = "LazySOC Incident Containment"
+class PlaybookReportRequest(BaseModel):
+    playbook_id: str
+    completed_task_ids: List[str]
+    analyst_name: Optional[str] = "SOC Analyst"
+    incident_id: Optional[str] = "INC-SOC-001"
+    notes: Optional[str] = ""
+    iocs: Optional[List[str]] = None
 
 
 class TraceUrlRequest(BaseModel):
@@ -285,10 +289,35 @@ def get_cve_endpoint(query: Optional[str] = None, limit: int = 30, page: int = 1
     return query_cve(search=query, limit=limit, page=page)
 
 
-@app.post("/api/containment")
-def generate_containment_endpoint(req: ContainmentRequest):
-    """Generates instant blocklist and containment scripts for multiple firewall and EDR platforms."""
-    return generate_containment_rules(req.iocs, custom_comment=req.comment or "LazySOC Incident Containment")
+@app.get("/api/playbooks")
+def list_playbooks_endpoint():
+    """Returns all standardized SOC incident response playbooks and metadata."""
+    return {"playbooks": get_all_playbooks()}
+
+
+@app.get("/api/playbooks/{playbook_id}")
+def get_playbook_endpoint(playbook_id: str):
+    """Retrieves a detailed playbook with checklist tasks and remediation commands."""
+    pb = get_playbook(playbook_id)
+    if not pb:
+        raise HTTPException(status_code=404, detail=f"Playbook '{playbook_id}' not found.")
+    return pb
+
+
+@app.post("/api/playbooks/report")
+def generate_playbook_report_endpoint(req: PlaybookReportRequest):
+    """Generates an audit report for playbook execution ready for ticket handover."""
+    report = generate_playbook_report(
+        playbook_id=req.playbook_id,
+        completed_task_ids=req.completed_task_ids,
+        analyst_name=req.analyst_name,
+        incident_id=req.incident_id,
+        notes=req.notes,
+        iocs=req.iocs,
+    )
+    if "error" in report:
+        raise HTTPException(status_code=400, detail=report["error"])
+    return report
 
 
 @app.post("/api/trace-url")
