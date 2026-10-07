@@ -1522,86 +1522,95 @@
   </div>
 
   <!-- MODAL: INTERACTIVE SOC INCIDENT PLAYBOOKS & CHECKLIST -->
-  <div id="modal-soc-playbook" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-cyber-card border border-amber-500/30 rounded-2xl max-w-4xl w-full p-4 sm:p-6 space-y-4 glow-amber max-h-[92vh] flex flex-col">
+  <div id="modal-soc-playbook" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-cyber-card border border-amber-500/40 rounded-2xl max-w-4xl w-full p-5 sm:p-6 space-y-4 glow-amber max-h-[92vh] flex flex-col shadow-2xl">
       
       <!-- HEADER -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyber-border/70 pb-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 glow-amber flex-shrink-0">
+      <div class="flex items-center justify-between gap-3 border-b border-cyber-border/80 pb-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
             <i data-lucide="book-open-check" class="w-5 h-5"></i>
           </div>
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2 font-mono">
-              SOC Incident Response Playbooks
-              <span id="pb-active-severity-badge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">HIGH</span>
-            </h3>
-            <p class="text-[11px] font-mono text-slate-400 mt-0.5">Interactive SOP checklists mapped to NIST SP 800-61r2 & MITRE ATT&CK</p>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-bold text-white tracking-wide font-sans">SOC Incident Response Playbooks</h3>
+              <span id="pb-active-severity-badge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">HIGH</span>
+            </div>
+            <p class="text-xs text-slate-400 font-mono mt-0.5 truncate">Standard Operating Procedures mapped to NIST SP 800-61r2 & MITRE ATT&CK</p>
           </div>
         </div>
 
-        <!-- PLAYBOOK PICKER & CLOSE -->
-        <div class="flex items-center gap-2 self-end sm:self-auto">
-          <select id="playbook-select" onchange="loadSelectedPlaybook(this.value)" class="bg-[#090d16] border border-cyber-border rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-cyber-cyan focus:outline-none focus:border-cyber-cyan">
-            <option value="phishing">🎣 Phishing & BEC Attack</option>
-            <option value="ransomware">💀 Ransomware & Destructive Malware</option>
-            <option value="credential_theft">🔑 Compromised Account (ATO)</option>
-            <option value="c2_exfil">📡 C2 Beaconing & Exfiltration</option>
-            <option value="web_exploit">🌐 Web Exploit & Webshell</option>
-          </select>
-          <button onclick="closePlaybookModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
-        </div>
+        <!-- CLOSE BUTTON -->
+        <button onclick="closePlaybookModal()" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition border border-cyber-border/60 flex-shrink-0">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
       </div>
 
-      <!-- ACTIVE PLAYBOOK META & PROGRESS BAR -->
-      <div class="bg-[#090d16] border border-cyber-border rounded-xl p-3 sm:p-4 space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
-          <div>
-            <div id="pb-active-title" class="text-white font-bold text-sm">Phishing & Business Email Compromise (BEC)</div>
-            <div id="pb-active-desc" class="text-[11px] text-slate-400 mt-0.5">Standard operating procedure for triaging suspicious emails.</div>
+      <!-- ACTIVE PLAYBOOK SELECTOR & METADATA -->
+      <div class="bg-[#060a12] border border-cyber-border rounded-xl p-4 space-y-3.5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <span>Select Active Incident Playbook:</span>
+            </div>
+            <select id="playbook-select" onchange="loadSelectedPlaybook(this.value)" class="w-full sm:max-w-md bg-[#0b101d] border border-cyber-border hover:border-amber-500/50 rounded-lg px-3 py-2 text-xs font-mono font-semibold text-amber-300 focus:outline-none focus:border-amber-400 transition cursor-pointer">
+              <option value="phishing">🎣 Phishing & Business Email Compromise (BEC)</option>
+              <option value="ransomware">💀 Ransomware & Destructive Malware Outbreak</option>
+              <option value="credential_theft">🔑 Compromised Account & Credential Access (ATO)</option>
+              <option value="c2_exfil">📡 C2 Beaconing & Data Exfiltration</option>
+              <option value="web_exploit">🌐 Web Exploit & Webshell Outbreak</option>
+            </select>
           </div>
-          <div class="flex items-center gap-2 text-right">
-            <span id="pb-progress-badge" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+
+          <div class="flex items-center sm:self-end">
+            <span id="pb-progress-badge" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 whitespace-nowrap">
               0 / 9 Completed (0%)
             </span>
           </div>
         </div>
 
-        <!-- PROGRESS BAR TRACK -->
-        <div class="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden border border-cyber-border/60">
-          <div id="pb-progress-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+        <div class="border-t border-cyber-border/50 pt-2.5">
+          <div id="pb-active-title" class="text-white font-bold text-sm">Phishing & Business Email Compromise (BEC)</div>
+          <div id="pb-active-desc" class="text-xs text-slate-400 font-mono mt-0.5 leading-relaxed">Standard operating procedure for triaging suspicious emails, credential harvesters, and attachments.</div>
         </div>
 
-        <!-- PHASE FILTER CHIPS -->
+        <!-- PROGRESS BAR TRACK -->
+        <div class="space-y-1">
+          <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-cyber-border/70">
+            <div id="pb-progress-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full transition-all duration-300 rounded-full" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- PHASE FILTER CHIPS & CONTROLS -->
         <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-cyber-border/40 text-xs font-mono">
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="text-slate-500 text-[11px] mr-1">Phase:</span>
-            <button onclick="setPlaybookPhaseFilter('all')" id="pb-filter-all" class="px-2 py-0.5 rounded text-[11px] font-bold bg-white/10 text-white border border-cyber-border">All</button>
-            <button onclick="setPlaybookPhaseFilter('Identification')" id="pb-filter-id" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Identification</button>
-            <button onclick="setPlaybookPhaseFilter('Containment')" id="pb-filter-cont" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Containment</button>
-            <button onclick="setPlaybookPhaseFilter('Eradication')" id="pb-filter-erad" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Eradication</button>
-            <button onclick="setPlaybookPhaseFilter('Recovery')" id="pb-filter-rec" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white">Recovery</button>
+            <button onclick="setPlaybookPhaseFilter('all')" id="pb-filter-all" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 transition">All</button>
+            <button onclick="setPlaybookPhaseFilter('Identification')" id="pb-filter-id" class="px-2.5 py-1 rounded-md text-[11px] text-slate-400 hover:text-white transition">Identification</button>
+            <button onclick="setPlaybookPhaseFilter('Containment')" id="pb-filter-cont" class="px-2.5 py-1 rounded-md text-[11px] text-slate-400 hover:text-white transition">Containment</button>
+            <button onclick="setPlaybookPhaseFilter('Eradication')" id="pb-filter-erad" class="px-2.5 py-1 rounded-md text-[11px] text-slate-400 hover:text-white transition">Eradication</button>
+            <button onclick="setPlaybookPhaseFilter('Recovery')" id="pb-filter-rec" class="px-2.5 py-1 rounded-md text-[11px] text-slate-400 hover:text-white transition">Recovery</button>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="selectAllPlaybookTasks()" class="text-[11px] text-cyber-cyan hover:underline">Select All</button>
-            <span class="text-slate-600">|</span>
-            <button onclick="resetPlaybookTasks()" class="text-[11px] text-slate-400 hover:text-white">Reset</button>
+          <div class="flex items-center gap-3">
+            <button onclick="selectAllPlaybookTasks()" class="text-[11px] text-cyber-cyan hover:underline transition">Select All</button>
+            <span class="text-slate-700">|</span>
+            <button onclick="resetPlaybookTasks()" class="text-[11px] text-slate-400 hover:text-white transition">Reset</button>
           </div>
         </div>
       </div>
 
       <!-- CHECKLIST TASKS LIST -->
-      <div id="playbook-tasks-container" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 min-h-[260px] max-h-[46vh]">
+      <div id="playbook-tasks-container" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1.5 min-h-[280px] max-h-[48vh]">
         <!-- Injected via JS -->
       </div>
 
       <!-- FOOTER ACTIONS -->
-      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-cyber-border">
-        <span id="pb-copy-status" class="text-[11px] font-mono text-emerald-400 text-center sm:text-left"></span>
-        <div class="flex items-center gap-2 justify-end">
-          <button onclick="closePlaybookModal()" class="w-full sm:w-auto px-3.5 py-1.5 text-xs font-mono text-slate-400 hover:text-white">Close</button>
-          <button onclick="exportPlaybookHandover()" class="w-full sm:w-auto justify-center px-4 py-2 text-xs font-mono font-bold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition flex items-center gap-1.5 glow-amber">
-            <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3.5 border-t border-cyber-border">
+        <span id="pb-copy-status" class="text-xs font-mono text-emerald-400 text-center sm:text-left"></span>
+        <div class="flex items-center gap-2.5 justify-end">
+          <button onclick="closePlaybookModal()" class="w-full sm:w-auto px-4 py-2 text-xs font-mono text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition">Close</button>
+          <button onclick="exportPlaybookHandover()" class="w-full sm:w-auto justify-center px-4 py-2 text-xs font-mono font-bold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition flex items-center gap-2 glow-amber">
+            <i data-lucide="clipboard-check" class="w-4 h-4"></i>
             <span>Export Handover Report</span>
           </button>
         </div>
@@ -2430,6 +2439,17 @@ tags:
     let completedTasksMap = {}; // { playbookId: Set(taskId) }
     let activePhaseFilter = 'all';
 
+    // Helper: Safely escape HTML characters
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     async function openPlaybookModal(preferredId = null) {
       const modal = document.getElementById('modal-soc-playbook');
       if (!modal) return;
@@ -2595,46 +2615,48 @@ tags:
       container.innerHTML = filteredTasks.map((task) => {
         const isChecked = completedSet.has(task.id);
         const pClass = phaseColors[task.phase] || 'text-slate-400 bg-slate-800 border-slate-700';
-        const cardBg = isChecked ? 'bg-[#0b141d]/70 border-emerald-500/30' : 'bg-[#090d16] border-cyber-border';
+        const cardBg = isChecked ? 'bg-[#0a131f]/60 border-emerald-500/30' : 'bg-[#080d18] border-cyber-border/80 hover:border-cyber-border';
 
         let commandBlock = '';
         if (task.command) {
-          const escapedCmd = task.command.replace(/"/g, '&quot;');
           commandBlock = `
-            <div class="mt-2.5 bg-[#04060a] border border-cyber-border/70 rounded-lg p-2.5 font-mono text-[11px] relative group">
-              <div class="flex items-center justify-between pb-1 text-[10px] text-slate-500 border-b border-cyber-border/40 mb-1.5">
-                <span>Remediation CLI Snippet</span>
-                <button onclick="copyPlaybookCommand(this)" data-cmd="${escapedCmd}" class="text-amber-400 hover:text-amber-300 flex items-center gap-1 transition">
+            <div class="mt-2.5 bg-[#03060c] border border-cyber-border/70 rounded-lg p-2.5 font-mono text-[11px] relative group">
+              <div class="flex items-center justify-between pb-1.5 text-[10px] text-slate-500 border-b border-cyber-border/40 mb-1.5">
+                <span class="flex items-center gap-1.5 text-slate-400">
+                  <i data-lucide="terminal" class="w-3 h-3 text-amber-400"></i>
+                  Remediation CLI Snippet
+                </span>
+                <button type="button" onclick="copyPlaybookCommand(this)" class="px-2 py-0.5 rounded bg-white/5 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 flex items-center gap-1 transition text-[10px] border border-transparent hover:border-amber-500/30">
                   <i data-lucide="copy" class="w-3 h-3"></i>
                   <span>Copy</span>
                 </button>
               </div>
-              <pre class="text-slate-300 overflow-x-auto custom-scrollbar whitespace-pre-wrap">${escapeHtml(task.command)}</pre>
+              <pre class="pb-cli-content text-slate-300 overflow-x-auto custom-scrollbar whitespace-pre-wrap selection:bg-amber-500/30">${escapeHtml(task.command)}</pre>
             </div>
           `;
         }
 
         return `
-          <div class="border rounded-xl p-3 sm:p-3.5 transition-all ${cardBg}">
+          <div class="border rounded-xl p-3.5 transition-all ${cardBg}">
             <div class="flex items-start gap-3">
               <input 
                 type="checkbox" 
                 id="chk-${task.id}" 
                 ${isChecked ? 'checked' : ''} 
                 onchange="togglePlaybookTask('${task.id}')"
-                class="mt-1 w-4 h-4 rounded border-cyber-border bg-[#090d16] text-amber-500 focus:ring-amber-500 focus:ring-offset-0 cursor-pointer accent-amber-500"
+                class="mt-1 w-4 h-4 rounded border-cyber-border bg-[#090d16] text-amber-500 focus:ring-amber-500 focus:ring-offset-0 cursor-pointer accent-amber-500 flex-shrink-0"
               />
               <div class="flex-1 min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
-                  <span class="text-[10px] font-mono uppercase font-bold px-1.5 py-0.5 rounded border ${pClass}">
+                  <span class="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded border ${pClass}">
                     ${task.phase}
                   </span>
-                  ${task.mitre ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-cyber-border/50">${task.mitre}</span>` : ''}
-                  <label for="chk-${task.id}" class="text-xs sm:text-sm font-bold cursor-pointer font-mono ${isChecked ? 'text-emerald-300 line-through' : 'text-white'}">
+                  ${task.mitre ? `<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-slate-400 border border-cyber-border/50 font-semibold">${escapeHtml(task.mitre)}</span>` : ''}
+                  <label for="chk-${task.id}" class="text-xs sm:text-sm font-bold cursor-pointer font-sans select-none ${isChecked ? 'text-emerald-300 line-through' : 'text-slate-100'}">
                     ${escapeHtml(task.title)}
                   </label>
                 </div>
-                <p class="text-[11px] text-slate-400 font-mono mt-1 leading-relaxed">
+                <p class="text-xs text-slate-400 font-sans mt-1.5 leading-relaxed">
                   ${escapeHtml(task.description)}
                 </p>
                 ${commandBlock}
@@ -2677,7 +2699,12 @@ tags:
     }
 
     function copyPlaybookCommand(buttonEl) {
-      const cmd = buttonEl.getAttribute('data-cmd');
+      let cmd = buttonEl.getAttribute('data-cmd');
+      if (!cmd) {
+        const container = buttonEl.closest('.group');
+        const pre = container ? container.querySelector('.pb-cli-content') : null;
+        if (pre) cmd = pre.innerText;
+      }
       if (!cmd) return;
       navigator.clipboard.writeText(cmd);
       const span = buttonEl.querySelector('span');
