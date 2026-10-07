@@ -263,9 +263,9 @@ def get_cyber_feed_endpoint(source: str = "all", limit: int = 40):
 
 
 @app.get("/api/cve")
-def get_cve_endpoint(query: Optional[str] = None, limit: int = 15):
-    """Searches NIST NVD and vulnerability databases for CVE details."""
-    return query_cve(search=query, limit=limit)
+def get_cve_endpoint(query: Optional[str] = None, limit: int = 30, page: int = 1):
+    """Searches NIST NVD and vulnerability databases for CVE details with latest-first pagination."""
+    return query_cve(search=query, limit=limit, page=page)
 
 
 @app.get("/", response_class=HTMLResponse)

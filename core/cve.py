@@ -66,7 +66,7 @@ FALLBACK_KEV_ITEMS: List[Dict[str, Any]] = [
 _KEV_CACHE: Dict[str, Any] = {"timestamp": 0.0, "items": []}
 
 
-def fetch_cisa_kev_recent(limit: int = 15) -> List[Dict[str, Any]]:
+def fetch_cisa_kev_recent(limit: int = 50) -> List[Dict[str, Any]]:
     """Fetches real-time latest known exploited vulnerabilities from CISA KEV catalog."""
     global _KEV_CACHE
     now = time.time()
@@ -81,7 +81,7 @@ def fetch_cisa_kev_recent(limit: int = 15) -> List[Dict[str, Any]]:
                 # Sort newest by dateAdded descending
                 sorted_vulns = sorted(raw_vulns, key=lambda x: x.get("dateAdded", ""), reverse=True)
                 formatted = []
-                for v in sorted_vulns[:40]:
+                for v in sorted_vulns[:500]:
                     cve_id = v.get("cveID", "")
                     vendor = v.get("vendorProject", "Vendor")
                     prod = v.get("product", "Product")
@@ -179,69 +179,166 @@ def _parse_nvd_item(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def query_cve(search: Optional[str] = None, limit: int = 15) -> Dict[str, Any]:
-    """Queries real-time live CVEs from CISA KEV and NIST NVD."""
+def query_cve(search: Optional[str] = None, limit: int = 30, page: int = 1) -> Dict[str, Any]:
+    """
+    Queries real-time live CVEs from CISA KEV and NIST NVD 2.0.
+    Automatically calculates offset to guarantee the newest/latest CVEs are retrieved first.
+    """
     now = time.time()
     query = (search or "").strip()
+    page = max(1, int(page))
+    limit = max(1, min(int(limit), 100))
 
     # 1. Default view: Return real-time latest known exploited vulnerabilities added to CISA KEV
     if not query:
-        realtime_items = fetch_cisa_kev_recent(limit=limit)
+        all_kev = fetch_cisa_kev_recent(limit=500)
+        total_kev = len(all_kev)
+        start_offset = (page - 1) * limit
+        end_offset = start_offset + limit
+        page_items = all_kev[start_offset:end_offset]
+        has_more = end_offset < total_kev
+
         return {
-            "total": len(realtime_items),
+            "total": total_kev,
+            "page": page,
+            "limit": limit,
+            "has_more": has_more,
             "query": "",
             "realtime": True,
-            "items": realtime_items,
+            "items": page_items,
             "cached": True,
         }
 
-    cache_key = f"cve_{query.lower()}_{limit}"
+    cache_key = f"cve_{query.lower()}_p{page}_l{limit}"
     if cache_key in _CVE_CACHE:
         entry = _CVE_CACHE[cache_key]
         if now - entry["timestamp"] < CACHE_TTL:
             return entry["data"]
 
-    # 2. Query NIST NVD for specific CVE or keyword
     headers = {"User-Agent": "LazySOC-CyberSec/3.0"}
-    params: Dict[str, Any] = {"resultsPerPage": min(limit, 20)}
-
     is_cve_id = query.upper().startswith("CVE-")
+
+    # 2. Specific CVE ID query (e.g. CVE-2024-3400)
     if is_cve_id:
-        params["cveId"] = query.upper()
-    else:
-        params["keywordSearch"] = query
+        params: Dict[str, Any] = {"cveId": query.upper()}
+        try:
+            resp = requests.get(NVD_API_URL, headers=headers, params=params, timeout=8)
+            if resp.status_code == 200:
+                data = resp.json()
+                vulns = data.get("vulnerabilities", [])
+                items = [_parse_nvd_item(v) for v in vulns]
+                result = {
+                    "total": len(items),
+                    "page": 1,
+                    "limit": limit,
+                    "has_more": False,
+                    "query": query,
+                    "realtime": True,
+                    "items": items,
+                    "cached": False,
+                }
+                _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
+                return result
+        except Exception:
+            pass
 
+    # 3. Vendor / Product / Keyword query with smart latest-first pagination
     try:
-        resp = requests.get(NVD_API_URL, headers=headers, params=params, timeout=8)
-        if resp.status_code == 200:
-            data = resp.json()
-            vulns = data.get("vulnerabilities", [])
-            items = [_parse_nvd_item(v) for v in vulns]
+        session = requests.Session()
+        # Step A: Probe totalResults for the query
+        probe_resp = session.get(
+            NVD_API_URL,
+            headers=headers,
+            params={"keywordSearch": query, "resultsPerPage": 1},
+            timeout=8
+        )
+        if probe_resp.status_code == 200:
+            probe_data = probe_resp.json()
+            total_results = probe_data.get("totalResults", 0)
 
-            result = {
-                "total": len(items),
-                "query": query,
-                "realtime": True,
-                "items": items,
-                "cached": False,
-            }
-            _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
-            return result
+            if total_results == 0:
+                result = {
+                    "total": 0,
+                    "page": page,
+                    "limit": limit,
+                    "has_more": False,
+                    "query": query,
+                    "realtime": True,
+                    "items": [],
+                    "cached": False,
+                }
+                _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
+                return result
+
+            # Step B: Calculate startIndex from the end to get the newest CVEs
+            # Since NVD stores CVEs chronologically ascending (oldest at index 0, newest at totalResults - 1)
+            target_end = total_results - ((page - 1) * limit)
+            if target_end <= 0:
+                return {
+                    "total": total_results,
+                    "page": page,
+                    "limit": limit,
+                    "has_more": False,
+                    "query": query,
+                    "realtime": True,
+                    "items": [],
+                    "cached": False,
+                }
+
+            start_idx = max(0, target_end - limit)
+            fetch_count = target_end - start_idx
+            has_more = (start_idx > 0)
+
+            fetch_resp = session.get(
+                NVD_API_URL,
+                headers=headers,
+                params={
+                    "keywordSearch": query,
+                    "startIndex": start_idx,
+                    "resultsPerPage": fetch_count
+                },
+                timeout=12
+            )
+            if fetch_resp.status_code == 200:
+                fetch_data = fetch_resp.json()
+                raw_vulns = fetch_data.get("vulnerabilities", [])
+                items = [_parse_nvd_item(v) for v in raw_vulns]
+                # Sort descending by published date so the absolute latest is at index 0
+                items.sort(key=lambda x: x.get("published", ""), reverse=True)
+
+                result = {
+                    "total": total_results,
+                    "page": page,
+                    "limit": limit,
+                    "has_more": has_more,
+                    "query": query,
+                    "realtime": True,
+                    "items": items,
+                    "cached": False,
+                }
+                _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
+                return result
     except Exception:
         pass
 
-    # 3. Fallback: Search in CISA KEV items
-    kev_items = fetch_cisa_kev_recent(limit=50)
+    # 4. Fallback: Search inside CISA KEV items
+    kev_items = fetch_cisa_kev_recent(limit=500)
     q_low = query.lower()
-    fallback_items = [
+    fallback_matched = [
         item for item in kev_items
         if q_low in item["id"].lower() or q_low in item["description"].lower() or q_low in item["cwe"].lower()
     ]
+    start_offset = (page - 1) * limit
+    end_offset = start_offset + limit
+    page_fallback = fallback_matched[start_offset:end_offset]
 
     return {
-        "total": len(fallback_items),
+        "total": len(fallback_matched),
+        "page": page,
+        "limit": limit,
+        "has_more": end_offset < len(fallback_matched),
         "query": query,
-        "items": fallback_items,
+        "items": page_fallback,
         "cached": True,
         "fallback": True,
     }

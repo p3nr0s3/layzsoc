@@ -137,3 +137,23 @@ def test_cve_endpoint():
     assert "severity" in first
 
 
+def test_cve_vendor_search_and_pagination():
+    res = client.get("/api/cve?query=Fortinet&limit=5&page=1")
+    assert res.status_code == 200
+    data = res.json()
+    assert "items" in data
+    assert len(data["items"]) > 0
+    # Verify latest items are returned and sorted descending
+    dates = [item.get("published", "") for item in data["items"] if item.get("published")]
+    if len(dates) >= 2:
+        assert dates == sorted(dates, reverse=True)
+
+    # Test page 2
+    res2 = client.get("/api/cve?query=Fortinet&limit=5&page=2")
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert "items" in data2
+    assert "has_more" in data2
+
+
+

@@ -1021,7 +1021,11 @@
         <!-- Quick Trending Pills -->
         <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
           <span class="text-slate-400 text-[11px] font-bold uppercase">Quick Online Lookups:</span>
-          <button onclick="quickCveLookup('CVE-2024-3400')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Palo Alto (CVE-2024-3400)</button>
+          <button onclick="quickCveLookup('Microsoft')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Microsoft (Latest)</button>
+          <button onclick="quickCveLookup('Fortinet')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Fortinet (Latest)</button>
+          <button onclick="quickCveLookup('Cisco')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Cisco (Latest)</button>
+          <button onclick="quickCveLookup('Palo Alto')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Palo Alto (Latest)</button>
+          <button onclick="quickCveLookup('CVE-2024-3400')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">PAN-OS (CVE-2024-3400)</button>
           <button onclick="quickCveLookup('CVE-2024-21887')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Ivanti (CVE-2024-21887)</button>
           <button onclick="quickCveLookup('CVE-2023-4966')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Citrix Bleed (CVE-2023-4966)</button>
           <button onclick="quickCveLookup('CVE-2021-44228')" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 transition text-[11px]">Log4Shell (CVE-2021-44228)</button>
@@ -1036,13 +1040,27 @@
           <!-- Injected via JS -->
         </div>
 
-        <!-- CVE Online Pagination / Status Bar -->
+        <!-- CVE Online Pagination / Load More Bar -->
         <div id="cve-pagination" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-cyber-border/70 text-xs font-mono">
-          <div class="text-slate-400 text-[11px] text-center sm:text-left">
-            Showing <span id="cve-range-start" class="text-white font-bold">1</span>-<span id="cve-range-end" class="text-white font-bold">5</span> of <span id="cve-total-count" class="text-cyber-cyan font-bold">0</span> online vulnerabilities
+          <div class="text-slate-400 text-[11px] text-center sm:text-left flex flex-wrap items-center justify-center sm:justify-start gap-2">
+            <span>Showing <span id="cve-loaded-count" class="text-white font-bold">0</span> of <span id="cve-total-count" class="text-cyber-cyan font-bold">0</span> online vulnerabilities</span>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 flex items-center gap-1 font-semibold">
+              <i data-lucide="sparkles" class="w-3 h-3"></i> Latest First
+            </span>
           </div>
-          <div class="flex flex-wrap items-center justify-center gap-1.5" id="cve-pagination-controls">
-            <!-- Injected via JS -->
+          <div id="cve-load-more-box" class="flex items-center gap-2">
+            <button id="btn-cve-load-more" onclick="loadMoreCve()" class="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-mono font-bold bg-cyber-cyan/15 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 flex items-center justify-center gap-1.5 transition glow-cyan">
+              <i data-lucide="chevrons-down" class="w-3.5 h-3.5"></i>
+              <span>Load More Recent CVEs</span>
+            </button>
+          </div>
+          <div class="flex items-center justify-center sm:justify-end gap-2 text-[11px] text-slate-400">
+            <span>Per batch:</span>
+            <select id="cve-batch-size" onchange="changeCveBatchLimit(this.value)" class="bg-[#090d16] border border-cyber-border rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-cyber-cyan">
+              <option value="15">15</option>
+              <option value="30" selected>30</option>
+              <option value="50">50</option>
+            </select>
           </div>
         </div>
       </div>
@@ -2766,132 +2784,144 @@ tags:
     // LIVE ONLINE CVE & NIST NVD INTELLIGENCE (NO LOCAL DB)
     // ==========================================
     let currentCveData = [];
-    let cveCurrentPage = 1;
-    let cvePageSize = 5;
+    let currentCveQuery = "";
+    let cveBackendPage = 1;
+    let cveBatchLimit = 30;
+    let cveHasMore = false;
+    let currentCveTotal = 0;
 
-    async function fetchCveIntel(query = "") {
+    async function fetchCveIntel(query = "", page = 1, append = false) {
       const container = document.getElementById('cve-results-container');
       const btn = document.getElementById('btn-search-cve');
+      const btnLoadMore = document.getElementById('btn-cve-load-more');
       const paginationEl = document.getElementById('cve-pagination');
 
-      if (btn) btn.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> Live Query...`;
-      if (paginationEl) paginationEl.classList.add('hidden');
-
-      container.innerHTML = `
-        <div class="py-12 text-center text-cyber-cyan font-mono text-xs space-y-2">
-          <div class="w-6 h-6 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div>Querying official NIST NVD 2.0 API & CISA KEV endpoints online in real time...</div>
-          <div class="text-[10px] text-slate-500">Live online search &bull; Zero local database footprint</div>
-        </div>
-      `;
-
-      try {
-        const url = query ? `/api/cve?query=${encodeURIComponent(query)}&limit=30` : '/api/cve?limit=25';
-        const res = await fetch(url);
-        const data = await res.json();
-        currentCveData = data.items || [];
-        cveCurrentPage = 1;
-        renderCvePage(query);
-      } catch (err) {
-        console.error("Failed to query CVE:", err);
+      if (!append) {
+        currentCveQuery = query;
+        cveBackendPage = 1;
+        currentCveData = [];
+        if (btn) btn.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> Live Query...`;
+        if (paginationEl) paginationEl.classList.add('hidden');
         container.innerHTML = `
-          <div class="py-8 text-center text-red-400 font-mono text-xs">
-            Failed to connect to NIST NVD / CISA online APIs. Please verify internet connection.
+          <div class="py-12 text-center text-cyber-cyan font-mono text-xs space-y-2">
+            <div class="w-6 h-6 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div>Querying official NIST NVD 2.0 API & CISA KEV endpoints online in real time...</div>
+            <div class="text-[10px] text-slate-500">Live online search &bull; Smart offset (Latest published vulnerabilities first)</div>
           </div>
         `;
+      } else {
+        if (btnLoadMore) {
+          btnLoadMore.disabled = true;
+          btnLoadMore.innerHTML = `<div class="w-3.5 h-3.5 border-2 border-cyber-cyan border-t-transparent rounded-full animate-spin"></div> <span>Loading more...</span>`;
+        }
+      }
+
+      try {
+        const url = query
+          ? `/api/cve?query=${encodeURIComponent(query)}&limit=${cveBatchLimit}&page=${page}`
+          : `/api/cve?limit=${cveBatchLimit}&page=${page}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const newItems = data.items || [];
+        cveHasMore = Boolean(data.has_more);
+        currentCveTotal = data.total || 0;
+
+        if (append) {
+          currentCveData = currentCveData.concat(newItems);
+        } else {
+          currentCveData = newItems;
+        }
+
+        renderCveResults(query, newItems, append);
+      } catch (err) {
+        console.error("Failed to query CVE:", err);
+        if (!append) {
+          container.innerHTML = `
+            <div class="py-8 text-center text-red-400 font-mono text-xs">
+              Failed to connect to NIST NVD / CISA online APIs. Please verify internet connection.
+            </div>
+          `;
+        }
       } finally {
         if (btn) {
           btn.innerHTML = `<i data-lucide="search" class="w-3.5 h-3.5"></i> <span>Live Search</span>`;
-          lucide.createIcons();
         }
+        if (btnLoadMore) {
+          btnLoadMore.disabled = false;
+          btnLoadMore.innerHTML = `<i data-lucide="chevrons-down" class="w-3.5 h-3.5"></i> <span>Load More Recent CVEs</span>`;
+        }
+        lucide.createIcons();
       }
     }
 
     function executeCveSearch() {
       const q = document.getElementById('cve-search-input')?.value.trim();
-      fetchCveIntel(q);
+      fetchCveIntel(q, 1, false);
     }
 
     function quickCveLookup(cveId) {
       const input = document.getElementById('cve-search-input');
       if (input) input.value = cveId;
-      fetchCveIntel(cveId);
+      fetchCveIntel(cveId, 1, false);
     }
 
-    function changeCvePage(newPage) {
-      const totalPages = Math.ceil(currentCveData.length / cvePageSize) || 1;
-      if (newPage < 1 || newPage > totalPages) return;
-      cveCurrentPage = newPage;
-      renderCvePage();
-      document.getElementById('view-cve')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    function loadMoreCve() {
+      if (!cveHasMore) return;
+      cveBackendPage += 1;
+      const q = document.getElementById('cve-search-input')?.value.trim() || currentCveQuery;
+      fetchCveIntel(q, cveBackendPage, true);
     }
 
-    function renderCvePage(query = "") {
+    function changeCveBatchLimit(limitVal) {
+      cveBatchLimit = parseInt(limitVal, 10) || 30;
+      const q = document.getElementById('cve-search-input')?.value.trim() || currentCveQuery;
+      fetchCveIntel(q, 1, false);
+    }
+
+    function renderCveResults(query = "", newItems = [], append = false) {
       const container = document.getElementById('cve-results-container');
       const paginationEl = document.getElementById('cve-pagination');
-      const totalCount = currentCveData.length;
+      const loadMoreBox = document.getElementById('cve-load-more-box');
+      const loadedEl = document.getElementById('cve-loaded-count');
+      const totalEl = document.getElementById('cve-total-count');
 
-      if (!totalCount) {
+      if (!currentCveData.length) {
         container.innerHTML = `
           <div class="py-12 text-center text-slate-500 font-mono text-xs space-y-1">
             <div>No vulnerabilities found matching "${query || 'default'}".</div>
-            <div class="text-[11px] text-slate-600">Try searching by CVE ID (e.g. CVE-2024-3400) or vendor keywords (e.g. Ivanti, Palo Alto, Microsoft, Linux).</div>
+            <div class="text-[11px] text-slate-600">Try searching by CVE ID (e.g. CVE-2024-3400) or vendor keywords (e.g. Ivanti, Palo Alto, Microsoft, Cisco, Fortinet).</div>
           </div>
         `;
         if (paginationEl) paginationEl.classList.add('hidden');
         return;
       }
 
-      const totalPages = Math.ceil(totalCount / cvePageSize);
-      if (cveCurrentPage > totalPages) cveCurrentPage = totalPages;
+      const offset = append ? (currentCveData.length - newItems.length) : 0;
+      const cardsHtml = generateCveCardsHtml(newItems, offset);
 
-      const startIndex = (cveCurrentPage - 1) * cvePageSize;
-      const endIndex = Math.min(startIndex + cvePageSize, totalCount);
-      const pageItems = currentCveData.slice(startIndex, endIndex);
+      if (append) {
+        container.insertAdjacentHTML('beforeend', cardsHtml);
+      } else {
+        container.innerHTML = cardsHtml;
+      }
 
-      // Render cards
-      renderCveCards(pageItems, startIndex);
+      if (loadedEl) loadedEl.innerText = currentCveData.length;
+      if (totalEl) totalEl.innerText = currentCveTotal ? currentCveTotal.toLocaleString() : currentCveData.length;
 
-      // Update counters
-      const startEl = document.getElementById('cve-range-start');
-      const endEl = document.getElementById('cve-range-end');
-      const totalEl = document.getElementById('cve-total-count');
-      if (startEl) startEl.innerText = startIndex + 1;
-      if (endEl) endEl.innerText = endIndex;
-      if (totalEl) totalEl.innerText = totalCount;
-
-      // Controls
-      const controls = document.getElementById('cve-pagination-controls');
-      if (controls) {
-        let btnsHtml = `
-          <button onclick="changeCvePage(${cveCurrentPage - 1})" ${cveCurrentPage === 1 ? 'disabled class="px-2.5 py-1 rounded bg-[#090d16] text-slate-600 border border-cyber-border cursor-not-allowed text-xs font-mono"' : 'class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition"'}>
-            Prev
-          </button>
-        `;
-
-        for (let p = 1; p <= totalPages; p++) {
-          if (p === cveCurrentPage) {
-            btnsHtml += `<button class="px-2.5 py-1 rounded bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/40 font-bold text-xs font-mono">${p}</button>`;
-          } else {
-            btnsHtml += `<button onclick="changeCvePage(${p})" class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition">${p}</button>`;
-          }
+      if (loadMoreBox) {
+        if (cveHasMore) {
+          loadMoreBox.classList.remove('hidden');
+        } else {
+          loadMoreBox.classList.add('hidden');
         }
-
-        btnsHtml += `
-          <button onclick="changeCvePage(${cveCurrentPage + 1})" ${cveCurrentPage === totalPages ? 'disabled class="px-2.5 py-1 rounded bg-[#090d16] text-slate-600 border border-cyber-border cursor-not-allowed text-xs font-mono"' : 'class="px-2.5 py-1 rounded bg-[#090d16] hover:bg-white/10 text-slate-300 border border-cyber-border text-xs font-mono transition"'}>
-            Next
-          </button>
-        `;
-
-        controls.innerHTML = btnsHtml;
       }
 
       if (paginationEl) paginationEl.classList.remove('hidden');
+      lucide.createIcons();
     }
 
-    function renderCveCards(items, offsetIndex = 0) {
-      const container = document.getElementById('cve-results-container');
-      container.innerHTML = items.map((cve, idx) => {
+    function generateCveCardsHtml(items, offsetIndex = 0) {
+      return items.map((cve, idx) => {
         const cvssNum = parseFloat(cve.cvss || 0);
         let sevBadge = 'bg-slate-800 text-slate-400 border-slate-700';
 
@@ -2965,8 +2995,6 @@ tags:
           </div>
         `;
       }).join('');
-
-      lucide.createIcons();
     }
 
     function sendCveToTriage(idx) {
