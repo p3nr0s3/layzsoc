@@ -1,35 +1,104 @@
-"""Mail Health and Domain Spoofing Posture Checker for Slothery."""
+"""Mail Health and Domain Spoofing Posture Checker for LazySOC."""
 
 import re
-from typing import Dict, Any, List, Optional
-import dns.resolver
+from typing import Any, Dict, List, Optional, Tuple
+
 import dns.exception
+import dns.resolver
+
+# Lookup states returned by MailHealthChecker._query()
+OK = "ok"
+NODATA = "nodata"      # domain exists, but has no record of this type
+NXDOMAIN = "nxdomain"  # domain does not exist
+ERROR = "error"        # timeout, SERVFAIL, refused, ... (we do not know the answer)
+
+_SPF_ALL = re.compile(r"^([+\-~?]?)all$", re.IGNORECASE)
 
 
 class MailHealthChecker:
     """Evaluates MX, SPF, and DMARC configurations to assess email spoofability."""
 
-    def __init__(self, timeout: float = 3.0):
-        self.resolver = dns.resolver.Resolver()
-        self.resolver.timeout = timeout
-        self.resolver.lifetime = timeout
+    def __init__(self, timeout: float = 3.0, resolver: Optional[Any] = None):
+        if resolver is None:
+            resolver = dns.resolver.Resolver()
+            resolver.timeout = timeout
+            resolver.lifetime = timeout
+            # Without EDNS, large TXT answers (google.com, github.com, ...) come back
+            # truncated and need a TCP retry, which many hosts/firewalls drop.
+            resolver.use_edns(0, 0, 1232)
+        self.resolver = resolver
 
+    # ------------------------------------------------------------------ DNS
+    def _query(self, name: str, rdtype: str) -> Tuple[str, Any]:
+        """Returns (state, answers_or_error_message)."""
+        try:
+            return OK, self.resolver.resolve(name, rdtype)
+        except dns.resolver.NoAnswer:
+            return NODATA, None
+        except dns.resolver.NXDOMAIN:
+            return NXDOMAIN, None
+        except dns.exception.Timeout:
+            return ERROR, "DNS query timed out"
+        except Exception as e:  # NoNameservers (SERVFAIL), YXDOMAIN, network errors...
+            return ERROR, f"{type(e).__name__}: {str(e)[:120]}"
+
+    @staticmethod
+    def _txt_records(answers: Any) -> List[str]:
+        return [b"".join(r.strings).decode("utf-8", errors="ignore").strip() for r in answers]
+
+    # ------------------------------------------------------------- Main API
     def check_domain(self, domain: str) -> Dict[str, Any]:
         """Performs full Mail Health and anti-spoofing audit for a domain."""
         dom = domain.lower().strip()
-        # Clean protocol or path if passed accidentally
         if "://" in dom:
             dom = dom.split("://")[1].split("/")[0]
-        dom = dom.split("/")[0].split(":")[0]
+        dom = dom.split("/")[0].split(":")[0].rstrip(".")
 
         mx_res = self._check_mx(dom)
+
+        if mx_res.get("state") == NXDOMAIN:
+            return {
+                "domain": dom,
+                "exists": False,
+                "score": None,
+                "rating": "NOT_FOUND",
+                "verdict": "Domain does not exist (NXDOMAIN)",
+                "mx": mx_res,
+                "spf": {"has_spf": False, "record": None, "status": "N/A", "state": NXDOMAIN},
+                "dmarc": {"has_dmarc": False, "record": None, "policy": "none", "status": "N/A", "state": NXDOMAIN},
+                "issues": ["The domain does not exist, so there is no mail configuration to audit."],
+                "dns_errors": [],
+            }
+
         spf_res = self._check_spf(dom)
         dmarc_res = self._check_dmarc(dom)
 
-        score, rating, verdict, issues = self._calculate_health_score(mx_res, spf_res, dmarc_res)
+        failed = [
+            label for label, res in (("MX", mx_res), ("SPF", spf_res), ("DMARC", dmarc_res))
+            if res.get("state") == ERROR
+        ]
+        if failed:
+            return {
+                "domain": dom,
+                "exists": True,
+                "score": None,
+                "rating": "INCONCLUSIVE",
+                "verdict": f"DNS lookup failed for {', '.join(failed)}. Result is incomplete, try again.",
+                "mx": mx_res,
+                "spf": spf_res,
+                "dmarc": dmarc_res,
+                "issues": [
+                    f"{label}: {res.get('error', 'lookup failed')}"
+                    for label, res in (("MX", mx_res), ("SPF", spf_res), ("DMARC", dmarc_res))
+                    if res.get("state") == ERROR
+                ],
+                "dns_errors": failed,
+            }
 
+        score, rating, verdict, issues = self._calculate_health_score(mx_res, spf_res, dmarc_res)
         return {
             "domain": dom,
+            "exists": True,
             "score": score,  # 0 to 100
             "rating": rating,  # 'PROTECTED', 'PARTIALLY_PROTECTED', 'VULNERABLE'
             "verdict": verdict,
@@ -37,152 +106,159 @@ class MailHealthChecker:
             "spf": spf_res,
             "dmarc": dmarc_res,
             "issues": issues,
+            "dns_errors": [],
         }
 
+    # ------------------------------------------------------------------- MX
     def _check_mx(self, domain: str) -> Dict[str, Any]:
-        try:
-            answers = self.resolver.resolve(domain, "MX")
-            records = []
-            for r in answers:
-                records.append({
-                    "priority": r.preference,
-                    "host": str(r.exchange).rstrip("."),
-                })
-            records.sort(key=lambda x: x["priority"])
+        state, answers = self._query(domain, "MX")
+        if state == ERROR:
+            return {"has_mx": False, "provider": "Error", "records": [], "count": 0, "state": ERROR, "error": answers}
+        if state != OK:
+            return {"has_mx": False, "provider": "None", "records": [], "count": 0, "state": state}
 
-            provider = "Custom / Private"
-            hosts_str = " ".join(r["host"].lower() for r in records)
-            if "google" in hosts_str or "aspmx" in hosts_str:
-                provider = "Google Workspace"
-            elif "outlook" in hosts_str or "microsoft" in hosts_str:
-                provider = "Microsoft 365"
-            elif "zoho" in hosts_str:
-                provider = "Zoho Mail"
-            elif "proton" in hosts_str:
-                provider = "Proton Mail"
-            elif "pphosted" in hosts_str or "proofpoint" in hosts_str:
-                provider = "Proofpoint Security Gateway"
-            elif "mimecast" in hosts_str:
-                provider = "Mimecast Security Gateway"
+        records = [{"priority": r.preference, "host": str(r.exchange).rstrip(".")} for r in answers]
+        records.sort(key=lambda x: x["priority"])
 
-            return {
-                "has_mx": True,
-                "provider": provider,
-                "records": records,
-                "count": len(records),
-            }
-        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
-            return {"has_mx": False, "provider": "None", "records": [], "count": 0}
-        except Exception as e:
-            return {"has_mx": False, "provider": "Error", "records": [], "error": str(e), "count": 0}
+        provider = "Custom / Private"
+        hosts_str = " ".join(r["host"].lower() for r in records)
+        if "google" in hosts_str or "aspmx" in hosts_str:
+            provider = "Google Workspace"
+        elif "outlook" in hosts_str or "microsoft" in hosts_str:
+            provider = "Microsoft 365"
+        elif "zoho" in hosts_str:
+            provider = "Zoho Mail"
+        elif "proton" in hosts_str:
+            provider = "Proton Mail"
+        elif "pphosted" in hosts_str or "proofpoint" in hosts_str:
+            provider = "Proofpoint Security Gateway"
+        elif "mimecast" in hosts_str:
+            provider = "Mimecast Security Gateway"
 
+        return {"has_mx": True, "provider": provider, "records": records, "count": len(records), "state": OK}
+
+    # ------------------------------------------------------------------ SPF
     def _check_spf(self, domain: str) -> Dict[str, Any]:
-        try:
-            answers = self.resolver.resolve(domain, "TXT")
-            spf_records = []
-            for r in answers:
-                txt = b"".join(r.strings).decode("utf-8", errors="ignore")
-                if txt.startswith("v=spf1"):
-                    spf_records.append(txt)
+        state, answers = self._query(domain, "TXT")
+        if state == ERROR:
+            return {"has_spf": False, "record": None, "status": "ERROR", "mechanism": "Unknown",
+                    "state": ERROR, "error": answers}
 
-            if not spf_records:
-                return {
-                    "has_spf": False,
-                    "record": None,
-                    "status": "MISSING",
-                    "mechanism": "None",
-                    "details": "No SPF TXT record found. Attackers can forge mail from this domain.",
-                }
+        spf_records = [t for t in self._txt_records(answers)
+                       if t.lower().startswith("v=spf1")] if state == OK else []
 
-            record = spf_records[0]
-            # Check mechanism (+all, -all, ~all, ?all)
-            mechanism = "Unknown"
-            status = "ACCEPTABLE"
-            if "-all" in record:
-                mechanism = "HardFail (-all)"
-                status = "STRICT"
-            elif "~all" in record:
-                mechanism = "SoftFail (~all)"
-                status = "MODERATE"
-            elif "?all" in record:
-                mechanism = "Neutral (?all)"
-                status = "WEAK"
-            elif "+all" in record:
-                mechanism = "Pass (+all)"
-                status = "CRITICAL_RISK"
-
-            return {
-                "has_spf": True,
-                "record": record,
-                "status": status,
-                "mechanism": mechanism,
-                "count": len(spf_records),
-                "is_multiple": len(spf_records) > 1,
-            }
-        except Exception:
+        if not spf_records:
             return {
                 "has_spf": False,
                 "record": None,
                 "status": "MISSING",
                 "mechanism": "None",
-                "details": "No SPF record found or query failed.",
+                "state": state,
+                "details": "No SPF TXT record found. Attackers can forge mail from this domain.",
             }
+
+        record = spf_records[0]
+        mechanism = "Unknown"
+        status = "ACCEPTABLE"
+        for token in record.split()[1:]:
+            m = _SPF_ALL.match(token)  # token match: 'include:x-all.example' must not count
+            if not m:
+                continue
+            qualifier = m.group(1) or "+"
+            if qualifier == "-":
+                mechanism, status = "HardFail (-all)", "STRICT"
+            elif qualifier == "~":
+                mechanism, status = "SoftFail (~all)", "MODERATE"
+            elif qualifier == "?":
+                mechanism, status = "Neutral (?all)", "WEAK"
+            else:
+                mechanism, status = "Pass (+all)", "CRITICAL_RISK"
+            break
+
+        return {
+            "has_spf": True,
+            "record": record,
+            "status": status,
+            "mechanism": mechanism,
+            "count": len(spf_records),
+            "is_multiple": len(spf_records) > 1,
+            "state": OK,
+        }
+
+    # ---------------------------------------------------------------- DMARC
+    def _dmarc_lookup_names(self, domain: str) -> List[Tuple[str, bool]]:
+        """_dmarc.<domain>, then parents down to two labels (RFC 7489 organizational fallback).
+
+        Without a Public Suffix List this is an approximation; the result reports
+        'inherited_from' so the analyst can see which record was used.
+        """
+        labels = domain.split(".")
+        names = [(f"_dmarc.{domain}", False)]
+        for i in range(1, max(len(labels) - 1, 1)):
+            names.append((f"_dmarc.{'.'.join(labels[i:])}", True))
+        return names
 
     def _check_dmarc(self, domain: str) -> Dict[str, Any]:
-        dmarc_host = f"_dmarc.{domain}"
-        try:
-            answers = self.resolver.resolve(dmarc_host, "TXT")
-            dmarc_records = []
-            for r in answers:
-                txt = b"".join(r.strings).decode("utf-8", errors="ignore")
-                if txt.startswith("v=DMARC1"):
-                    dmarc_records.append(txt)
+        for name, inherited in self._dmarc_lookup_names(domain):
+            state, answers = self._query(name, "TXT")
+            if state == ERROR:
+                return {"has_dmarc": False, "record": None, "policy": "none", "status": "ERROR",
+                        "state": ERROR, "error": answers}
+            records = [t for t in self._txt_records(answers) if t.startswith("v=DMARC1")] if state == OK else []
+            if records:
+                return self._parse_dmarc(records[0], inherited_from=name if inherited else None)
 
-            if not dmarc_records:
-                return {
-                    "has_dmarc": False,
-                    "record": None,
-                    "policy": "none",
-                    "status": "MISSING",
-                    "details": "No DMARC record found. Domain is vulnerable to direct sender spoofing.",
-                }
+        return {
+            "has_dmarc": False,
+            "record": None,
+            "policy": "none",
+            "status": "MISSING",
+            "state": OK,
+            "details": "No DMARC record found. Domain is vulnerable to direct sender spoofing.",
+        }
 
-            record = dmarc_records[0]
-            policy_match = re.search(r"p\s*=\s*([a-zA-Z]+)", record)
-            policy = policy_match.group(1).lower() if policy_match else "unknown"
+    @staticmethod
+    def _parse_dmarc(record: str, inherited_from: Optional[str]) -> Dict[str, Any]:
+        tags = {}
+        for part in record.split(";"):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                tags[k.strip().lower()] = v.strip()
 
-            rua_match = re.search(r"rua\s*=\s*mailto:([^\s;]+)", record)
-            reporting_email = rua_match.group(1) if rua_match else None
+        policy = tags.get("p", "unknown").lower()
+        # For a sub-domain that inherits the parent's record, 'sp' (if present) applies.
+        effective = tags.get("sp", policy).lower() if inherited_from else policy
 
-            pct_match = re.search(r"pct\s*=\s*(\d+)", record)
-            pct = int(pct_match.group(1)) if pct_match else 100
+        rua_match = re.search(r"mailto:([^\s,;]+)", tags.get("rua", ""))
+        pct_match = re.match(r"\d+", tags.get("pct", ""))
+        pct = int(pct_match.group(0)) if pct_match else 100
 
-            status = "VULNERABLE"
-            if policy == "reject":
-                status = "STRICT_PROTECTED"
-            elif policy == "quarantine":
-                status = "PROTECTED"
-            elif policy == "none":
-                status = "MONITORING_ONLY"
+        status = "VULNERABLE"
+        if effective == "reject":
+            status = "STRICT_PROTECTED"
+        elif effective == "quarantine":
+            status = "PROTECTED"
+        elif effective == "none":
+            status = "MONITORING_ONLY"
 
-            return {
-                "has_dmarc": True,
-                "record": record,
-                "policy": policy,
-                "status": status,
-                "reporting_email": reporting_email,
-                "pct": pct,
-                "details": f"Policy set to {policy.upper()} ({pct}% enforcement)",
-            }
-        except Exception:
-            return {
-                "has_dmarc": False,
-                "record": None,
-                "policy": "none",
-                "status": "MISSING",
-                "details": "No DMARC record configured.",
-            }
+        details = f"Policy set to {effective.upper()} ({pct}% enforcement)"
+        if inherited_from:
+            details += f", inherited from {inherited_from}"
 
+        return {
+            "has_dmarc": True,
+            "record": record,
+            "policy": effective,
+            "domain_policy": policy,
+            "status": status,
+            "reporting_email": rua_match.group(1) if rua_match else None,
+            "pct": pct,
+            "inherited_from": inherited_from,
+            "state": OK,
+            "details": details,
+        }
+
+    # -------------------------------------------------------------- Scoring
     def _calculate_health_score(
         self,
         mx: Dict[str, Any],
@@ -209,8 +285,9 @@ class MailHealthChecker:
                 score += 15
                 issues.append("SPF uses Neutral (?all). Spoofed emails will not be blocked.")
             elif spf.get("status") == "CRITICAL_RISK":
-                score += 0
                 issues.append("CRITICAL: SPF uses +all, allowing any IP to send mail on your behalf!")
+            else:
+                issues.append("SPF record has no 'all' mechanism, so unauthorized senders are not rejected.")
             if spf.get("is_multiple"):
                 issues.append("Multiple SPF records detected. This causes SPF PermError!")
                 score = max(0, score - 15)
@@ -228,10 +305,13 @@ class MailHealthChecker:
             elif pol == "none":
                 score += 15
                 issues.append("DMARC policy is p=none (monitoring only). Direct spoofing is NOT blocked.")
+            else:
+                issues.append("DMARC record has no valid p= policy, so it is not enforced.")
+            if dmarc.get("inherited_from"):
+                issues.append(f"No DMARC record on this exact name; policy inherited from {dmarc['inherited_from']}.")
         else:
             issues.append("Missing DMARC record. Highly susceptible to brand impersonation and phishing.")
 
-        # Rating categorization
         if score >= 80:
             rating = "PROTECTED"
             verdict = "Strong Anti-Spoofing Posture"

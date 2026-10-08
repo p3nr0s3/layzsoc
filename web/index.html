@@ -3743,9 +3743,15 @@ tags:
         const data = await res.json();
         document.getElementById('mail-health-results').classList.remove('hidden');
 
-        document.getElementById('mail-score').innerText = data.score;
+        document.getElementById('mail-score').innerText = (data.score ?? '–');
         const ratingBadge = document.getElementById('mail-rating-badge');
-        if (data.rating === 'PROTECTED') {
+        if (data.rating === 'NOT_FOUND') {
+          ratingBadge.className = 'mt-2 text-sm font-bold font-mono text-slate-400';
+          ratingBadge.innerText = '● DOMAIN NOT FOUND';
+        } else if (data.rating === 'INCONCLUSIVE') {
+          ratingBadge.className = 'mt-2 text-sm font-bold font-mono text-amber-400';
+          ratingBadge.innerText = '● DNS LOOKUP FAILED - TRY AGAIN';
+        } else if (data.rating === 'PROTECTED') {
           ratingBadge.className = 'mt-2 text-sm font-bold font-mono text-emerald-400';
           ratingBadge.innerText = '● PROTECTED';
         } else if (data.rating === 'PARTIALLY_PROTECTED') {
@@ -3763,7 +3769,7 @@ tags:
         document.getElementById('mail-mx-count').innerText = `${data.mx?.count || 0} records`;
         const mxList = document.getElementById('mail-mx-list');
         if (data.mx?.records && data.mx.records.length) {
-          mxList.innerHTML = data.mx.records.map(r => `<div>[${r.priority}] ${r.host}</div>`).join('');
+          mxList.innerHTML = data.mx.records.map(r => `<div>[${escapeHtml(String(r.priority))}] ${escapeHtml(r.host)}</div>`).join('');
         } else {
           mxList.innerHTML = `<span class="text-slate-500">No MX records configured.</span>`;
         }
@@ -3771,19 +3777,21 @@ tags:
         // SPF
         const spfBadge = document.getElementById('mail-spf-badge');
         spfBadge.innerText = data.spf?.status || 'MISSING';
-        spfBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded font-bold ${data.spf?.has_spf ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`;
-        document.getElementById('mail-spf-text').innerText = data.spf?.record || 'No SPF record found.';
+        spfBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded font-bold ${data.spf?.status === 'ERROR' ? 'bg-amber-500/15 text-amber-400' : data.spf?.has_spf ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`;
+        document.getElementById('mail-spf-text').innerText = data.spf?.record || (data.spf?.status === 'ERROR' ? ('Lookup failed: ' + (data.spf.error || 'unknown error')) : 'No SPF record found.');
 
         // DMARC
         const dmarcBadge = document.getElementById('mail-dmarc-badge');
         dmarcBadge.innerText = (data.dmarc?.policy || 'MISSING').toUpperCase();
         dmarcBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded font-bold ${data.dmarc?.policy === 'reject' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`;
-        document.getElementById('mail-dmarc-text').innerText = data.dmarc?.record || 'No DMARC record found.';
+        document.getElementById('mail-dmarc-text').innerText = data.dmarc?.record
+          ? data.dmarc.record + (data.dmarc.inherited_from ? `  (inherited from ${data.dmarc.inherited_from})` : '')
+          : (data.dmarc?.status === 'ERROR' ? ('Lookup failed: ' + (data.dmarc.error || 'unknown error')) : 'No DMARC record found.');
 
         // Issues
         const issuesList = document.getElementById('mail-issues-list');
         if (data.issues && data.issues.length) {
-          issuesList.innerHTML = data.issues.map(i => `<li>${i}</li>`).join('');
+          issuesList.innerHTML = data.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('');
         } else {
           issuesList.innerHTML = `<li class="text-emerald-400">All email security protocols (MX, SPF, DMARC) are optimally configured!</li>`;
         }
