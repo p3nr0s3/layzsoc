@@ -43,6 +43,8 @@ from core.cve import query_cve
 from core.playbooks import get_all_playbooks, get_playbook, generate_playbook_report
 from core.url_tracer import trace_url_redirects
 from core.deobfuscator import deobfuscate_payload
+from core.hunting import generate_single_ioc_hunt_queries
+from core.mitre import get_mitre_matrix_data, analyze_mitre_coverage
 
 app = FastAPI(title="LazySOC Threat Triage & Investigation Platform", version="3.0.0")
 
@@ -102,6 +104,22 @@ class TraceUrlRequest(BaseModel):
 
 class DeobfuscateRequest(BaseModel):
     payload: str
+
+
+class HuntRequest(BaseModel):
+    ioc: str
+    type: str
+    verdict: Optional[str] = "Malicious"
+
+
+class MitreCoverageRequest(BaseModel):
+    iocs: Optional[List[Dict[str, Any]]] = None
+    playbook_id: Optional[str] = None
+
+
+class SanitizeRequest(BaseModel):
+    text: str
+    mode: str = "defang"  # "defang" or "refang"
 
 
 @app.get("/api/status")
@@ -336,6 +354,54 @@ def deobfuscate_endpoint(req: DeobfuscateRequest):
     if not payload:
         raise HTTPException(status_code=400, detail="Payload cannot be empty.")
     return deobfuscate_payload(payload)
+
+
+@app.post("/api/hunt")
+def hunt_single_ioc_endpoint(req: HuntRequest):
+    """Generates targeted multi-SIEM threat hunting queries for a specific single IoC."""
+    ioc_val = req.ioc.strip()
+    if not ioc_val:
+        raise HTTPException(status_code=400, detail="IoC cannot be empty.")
+    return generate_single_ioc_hunt_queries(ioc_val, req.type, req.verdict)
+
+
+@app.get("/api/mitre")
+def get_mitre_matrix_endpoint():
+    """Returns complete MITRE ATT&CK Matrix tactical columns and technique definitions."""
+    return get_mitre_matrix_data()
+
+
+@app.post("/api/mitre/coverage")
+def analyze_mitre_coverage_endpoint(req: MitreCoverageRequest):
+    """Analyzes and correlates current triage IoCs and playbook to generate an active TTP heatmap."""
+    return analyze_mitre_coverage(req.iocs or [], req.playbook_id)
+
+
+@app.post("/api/sanitize")
+def sanitize_text_endpoint(req: SanitizeRequest):
+    """Defangs or refangs free-form text, indicators, and URLs safely."""
+    raw_text = req.text
+    if req.mode == "refang":
+        # Turn defanged text back to live indicators
+        from core.parser import defang_string
+        cleaned = defang_string(raw_text)
+        return {"result": cleaned, "mode": "refang"}
+    else:
+        # Aggressive defanging for safe pasting
+        from core.parser import parse_raw_text, refang_string
+        # First extract IoCs to ensure accurate replacement
+        items = parse_raw_text(raw_text)
+        replaced = raw_text
+        for item in items:
+            defanged_val = refang_string(item.value, item.ioc_type)
+            if item.value in replaced:
+                replaced = replaced.replace(item.value, defanged_val)
+            elif item.raw in replaced:
+                replaced = replaced.replace(item.raw, defanged_val)
+        
+        # Also clean up any lingering http:// or https://
+        replaced = replaced.replace("https://", "hxxps://").replace("http://", "hxxp://")
+        return {"result": replaced, "mode": "defang", "indicators_found": len(items)}
 
 
 @app.get("/", response_class=HTMLResponse)

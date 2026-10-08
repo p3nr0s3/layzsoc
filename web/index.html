@@ -226,6 +226,14 @@
           <i data-lucide="shield-alert" class="w-4 h-4 flex-shrink-0"></i>
           <span>CVE / NVD</span>
         </button>
+        <button onclick="switchTab('mitre')" id="tab-btn-mitre" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+          <i data-lucide="grid" class="w-4 h-4 flex-shrink-0"></i>
+          <span>MITRE ATT&CK</span>
+        </button>
+        <button onclick="switchTab('sanitize')" id="tab-btn-sanitize" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+          <i data-lucide="shield-check" class="w-4 h-4 flex-shrink-0"></i>
+          <span>Defang Studio</span>
+        </button>
         <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
           <i data-lucide="database" class="w-4 h-4 flex-shrink-0"></i>
           <span>Cache & Logs</span>
@@ -553,6 +561,7 @@
                   <th class="py-3 px-4">VirusTotal v3</th>
                   <th class="py-3 px-4">AbuseIPDB / URLhaus</th>
                   <th class="py-3 px-4">Telemetry Notes</th>
+                  <th class="py-3 px-4 text-center">Threat Hunt</th>
                   <th class="py-3 px-4 text-center">Inspect</th>
                 </tr>
               </thead>
@@ -1359,6 +1368,148 @@
       </div>
     </section>
 
+    <!-- ============================================================
+         TAB 8: MITRE ATT&CK MATRIX & TTP HEATMAP
+         ============================================================ -->
+    <section id="view-mitre" class="hidden space-y-6">
+      
+      <!-- Top Overview Card -->
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="grid" class="w-4 h-4 text-cyber-cyan"></i>
+              MITRE ATT&CK® Enterprise TTP Navigator & Incident Heatmap
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Correlates triaged IoCs and incident playbook execution against official ATT&CK tactics & techniques</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="syncMitreWithActiveIncident()" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 flex items-center gap-1.5 transition">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Sync with Triage Findings</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Coverage Stats Banner -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-cyber-border/60">
+          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3">
+            <div class="text-[10px] font-mono text-slate-400 uppercase">Covered Tactics</div>
+            <div id="mitre-covered-tactics" class="text-xl font-bold font-mono text-cyber-cyan mt-0.5">0 / 12</div>
+          </div>
+          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3">
+            <div class="text-[10px] font-mono text-slate-400 uppercase">Triggered Techniques (TTPs)</div>
+            <div id="mitre-active-techniques-count" class="text-xl font-bold font-mono text-amber-400 mt-0.5">0 Active</div>
+          </div>
+          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3">
+            <div class="text-[10px] font-mono text-slate-400 uppercase">Recommended Mitigations</div>
+            <div id="mitre-mitigations-count" class="text-xl font-bold font-mono text-emerald-400 mt-0.5">Ready</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATT&CK Matrix Grid Container -->
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 sm:p-5 space-y-4">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <div class="font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="layout-grid" class="w-4 h-4 text-cyber-cyan"></i>
+            Enterprise Tactical Matrix
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-slate-400">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500/30 border border-amber-500/70 inline-block"></span> Active Threat TTP</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#0b101c] border border-cyber-border inline-block"></span> Standard Technique</span>
+          </div>
+        </div>
+
+        <div id="mitre-matrix-container" class="overflow-x-auto custom-scrollbar pb-2">
+          <!-- Injected dynamically via JS -->
+          <div class="p-8 text-center text-slate-500 font-mono text-xs">Loading ATT&CK tactical framework...</div>
+        </div>
+      </div>
+
+      <!-- Selected Technique Detail Card -->
+      <div id="mitre-technique-detail-card" class="hidden bg-cyber-card border border-amber-500/40 rounded-xl p-5 space-y-3 glow-amber">
+        <!-- Injected via JS when clicking on technique -->
+      </div>
+
+    </section>
+
+    <!-- ============================================================
+         TAB 9: DEFANG STUDIO & TEXT SANITIZER
+         ============================================================ -->
+    <section id="view-sanitize" class="hidden space-y-6">
+      
+      <!-- Input Card -->
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-cyber-cyan"></i>
+              IoC Defanger & Text Normalizer Studio
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Sanitize live URLs, IPs, and hostnames for safe ticket sharing, or refang obfuscated bulletins</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadSampleSanitizer()" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border transition">
+              Load Sample
+            </button>
+            <button onclick="clearSanitizer()" class="px-2.5 py-1 text-xs font-mono rounded-md bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Left: Input Box -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+              <span class="font-bold text-slate-300">Input Content:</span>
+              <span id="sanitize-input-stats">0 chars</span>
+            </div>
+            <textarea 
+              id="sanitize-input" 
+              rows="12" 
+              placeholder="Paste raw bulletin, email contents, active URLs (https://evil.com/payload.exe) or IPs (185.220.101.5) here..."
+              class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyber-cyan custom-scrollbar"
+              oninput="updateSanitizerStats()"
+            ></textarea>
+            <div class="flex items-center gap-2 pt-1">
+              <button onclick="runSanitizeAction('defang')" class="flex-1 py-2 px-3 rounded-lg bg-cyber-cyan text-slate-950 font-bold font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-cyber-cyan/90 transition glow-cyan">
+                <i data-lucide="shield" class="w-4 h-4"></i>
+                Bulk Defang [.]
+              </button>
+              <button onclick="runSanitizeAction('refang')" class="flex-1 py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-white font-bold font-mono text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-cyber-border transition">
+                <i data-lucide="shield-off" class="w-4 h-4"></i>
+                Refang to Live
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Output Box -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+              <span class="font-bold text-cyber-cyan">Processed Output:</span>
+              <span id="sanitize-status" class="text-emerald-400 font-bold"></span>
+            </div>
+            <textarea 
+              id="sanitize-output" 
+              rows="12" 
+              readonly 
+              placeholder="Sanitized safe-to-share text will appear here..."
+              class="w-full bg-[#060a12] border border-cyber-border rounded-lg p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none custom-scrollbar select-all"
+            ></textarea>
+            <div class="flex items-center justify-between pt-1">
+              <span id="sanitize-action-badge" class="text-[11px] font-mono text-slate-400">Ready</span>
+              <button onclick="copySanitizeOutput()" class="py-2 px-4 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 font-bold font-mono text-xs flex items-center gap-1.5 transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>Copy Output</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- CYBERPUNK HUD FOOTER & CREATOR WATERMARK -->
@@ -1651,6 +1802,53 @@
     </div>
   </div>
 
+  <!-- MODAL: SINGLE-IOC DIRECT HUNTING PIVOT -->
+  <div id="modal-single-hunt" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-cyber-card border border-cyber-cyan/40 rounded-2xl max-w-2xl w-full p-4 sm:p-6 space-y-4 glow-cyan max-h-[92vh] flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between border-b border-cyber-border/80 pb-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-cyber-cyan/15 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan flex-shrink-0">
+            <i data-lucide="crosshair" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-sm sm:text-base font-bold text-white font-mono">Live Threat Hunting Pivot</h3>
+              <span id="single-hunt-verdict-badge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">MALICIOUS</span>
+            </div>
+            <div id="single-hunt-target" class="text-xs font-mono text-cyber-cyan truncate font-bold mt-0.5">-</div>
+          </div>
+        </div>
+        <button onclick="closeSingleHuntModal()" class="text-slate-400 hover:text-white p-1 rounded hover:bg-white/10 transition text-lg flex-shrink-0">✕</button>
+      </div>
+
+      <!-- Platform Selection Chips -->
+      <div class="flex items-center gap-1.5 p-1 bg-[#090d16] border border-cyber-border rounded-lg text-xs font-mono overflow-x-auto custom-scrollbar">
+        <button onclick="switchSingleHuntPlatform('splunk')" id="hunt-tab-splunk" class="px-3 py-1 rounded font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 whitespace-nowrap">Splunk SPL</button>
+        <button onclick="switchSingleHuntPlatform('sentinel')" id="hunt-tab-sentinel" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Sentinel KQL</button>
+        <button onclick="switchSingleHuntPlatform('crowdstrike')" id="hunt-tab-crowdstrike" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">CrowdStrike</button>
+        <button onclick="switchSingleHuntPlatform('opensearch')" id="hunt-tab-opensearch" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">OpenSearch</button>
+        <button onclick="switchSingleHuntPlatform('suricata')" id="hunt-tab-suricata" class="px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap">Suricata IDS</button>
+      </div>
+
+      <!-- Output Textarea -->
+      <div class="relative flex-1 min-h-[220px]">
+        <textarea id="single-hunt-output" readonly class="w-full h-full min-h-[200px] p-3 text-xs font-mono text-slate-200 bg-[#060a12] border border-cyber-border rounded-lg focus:outline-none custom-scrollbar select-all"></textarea>
+      </div>
+
+      <!-- Actions Footer -->
+      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-cyber-border">
+        <span id="single-hunt-copy-status" class="text-[11px] font-mono text-emerald-400 text-center sm:text-left"></span>
+        <div class="flex items-center gap-2 justify-end">
+          <button onclick="closeSingleHuntModal()" class="w-full sm:w-auto px-3.5 py-1.5 text-xs font-mono text-slate-400 hover:text-white">Close</button>
+          <button onclick="copySingleHuntQuery()" class="w-full sm:w-auto justify-center px-4 py-1.5 text-xs font-bold rounded-lg bg-cyber-cyan text-slate-950 hover:bg-cyber-cyan/90 transition flex items-center gap-1.5 glow-cyan">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>Copy Hunting Query</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- DRAWER: INSPECT TELEMETRY -->
   <div id="drawer-inspect" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
     <div class="bg-cyber-card border-l border-cyber-border w-full max-w-xl h-full p-4 sm:p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
@@ -1731,6 +1929,8 @@ Content-Type: text/html; charset=UTF-8
       mail: "Domain Mail Health",
       feed: "Real-Time Cyber Feeds",
       cve: "Online CVE & NIST NVD Intel",
+      mitre: "MITRE ATT&CK® Matrix & TTP Heatmap",
+      sanitize: "IoC Defanger & Text Normalizer",
       cache: "Cache & Investigation Logs"
     };
 
@@ -1751,7 +1951,7 @@ Content-Type: text/html; charset=UTF-8
     }
 
     function switchTab(tabId) {
-      ['triage', 'recon', 'eml', 'urltrace', 'deobf', 'mail', 'feed', 'cve', 'cache'].forEach(t => {
+      ['triage', 'recon', 'eml', 'urltrace', 'deobf', 'mail', 'feed', 'cve', 'mitre', 'sanitize', 'cache'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (view) view.classList.add('hidden');
@@ -1780,6 +1980,7 @@ Content-Type: text/html; charset=UTF-8
 
       if (tabId === 'feed') fetchCyberFeeds();
       if (tabId === 'cve') fetchCveIntel();
+      if (tabId === 'mitre') fetchMitreMatrix();
       if (tabId === 'cache') fetchCache();
       lucide.createIcons();
     }
@@ -2039,7 +2240,13 @@ Content-Type: text/html; charset=UTF-8
             <td class="py-3 px-4 text-slate-300">${secondaryScore}</td>
             <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${r.notes || '-'}</td>
             <td class="py-3 px-4 text-center">
-              <button onclick='openInspectDrawer("${r.ioc}")' class="p-1 rounded hover:bg-cyber-cyan/15 text-slate-400 hover:text-cyber-cyan transition">
+              <button onclick='openSingleHuntModal("${escapeHtml(r.ioc)}", "${r.type}", "${r.verdict}")' class="px-2 py-1 rounded bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 text-[11px] font-bold flex items-center gap-1 mx-auto transition" title="1-Click SIEM Threat Hunting Queries">
+                <i data-lucide="crosshair" class="w-3 h-3"></i>
+                <span>Hunt</span>
+              </button>
+            </td>
+            <td class="py-3 px-4 text-center">
+              <button onclick='openInspectDrawer("${r.ioc}")' class="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition" title="Inspect Indicator Telemetry">
                 <i data-lucide="eye" class="w-4 h-4"></i>
               </button>
             </td>
@@ -4168,6 +4375,310 @@ tags:
       switchTab('triage');
       handleInputDebounce();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==========================================
+    // FEATURE 1: 1-CLICK SINGLE-IOC THREAT HUNTING PIVOT
+    // ==========================================
+    let activeHuntCache = null;
+    let activeHuntPlatform = 'splunk';
+
+    async function openSingleHuntModal(ioc, type, verdict) {
+      const modal = document.getElementById('modal-single-hunt');
+      if (!modal) return;
+
+      document.getElementById('single-hunt-target').innerText = `${ioc} (${(type || '').toUpperCase()})`;
+      const vBadge = document.getElementById('single-hunt-verdict-badge');
+      if (vBadge) {
+        vBadge.innerText = (verdict || 'MALICIOUS').toUpperCase();
+        if (verdict === 'Malicious') {
+          vBadge.className = "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30";
+        } else if (verdict === 'Suspicious') {
+          vBadge.className = "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        } else {
+          vBadge.className = "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30";
+        }
+      }
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+
+      const out = document.getElementById('single-hunt-output');
+      out.value = "# Querying targeted hunting syntax across SIEM engines...";
+
+      try {
+        const res = await fetch('/api/hunt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ioc, type, verdict })
+        });
+
+        if (!res.ok) throw new Error("Failed to generate hunting queries.");
+        const data = await res.json();
+        activeHuntCache = data.queries || {};
+        switchSingleHuntPlatform(activeHuntPlatform);
+      } catch (e) {
+        out.value = `# Error: ${e.message}`;
+      }
+    }
+
+    function closeSingleHuntModal() {
+      const modal = document.getElementById('modal-single-hunt');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function switchSingleHuntPlatform(platform) {
+      activeHuntPlatform = platform;
+      ['splunk', 'sentinel', 'crowdstrike', 'opensearch', 'suricata'].forEach(p => {
+        const btn = document.getElementById(`hunt-tab-${p}`);
+        if (btn) {
+          if (p === platform) {
+            btn.className = "px-3 py-1 rounded font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 whitespace-nowrap";
+          } else {
+            btn.className = "px-3 py-1 rounded text-slate-400 hover:text-white whitespace-nowrap";
+          }
+        }
+      });
+
+      const out = document.getElementById('single-hunt-output');
+      if (activeHuntCache && activeHuntCache[platform]) {
+        out.value = activeHuntCache[platform];
+      } else {
+        out.value = `# No specific hunting query template available for ${platform}.`;
+      }
+      document.getElementById('single-hunt-copy-status').innerText = "";
+    }
+
+    function copySingleHuntQuery() {
+      const text = document.getElementById('single-hunt-output').value;
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+      const st = document.getElementById('single-hunt-copy-status');
+      if (st) {
+        st.innerText = "✓ Copied to clipboard!";
+        setTimeout(() => { st.innerText = ""; }, 2500);
+      }
+    }
+
+    // ==========================================
+    // FEATURE 2: MITRE ATT&CK MATRIX & TTP HEATMAP
+    // ==========================================
+    let mitreMatrixData = null;
+    let mitreActiveTechniques = new Set();
+
+    async function fetchMitreMatrix() {
+      const container = document.getElementById('mitre-matrix-container');
+      if (!mitreMatrixData) {
+        try {
+          const res = await fetch('/api/mitre');
+          if (res.ok) {
+            mitreMatrixData = await res.json();
+          }
+        } catch (e) {
+          console.error("Failed to fetch MITRE data:", e);
+        }
+      }
+
+      await syncMitreWithActiveIncident();
+    }
+
+    async function syncMitreWithActiveIncident() {
+      const container = document.getElementById('mitre-matrix-container');
+      if (!mitreMatrixData || !container) return;
+
+      try {
+        const res = await fetch('/api/mitre/coverage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iocs: currentResults || [],
+            playbook_id: currentPlaybookId || 'phishing'
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          mitreActiveTechniques = new Set(data.active_techniques || []);
+          document.getElementById('mitre-active-techniques-count').innerText = `${mitreActiveTechniques.size} Active`;
+        }
+      } catch (e) {
+        console.error("Coverage analysis error:", e);
+      }
+
+      renderMitreMatrix();
+    }
+
+    function renderMitreMatrix() {
+      const container = document.getElementById('mitre-matrix-container');
+      if (!mitreMatrixData || !container) return;
+
+      const columns = mitreMatrixData.matrix || [];
+      let coveredTacticsCount = 0;
+
+      const colsHtml = columns.map(col => {
+        let hasActiveInTactic = false;
+        const techsHtml = (col.techniques || []).map(tech => {
+          const isActive = mitreActiveTechniques.has(tech.id);
+          if (isActive) hasActiveInTactic = true;
+
+          const cardStyle = isActive 
+            ? 'bg-amber-500/20 text-amber-200 border-amber-500/60 shadow-lg glow-amber' 
+            : 'bg-[#090d16] text-slate-300 border-cyber-border hover:border-cyber-cyan/50 hover:bg-[#0d1424]';
+
+          return `
+            <div 
+              onclick='showMitreTechniqueDetail("${tech.id}")'
+              class="p-2.5 rounded-lg border text-xs font-mono transition cursor-pointer ${cardStyle}"
+              title="${escapeHtml(tech.name)}"
+            >
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <span class="font-bold text-[10px] ${isActive ? 'text-amber-300' : 'text-cyber-cyan'}">${tech.id}</span>
+                ${isActive ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>' : ''}
+              </div>
+              <div class="text-[11px] font-sans font-semibold leading-tight line-clamp-2">${escapeHtml(tech.name)}</div>
+            </div>
+          `;
+        }).join('');
+
+        if (hasActiveInTactic) coveredTacticsCount++;
+
+        return `
+          <div class="flex-shrink-0 w-52 space-y-2">
+            <div class="bg-[#0b101c] border border-cyber-border rounded-lg p-2.5 flex items-center justify-between">
+              <span class="font-bold text-xs text-white uppercase font-mono truncate" title="${col.name}">${col.name}</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ${hasActiveInTactic ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40' : 'bg-white/5 text-slate-400'}">${col.techniques.length}</span>
+            </div>
+            <div class="space-y-2">
+              ${techsHtml || '<div class="text-[10px] font-mono text-slate-600 p-2 text-center">No mapped sub-techniques</div>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = `<div class="flex items-start gap-3 min-w-max pb-2">${colsHtml}</div>`;
+      document.getElementById('mitre-covered-tactics').innerText = `${coveredTacticsCount} / ${columns.length}`;
+      lucide.createIcons();
+    }
+
+    function showMitreTechniqueDetail(techId) {
+      if (!mitreMatrixData) return;
+      let targetTech = null;
+      (mitreMatrixData.matrix || []).forEach(col => {
+        (col.techniques || []).forEach(t => {
+          if (t.id === techId) targetTech = t;
+        });
+      });
+
+      if (!targetTech) return;
+      const detailCard = document.getElementById('mitre-technique-detail-card');
+      if (!detailCard) return;
+
+      const isActive = mitreActiveTechniques.has(techId);
+
+      detailCard.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border/70 pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">${targetTech.id}</span>
+              <h4 class="text-sm sm:text-base font-bold text-white font-sans">${escapeHtml(targetTech.name)}</h4>
+              ${isActive ? '<span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">TRIGGERED IN TRIAGE</span>' : ''}
+            </div>
+            <span class="text-xs text-slate-400 font-mono mt-1 block">Tactic: ${escapeHtml(targetTech.tactic)} (${targetTech.tactic_id})</span>
+          </div>
+          <button onclick="document.getElementById('mitre-technique-detail-card').classList.add('hidden')" class="text-slate-400 hover:text-white p-1 self-end sm:self-auto">✕</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-sans">
+          <div class="space-y-1.5 md:col-span-1 bg-[#090d16] p-3 rounded-lg border border-cyber-border">
+            <span class="text-slate-400 font-mono text-[11px] font-bold uppercase block">Technique Description</span>
+            <p class="text-slate-300 leading-relaxed">${escapeHtml(targetTech.description)}</p>
+          </div>
+          <div class="space-y-1.5 md:col-span-1 bg-[#090d16] p-3 rounded-lg border border-cyber-border">
+            <span class="text-cyan-400 font-mono text-[11px] font-bold uppercase block">Detection Guidance</span>
+            <p class="text-slate-300 leading-relaxed">${escapeHtml(targetTech.detection)}</p>
+          </div>
+          <div class="space-y-1.5 md:col-span-1 bg-[#090d16] p-3 rounded-lg border border-cyber-border">
+            <span class="text-emerald-400 font-mono text-[11px] font-bold uppercase block">Security Mitigations</span>
+            <p class="text-slate-300 leading-relaxed">${escapeHtml(targetTech.mitigation)}</p>
+          </div>
+        </div>
+      `;
+
+      detailCard.classList.remove('hidden');
+      detailCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // FEATURE 3: DEFANG STUDIO & TEXT NORMALIZER
+    // ==========================================
+    function loadSampleSanitizer() {
+      document.getElementById('sanitize-input').value = `Incident IOC Bulletin Report:
+During our malware investigation, we identified malicious traffic to http://evil-login-verify.xyz/login.php and secondary C2 server at 185.220.101.5:8080.
+The victim also received an email from admin@phishing-gateway.com containing payload link:
+https://storage.malicious-cloud.com/dropper.exe (SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855).`;
+      updateSanitizerStats();
+    }
+
+    function clearSanitizer() {
+      document.getElementById('sanitize-input').value = '';
+      document.getElementById('sanitize-output').value = '';
+      document.getElementById('sanitize-input-stats').innerText = '0 chars';
+      document.getElementById('sanitize-status').innerText = '';
+    }
+
+    function updateSanitizerStats() {
+      const len = document.getElementById('sanitize-input').value.length;
+      document.getElementById('sanitize-input-stats').innerText = `${len} chars`;
+    }
+
+    async function runSanitizeAction(mode) {
+      const text = document.getElementById('sanitize-input').value;
+      if (!text.trim()) {
+        alert("Please enter or paste text to sanitize.");
+        return;
+      }
+
+      const outEl = document.getElementById('sanitize-output');
+      outEl.value = "Processing text sanitization...";
+
+      try {
+        const res = await fetch('/api/sanitize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, mode })
+        });
+
+        if (!res.ok) throw new Error("Sanitization failed.");
+        const data = await res.json();
+        outEl.value = data.result || '';
+
+        const badge = document.getElementById('sanitize-action-badge');
+        if (badge) {
+          badge.innerText = mode === 'defang' 
+            ? `✓ Defanged ${data.indicators_found || 0} indicators safely` 
+            : `✓ Refanged back to live indicators`;
+        }
+
+        const st = document.getElementById('sanitize-status');
+        if (st) {
+          st.innerText = "Processed successfully";
+          setTimeout(() => { st.innerText = ""; }, 2500);
+        }
+      } catch (e) {
+        outEl.value = `Error: ${e.message}`;
+      }
+    }
+
+    function copySanitizeOutput() {
+      const text = document.getElementById('sanitize-output').value;
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+      const st = document.getElementById('sanitize-status');
+      if (st) {
+        st.innerText = "✓ Output copied to clipboard!";
+        setTimeout(() => { st.innerText = ""; }, 2500);
+      }
     }
   </script>
 </body>

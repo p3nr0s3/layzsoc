@@ -75,7 +75,24 @@
 - **PowerShell -enc Decoder**: Extracts and decodes Base64 UTF-16LE commands, strips backtick obfuscation, flags dangerous cmdlets (`DownloadString`, `IEX`, `Net.WebClient`), and harvests embedded URLs.
 - **Multi-Scheme Decoders**: Standard Base64, Hex / byte arrays (`\x41`, `0x41`, raw hex), multi-pass URL percent-encoding, ROT13, and string reversal.
 - **Single-Byte XOR Brute-Force Scanner**: Tests keys `0x01`–`0xFF` against ascii/hex streams to uncover XOR-encrypted shellcode and C2 domains.
-- **1-Click Defang & Refang**: Safely neutralizes or normalizes URLs, IPs, and hostnames for reporting.
+
+### 🎯 11. 1-Click Threat Hunting Query Pivot (Per-IoC Direct)
+- Direct **"Hunt"** button on every triaged IoC row in the results table.
+- Generates tailored, targeted hunting queries for that exact indicator across:
+  - **Splunk SPL** (`index=* earliest=-30d (src_ip="X" OR dest_ip="X")`)
+  - **Microsoft Sentinel / Defender KQL** (`search in (DeviceNetworkEvents, CommonSecurityLog)`)
+  - **CrowdStrike Falcon (LQL)** (`event_simpleName=NetworkConnectIP4 ...`)
+  - **OpenSearch (DQL & PPL)** (`source = * | where destination.ip = 'X'`)
+  - **Suricata IDS Rule** (`alert ip any any -> X any (msg:"LazySOC Alert...";)`)
+
+### 🗺️ 12. MITRE ATT&CK® Enterprise Matrix & TTP Heatmap
+- Official 12-tactic enterprise tactical matrix visualizer.
+- **Real-Time TTP Correlation**: Automatically highlights triggered techniques based on malicious triage findings and active playbook selections.
+- Interactive technique inspector with full descriptions, detection guidance, and mitigation recommendations.
+
+### 🛡️ 13. Bulk IoC Defanger & Text Normalizer Studio
+- **Safe Ticket Sharing**: Rapid bulk defanging of active threat bulletins (`hxxps://evil[.]com`, `1[.]1[.]1[.]1`) for pasting into Slack, Teams, or Jira.
+- **Refanger**: Instantly turns defanged indicators back into live URLs/IPs ready for investigative queries.
 
 ---
 

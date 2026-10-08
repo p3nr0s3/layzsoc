@@ -220,5 +220,63 @@ def test_deobfuscator_endpoint():
     assert data2.get("rot13") == "48656p6p6s"
 
 
+def test_hunt_single_ioc_endpoint():
+    res = client.post("/api/hunt", json={
+        "ioc": "185.220.101.5",
+        "type": "ipv4",
+        "verdict": "Malicious"
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert "queries" in data
+    assert "splunk" in data["queries"]
+    assert "sentinel" in data["queries"]
+    assert "crowdstrike" in data["queries"]
+    assert "185.220.101.5" in data["queries"]["splunk"]
+
+
+def test_mitre_endpoints():
+    # 1. Get matrix structure
+    res = client.get("/api/mitre")
+    assert res.status_code == 200
+    data = res.json()
+    assert "tactics" in data
+    assert "matrix" in data
+    assert data["techniques_count"] > 0
+
+    # 2. Analyze coverage
+    res2 = client.post("/api/mitre/coverage", json={
+        "iocs": [{"ioc": "evil.com", "type": "domain", "verdict": "Malicious"}],
+        "playbook_id": "phishing"
+    })
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert "active_techniques" in data2
+    assert "T1566" in data2["active_techniques"]  # Phishing
+
+
+def test_sanitize_endpoint():
+    # Defang
+    res = client.post("/api/sanitize", json={
+        "text": "Visit http://evil.com or connect to 1.1.1.1",
+        "mode": "defang"
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert "hxxp://evil[.]com" in data["result"]
+    assert "1[.]1[.]1[.]1" in data["result"]
+
+    # Refang
+    res2 = client.post("/api/sanitize", json={
+        "text": "hxxps://evil[.]com/payload and 8[.]8[.]8[.]8",
+        "mode": "refang"
+    })
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert "https://evil.com/payload" in data2["result"]
+    assert "8.8.8.8" in data2["result"]
+
+
+
 
 
