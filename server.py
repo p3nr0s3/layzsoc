@@ -1,4 +1,4 @@
-"""FastAPI Server for Slothery Custom Web Interface."""
+"""FastAPI Server for LazySOC Cyber Threat Triage & SOC Workbench."""
 
 import os
 import uvicorn
@@ -66,6 +66,8 @@ email_analyzer = EmailAnalyzer()
 WEB_DIR = BASE_DIR / "web"
 WEB_DIR.mkdir(parents=True, exist_ok=True)
 
+MAX_UPLOAD_SIZE = 25 * 1024 * 1024  # 25 MB max upload limit
+
 
 # Models
 class ScanRequest(BaseModel):
@@ -75,6 +77,7 @@ class ScanRequest(BaseModel):
     ttl_hours: int = CACHE_TTL_HOURS
     skip_private_ips: bool = True
     auto_throttle: bool = True
+    airgapped_mode: bool = False
 
 
 class KeyRequest(BaseModel):
@@ -172,6 +175,7 @@ def run_scan(req: ScanRequest):
         ttl_hours=req.ttl_hours,
         skip_private_ips=req.skip_private_ips,
         auto_throttle=req.auto_throttle,
+        airgapped_mode=req.airgapped_mode,
     ):
         if event["type"] == "item_result":
             results.append(event["data"])
@@ -191,9 +195,41 @@ def run_scan(req: ScanRequest):
     }
 
 
+@app.post("/api/scan/stream")
+def run_scan_stream(req: ScanRequest):
+    """Streams scan progress and item results using Server-Sent Events (SSE)."""
+    items = parse_raw_text(req.raw_text)
+
+    def event_stream():
+        if not items:
+            yield f"data: {json.dumps({'type': 'complete', 'summary': {'total': 0, 'malicious': 0, 'suspicious': 0, 'clean': 0, 'unknown': 0}})}\n\n"
+            return
+
+        for event in engine.scan_items(
+            items=items,
+            providers=req.providers,
+            use_cache=req.use_cache,
+            ttl_hours=req.ttl_hours,
+            skip_private_ips=req.skip_private_ips,
+            auto_throttle=req.auto_throttle,
+            airgapped_mode=req.airgapped_mode,
+        ):
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @app.get("/api/recon")
 def network_recon_endpoint(target: str):
-    """Network recon for IP or domain: WHOIS/RDAP, Reverse DNS (PTR), Geolocation & ASN."""
+    """Network recon for IP or domain: WHOIS/RDAP, Reverse DNS (PTR), Geolocation, ASN & Shodan."""
     tgt = target.strip()
     if not tgt:
         raise HTTPException(status_code=400, detail="Target cannot be empty.")
@@ -204,9 +240,13 @@ def network_recon_endpoint(target: str):
 async def analyze_eml_endpoint(file: Optional[UploadFile] = File(None), raw_text: Optional[str] = Form(None)):
     """Analyzes .eml file or raw email header text for phishing and spoofing indicators."""
     if file:
-        content = await file.read()
+        content = await file.read(MAX_UPLOAD_SIZE + 1)
+        if len(content) > MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=413, detail=f"File exceeds maximum allowed upload size ({MAX_UPLOAD_SIZE // (1024*1024)} MB).")
         return email_analyzer.analyze(content, filename=file.filename or "email.eml")
     elif raw_text:
+        if len(raw_text) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Pasted raw headers exceed 10 MB limit.")
         return email_analyzer.analyze(raw_text.encode("utf-8", errors="ignore"), filename="pasted_headers.eml")
     else:
         raise HTTPException(status_code=400, detail="Provide either a file or raw_text.")
@@ -215,13 +255,16 @@ async def analyze_eml_endpoint(file: Optional[UploadFile] = File(None), raw_text
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     """Parses uploaded CSV or TXT file."""
-    content = await file.read()
+    content = await file.read(MAX_UPLOAD_SIZE + 1)
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail=f"File exceeds maximum allowed upload size ({MAX_UPLOAD_SIZE // (1024*1024)} MB).")
     items = parse_uploaded_file(content, file.filename)
     return {
         "filename": file.filename,
         "total": len(items),
         "items": [item.to_dict() for item in items],
     }
+
 
 
 ALLOW_KEY_MANAGEMENT = os.environ.get("ALLOW_KEY_MANAGEMENT", "false").lower() in ("true", "1", "yes")
@@ -383,17 +426,16 @@ def sanitize_text_endpoint(req: SanitizeRequest):
     raw_text = req.text
     if req.mode == "refang":
         # Turn defanged text back to live indicators
-        from core.parser import defang_string
-        cleaned = defang_string(raw_text)
+        from core.parser import refang_text
+        cleaned = refang_text(raw_text)
         return {"result": cleaned, "mode": "refang"}
     else:
         # Aggressive defanging for safe pasting
-        from core.parser import parse_raw_text, refang_string
-        # First extract IoCs to ensure accurate replacement
+        from core.parser import parse_raw_text, defang_text
         items = parse_raw_text(raw_text)
         replaced = raw_text
         for item in items:
-            defanged_val = refang_string(item.value, item.ioc_type)
+            defanged_val = defang_text(item.value, item.ioc_type)
             if item.value in replaced:
                 replaced = replaced.replace(item.value, defanged_val)
             elif item.raw in replaced:

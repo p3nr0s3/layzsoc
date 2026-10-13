@@ -6,6 +6,7 @@ Fetches, caches, and aggregates live vulnerability data from CISA KEV and NIST N
 import time
 import requests
 from typing import List, Dict, Any, Optional
+from core.config import NVD_API_KEY
 
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 CISA_KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
@@ -216,6 +217,8 @@ def query_cve(search: Optional[str] = None, limit: int = 30, page: int = 1) -> D
             return entry["data"]
 
     headers = {"User-Agent": "LazySOC-CyberSec/3.0"}
+    if NVD_API_KEY:
+        headers["apiKey"] = NVD_API_KEY
     is_cve_id = query.upper().startswith("CVE-")
 
     # 2. Specific CVE ID query (e.g. CVE-2024-3400)

@@ -277,6 +277,47 @@ def test_sanitize_endpoint():
     assert "8.8.8.8" in data2["result"]
 
 
+def test_trace_url_ssrf_protection():
+    # 1. Localhost / loopback check
+    res_loopback = client.post("/api/trace-url", json={"url": "http://127.0.0.1:8000/api/status"})
+    assert res_loopback.status_code == 200
+    data_lb = res_loopback.json()
+    assert data_lb.get("blocked_ssrf") is True
+    assert "SSRF" in data_lb.get("error", "")
+
+    # 2. Cloud metadata IP check
+    res_meta = client.post("/api/trace-url", json={"url": "http://169.254.169.254/latest/meta-data/"})
+    assert res_meta.status_code == 200
+    data_meta = res_meta.json()
+    assert data_meta.get("blocked_ssrf") is True
+
+
+def test_recon_includes_shodan_exposure():
+    res = client.get("/api/recon?target=1.1.1.1")
+    assert res.status_code == 200
+    data = res.json()
+    assert "shodan" in data
+    assert isinstance(data["shodan"], dict)
+
+
+def test_scan_stream_endpoint():
+    res = client.post("/api/scan/stream", json={"raw_text": "1.1.1.1", "providers": ["urlhaus"], "use_cache": False})
+    assert res.status_code == 200
+    assert "text/event-stream" in res.headers.get("content-type", "")
+    assert "data:" in res.text
+
+
+
+def test_scan_airgapped_mode():
+    res = client.post("/api/scan", json={"raw_text": "185.220.101.5", "airgapped_mode": True, "use_cache": False})
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data["results"]) == 1
+    assert "Air-Gapped" in data["results"][0]["notes"]
+    assert data["results"][0]["vt_stats"] == "Suppressed"
+
+
+
 
 
 

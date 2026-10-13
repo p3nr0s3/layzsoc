@@ -1,6 +1,7 @@
 """Orchestration engine for IoC enrichment and threat triage."""
 
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any, Generator, Optional
 from core.parser import IoCItem
 from core.key_manager import KeyManager
@@ -88,6 +89,7 @@ class EnrichmentEngine:
         ttl_hours: int = CACHE_TTL_HOURS,
         skip_private_ips: bool = True,
         auto_throttle: bool = True,
+        airgapped_mode: bool = False,
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Processes a list of IoCItem objects.
@@ -174,62 +176,115 @@ class EnrichmentEngine:
                     yield {"type": "item_result", "data": item_dict}
                     continue
 
-            # 3. Live External Queries
+            # 3. Air-gapped / Safe Mode Check
+            if airgapped_mode:
+                item_dict = {
+                    "ioc": val,
+                    "type": ioc_type,
+                    "verdict": VERDICT_UNKNOWN,
+                    "notes": "Air-Gapped Mode: External threat queries suppressed",
+                    "vt_stats": "Suppressed",
+                    "abuse_score": "Suppressed",
+                    "ptr": "Suppressed",
+                    "details": {"airgapped": True},
+                    "is_cached": False,
+                }
+                unknown_count += 1
+                results.append(item_dict)
+                yield {"type": "item_result", "data": item_dict}
+                continue
+
+            # 4. Live External Queries (Concurrent across enabled providers)
             vt_res = None
             abuse_res = None
             urlhaus_res = None
             mail_res = None
             ptr_res = None
 
-            # For IPs
-            if ioc_type in ("ipv4", "ipv6"):
-                if "abuseipdb" in enabled:
-                    abuse_res = self._query_with_throttle(
-                        lambda: self.abuse_client.check_ip(val),
-                        service_name="AbuseIPDB",
-                        auto_throttle=auto_throttle,
-                    )
-                if "virustotal" in enabled:
-                    vt_res = self._query_with_throttle(
-                        lambda: self.vt_client.check_ip(val),
-                        service_name="VirusTotal",
-                        auto_throttle=auto_throttle,
-                    )
-                if "reverse_dns" in enabled:
-                    ptr_res = resolve_ptr(val)
+            with ThreadPoolExecutor(max_workers=3) as pool:
+                futures = {}
 
-            # For Hashes
-            elif ioc_type in ("md5", "sha1", "sha256"):
-                if "virustotal" in enabled:
-                    vt_res = self._query_with_throttle(
-                        lambda: self.vt_client.check_hash(val),
-                        service_name="VirusTotal",
-                        auto_throttle=auto_throttle,
-                    )
+                # For IPs
+                if ioc_type in ("ipv4", "ipv6"):
+                    if "abuseipdb" in enabled:
+                        futures["abuse"] = pool.submit(
+                            self._query_with_throttle,
+                            lambda: self.abuse_client.check_ip(val),
+                            service_name="AbuseIPDB",
+                            auto_throttle=auto_throttle,
+                        )
+                    if "virustotal" in enabled:
+                        futures["vt"] = pool.submit(
+                            self._query_with_throttle,
+                            lambda: self.vt_client.check_ip(val),
+                            service_name="VirusTotal",
+                            auto_throttle=auto_throttle,
+                        )
+                    if "reverse_dns" in enabled:
+                        futures["ptr"] = pool.submit(resolve_ptr, val)
 
-            # For Domains
-            elif ioc_type == "domain":
-                if "virustotal" in enabled:
-                    vt_res = self._query_with_throttle(
-                        lambda: self.vt_client.check_domain(val),
-                        service_name="VirusTotal",
-                        auto_throttle=auto_throttle,
-                    )
-                if "urlhaus" in enabled:
-                    urlhaus_res = self.urlhaus_client.check_host(val)
-                if "mail_health" in enabled:
-                    mail_res = self.mail_checker.check_domain(val)
+                # For Hashes
+                elif ioc_type in ("md5", "sha1", "sha256"):
+                    if "virustotal" in enabled:
+                        futures["vt"] = pool.submit(
+                            self._query_with_throttle,
+                            lambda: self.vt_client.check_hash(val),
+                            service_name="VirusTotal",
+                            auto_throttle=auto_throttle,
+                        )
 
-            # For URLs
-            elif ioc_type == "url":
-                if "virustotal" in enabled:
-                    vt_res = self._query_with_throttle(
-                        lambda: self.vt_client.check_url(val),
-                        service_name="VirusTotal",
-                        auto_throttle=auto_throttle,
-                    )
-                if "urlhaus" in enabled:
-                    urlhaus_res = self.urlhaus_client.check_url(val)
+                # For Domains
+                elif ioc_type == "domain":
+                    if "virustotal" in enabled:
+                        futures["vt"] = pool.submit(
+                            self._query_with_throttle,
+                            lambda: self.vt_client.check_domain(val),
+                            service_name="VirusTotal",
+                            auto_throttle=auto_throttle,
+                        )
+                    if "urlhaus" in enabled:
+                        futures["urlhaus"] = pool.submit(self.urlhaus_client.check_host, val)
+                    if "mail_health" in enabled:
+                        futures["mail"] = pool.submit(self.mail_checker.check_domain, val)
+
+                # For URLs
+                elif ioc_type == "url":
+                    if "virustotal" in enabled:
+                        futures["vt"] = pool.submit(
+                            self._query_with_throttle,
+                            lambda: self.vt_client.check_url(val),
+                            service_name="VirusTotal",
+                            auto_throttle=auto_throttle,
+                        )
+                    if "urlhaus" in enabled:
+                        futures["urlhaus"] = pool.submit(self.urlhaus_client.check_url, val)
+
+                # Collect completed futures safely
+                if "abuse" in futures:
+                    try:
+                        abuse_res = futures["abuse"].result()
+                    except Exception:
+                        abuse_res = None
+                if "vt" in futures:
+                    try:
+                        vt_res = futures["vt"].result()
+                    except Exception:
+                        vt_res = None
+                if "ptr" in futures:
+                    try:
+                        ptr_res = futures["ptr"].result()
+                    except Exception:
+                        ptr_res = None
+                if "urlhaus" in futures:
+                    try:
+                        urlhaus_res = futures["urlhaus"].result()
+                    except Exception:
+                        urlhaus_res = None
+                if "mail" in futures:
+                    try:
+                        mail_res = futures["mail"].result()
+                    except Exception:
+                        mail_res = None
 
             # Calculate verdict
             verdict = determine_verdict(ioc_type, vt_res, abuse_res, urlhaus_res, item.is_private)

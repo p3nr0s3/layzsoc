@@ -677,7 +677,22 @@
             </div>
           </div>
 
+          <!-- Card 3: Passive Shodan InternetDB Exposure -->
+          <div class="col-span-1 md:col-span-2 bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-2">
+              <span class="text-xs font-bold text-white uppercase font-mono flex items-center gap-1.5">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+                Shodan InternetDB Host Exposure & Vulnerabilities
+              </span>
+              <span id="recon-shodan-badge" class="text-[10px] font-mono px-2 py-0.5 rounded font-bold">-</span>
+            </div>
+            <div id="recon-shodan-content" class="space-y-2 text-xs font-mono text-slate-300">
+              <!-- Injected -->
+            </div>
+          </div>
+
         </div>
+
 
         <!-- Raw Recon JSON Viewer -->
         <div class="bg-cyber-card border border-cyber-border rounded-xl p-4">
@@ -3086,9 +3101,50 @@ tags:
         `;
       }
 
+      // Shodan Exposure details
+      const shodanBox = document.getElementById('recon-shodan-content');
+      const shodanBadge = document.getElementById('recon-shodan-badge');
+      const shodan = data.shodan;
+
+      if (shodan && shodan.found) {
+        shodanBadge.innerText = `${shodan.ports?.length || 0} PORTS // ${shodan.vulns?.length || 0} VULNS`;
+        shodanBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-500/15 text-amber-400';
+
+        const portBadges = (shodan.ports || []).map(p => 
+          `<span class="px-2 py-0.5 rounded bg-cyber-cyan/10 border border-cyber-cyan/30 text-cyber-cyan font-bold text-[11px]">${p}</span>`
+        ).join(' ') || '<span class="text-slate-500">None detected</span>';
+
+        const vulnBadges = (shodan.vulns || []).map(v => 
+          `<a href="https://nvd.nist.gov/vuln/detail/${v}" target="_blank" class="px-2 py-0.5 rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:text-red-300 font-bold text-[11px] inline-flex items-center gap-1">${v}</a>`
+        ).join(' ') || '<span class="text-emerald-400 text-[11px]">No active CVEs indexed</span>';
+
+        const tagBadges = (shodan.tags || []).map(t => 
+          `<span class="px-2 py-0.5 rounded bg-white/5 border border-cyber-border text-slate-300 text-[10px] uppercase">${t}</span>`
+        ).join(' ');
+
+        shodanBox.innerHTML = `
+          <div class="space-y-3">
+            <div>
+              <div class="text-[11px] text-slate-500 mb-1">Open Network Ports:</div>
+              <div class="flex flex-wrap gap-1.5">${portBadges}</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-500 mb-1">Indexed Host Vulnerabilities (CVEs):</div>
+              <div class="flex flex-wrap gap-1.5">${vulnBadges}</div>
+            </div>
+            ${tagBadges ? `<div><div class="text-[11px] text-slate-500 mb-1">Host Tags:</div><div class="flex flex-wrap gap-1.5">${tagBadges}</div></div>` : ''}
+          </div>
+        `;
+      } else {
+        shodanBadge.innerText = 'NO EXPOSURE';
+        shodanBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-400';
+        shodanBox.innerHTML = `<div class="text-slate-400 text-xs">${shodan?.message || 'No open ports or active host CVEs indexed in Shodan InternetDB.'}</div>`;
+      }
+
       document.getElementById('recon-raw-json').innerText = JSON.stringify(data, null, 2);
       lucide.createIcons();
     }
+
 
     // ==========================================
     // TAB 3: PHISHING EML ANALYZER LOGIC

@@ -15,6 +15,7 @@ import re
 import base64
 import urllib.parse
 from typing import Dict, Any, List, Optional
+from core.parser import defang_text, refang_text
 
 
 def _clean_backticks(text: str) -> str:
@@ -163,22 +164,6 @@ def _xor_bruteforce(raw_bytes: bytes) -> List[Dict[str, Any]]:
             pass
 
     return candidates[:3]
-
-
-def defang_text(text: str) -> str:
-    """Safely defangs URLs, IPs, and protocols."""
-    s = text.replace("http://", "hxxp://").replace("https://", "hxxps://")
-    s = s.replace("ftp://", "fxp://")
-    # Defang dots in IPs and domains
-    s = re.sub(r"(?<=\w)\.(?=\w)", "[.]", s)
-    return s
-
-
-def refang_text(text: str) -> str:
-    """Refangs defanged text back to standard format."""
-    s = text.replace("[.]", ".").replace("(.)", ".")
-    s = s.replace("hxxps://", "https://").replace("hxxp://", "http://").replace("fxp://", "ftp://")
-    return s
 
 
 def deobfuscate_payload(raw_text: str) -> Dict[str, Any]:

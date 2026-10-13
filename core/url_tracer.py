@@ -2,18 +2,74 @@
 Safe URL Redirect Tracer & Domain Age Inspector for LazySOC.
 Passively inspects URL redirection chains, status codes, destination servers,
 SSL certificates, and computes domain age from RDAP to flag Newly Registered Domains (NRDs).
+Includes SSRF safeguards to prevent probing internal networks or cloud metadata.
 """
 
 import socket
 import ssl
+import ipaddress
 import datetime
 from urllib.parse import urlparse
 import requests
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
+
+
+def is_private_or_internal_host(hostname: str) -> Tuple[bool, str]:
+    """
+    Validates whether a hostname or IP address resolves to a private,
+    loopback, link-local, or cloud metadata network to block SSRF.
+    """
+    clean_host = hostname.strip().lower()
+    if not clean_host:
+        return True, "Empty hostname"
+
+    # Direct name checks
+    if clean_host in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+        return True, "Loopback / Localhost address"
+
+    if clean_host.endswith(".local") or clean_host.endswith(".internal"):
+        return True, "Internal network domain"
+
+    # Direct IP string check
+    try:
+        ip_obj = ipaddress.ip_address(clean_host)
+        if (
+            ip_obj.is_private
+            or ip_obj.is_loopback
+            or ip_obj.is_link_local
+            or ip_obj.is_multicast
+            or ip_obj.is_reserved
+            or ip_obj.is_unspecified
+        ):
+            return True, f"Private / Protected IP address: {clean_host}"
+    except ValueError:
+        # Not a direct IP literal, resolve via DNS
+        try:
+            addr_info = socket.getaddrinfo(clean_host, None)
+            for item in addr_info:
+                ip_str = item[4][0]
+                resolved_ip = ipaddress.ip_address(ip_str)
+                if (
+                    resolved_ip.is_private
+                    or resolved_ip.is_loopback
+                    or resolved_ip.is_link_local
+                    or resolved_ip.is_multicast
+                    or resolved_ip.is_reserved
+                    or resolved_ip.is_unspecified
+                ):
+                    return True, f"Domain resolves to private/internal IP: {ip_str}"
+        except socket.gaierror:
+            pass  # Unresolvable domains will fail naturally on connection
+
+    return False, ""
 
 
 def _get_ssl_info(hostname: str, port: int = 443) -> Optional[Dict[str, Any]]:
     """Retrieves SSL certificate metadata safely without downloading body content."""
+    is_blocked, reason = is_private_or_internal_host(hostname)
+    if is_blocked:
+        return {"has_ssl": False, "error": f"SSRF Protection: {reason}"}
+
     try:
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
@@ -87,11 +143,21 @@ def _get_domain_age(domain: str) -> Dict[str, Any]:
                     reg_date_str = ev.get("eventDate", "")
                     break
 
+            # Robust registrar extraction iterating over vcardArray
             registrar = None
             for ent in data.get("entities", []):
-                if "registrar" in ent.get("roles", []):
-                    registrar = ent.get("vcardArray", [None, [None, None, None, [""]]])[1][3][3] or ent.get("handle")
-                    break
+                roles = ent.get("roles", [])
+                if "registrar" in roles:
+                    vcard = ent.get("vcardArray", [])
+                    if len(vcard) > 1 and isinstance(vcard[1], list):
+                        for item in vcard[1]:
+                            if isinstance(item, list) and len(item) > 3 and item[0] == "fn":
+                                registrar = item[3]
+                                break
+                    if not registrar:
+                        registrar = ent.get("handle")
+                    if registrar:
+                        break
 
             if reg_date_str:
                 clean_date = reg_date_str[:10]
@@ -134,11 +200,37 @@ def _get_domain_age(domain: str) -> Dict[str, Any]:
 def trace_url_redirects(target_url: str, max_hops: int = 8) -> Dict[str, Any]:
     """
     Traces URL redirect chain safely and passively (headers only, stream=True).
+    Blocks SSRF attempts against private or cloud-metadata endpoints.
     Returns list of hops, final landing URL, domain age, and SSL metadata.
     """
     raw_url = target_url.strip()
     if not raw_url.startswith("http://") and not raw_url.startswith("https://"):
         raw_url = "https://" + raw_url
+
+    parsed_initial = urlparse(raw_url)
+    initial_host = parsed_initial.hostname or ""
+
+    # SSRF guard on initial target
+    is_blocked, block_reason = is_private_or_internal_host(initial_host)
+    if is_blocked:
+        return {
+            "initial_url": raw_url,
+            "final_url": raw_url,
+            "total_hops": 0,
+            "is_shortener": False,
+            "has_redirects": False,
+            "blocked_ssrf": True,
+            "error": f"Target blocked by SSRF protection: {block_reason}",
+            "hops": [{
+                "hop": 1,
+                "url": raw_url,
+                "domain": initial_host,
+                "status_code": "BLOCKED_SSRF",
+                "error": f"SSRF Guard: {block_reason}",
+            }],
+            "domain_info": {"domain": initial_host, "risk": "BLOCKED", "risk_label": "Internal/Private Target"},
+            "ssl_info": None,
+        }
 
     hops: List[Dict[str, Any]] = []
     current_url = raw_url
@@ -152,6 +244,18 @@ def trace_url_redirects(target_url: str, max_hops: int = 8) -> Dict[str, Any]:
         for step in range(1, max_hops + 1):
             parsed = urlparse(current_url)
             hostname = parsed.hostname or ""
+
+            # Guard each redirect hop against SSRF pivots
+            hop_blocked, hop_reason = is_private_or_internal_host(hostname)
+            if hop_blocked:
+                hops.append({
+                    "hop": step,
+                    "url": current_url,
+                    "domain": hostname,
+                    "status_code": "BLOCKED_SSRF",
+                    "error": f"SSRF Guard: Redirect destination blocked ({hop_reason})",
+                })
+                break
 
             try:
                 # Do NOT follow redirects automatically to capture every step
@@ -197,7 +301,7 @@ def trace_url_redirects(target_url: str, max_hops: int = 8) -> Dict[str, Any]:
                     "error": str(hop_err)[:100],
                 })
                 break
-    except Exception as e:
+    except Exception:
         pass
 
     final_url = hops[-1]["url"] if hops else raw_url

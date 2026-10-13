@@ -43,8 +43,8 @@ DEFANG_REPLACEMENTS = [
 ]
 
 
-def defang_string(text: str) -> str:
-    """Normalize and defang an input string."""
+def refang_text(text: str) -> str:
+    """Normalize defanged indicators back to live IPs, domains, and URLs."""
     if not text:
         return ""
     result = text
@@ -56,13 +56,26 @@ def defang_string(text: str) -> str:
     return result.strip()
 
 
-def refang_string(ioc: str, ioc_type: str) -> str:
-    """Intentionally defang an IoC for safe display / export if desired."""
+def defang_text(ioc: str, ioc_type: str = "") -> str:
+    """Defangs a live indicator into a safe format for display or export."""
+    if not ioc:
+        return ""
     if ioc_type in ("ipv4", "ipv6", "domain"):
         return ioc.replace(".", "[.]").replace(":", "[:]")
     elif ioc_type == "url":
         return ioc.replace("http://", "hxxp://").replace("https://", "hxxps://").replace(".", "[.]")
-    return ioc
+    
+    # Generic text defanging
+    res = ioc.replace("http://", "hxxp://").replace("https://", "hxxps://").replace("ftp://", "fxp://")
+    res = re.sub(r"(?<=\w)\.(?=\w)", "[.]", res)
+    return res
+
+
+# Backward-compatible aliases for legacy callers
+defang_string = refang_text  # Legacy alias: normalized defanged text into live indicators
+refang_string = defang_text  # Legacy alias: defanged indicators for export
+normalize_defanged_text = refang_text
+
 
 
 def is_valid_ipv4(ip: str) -> bool:
