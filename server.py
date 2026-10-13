@@ -45,8 +45,17 @@ from core.url_tracer import trace_url_redirects
 from core.deobfuscator import deobfuscate_payload
 from core.hunting import generate_single_ioc_hunt_queries
 from core.mitre import get_mitre_matrix_data, analyze_mitre_coverage
+from core.soc_analyst import (
+    lookup_windows_event,
+    analyze_command_line,
+    calculate_impossible_travel,
+    check_false_positive_indicators,
+    classify_ip_infrastructure,
+    dissect_user_agent,
+)
 
 app = FastAPI(title="LazySOC Threat Triage & Investigation Platform", version="3.0.0")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -123,6 +132,41 @@ class MitreCoverageRequest(BaseModel):
 class SanitizeRequest(BaseModel):
     text: str
     mode: str = "defang"  # "defang" or "refang"
+
+
+class EventLookupRequest(BaseModel):
+    query: str
+
+
+class LolbasRequest(BaseModel):
+    command: str
+
+
+class ImpossibleTravelRequest(BaseModel):
+    lat1: float
+    lon1: float
+    time1: str
+    lat2: float
+    lon2: float
+    time2: str
+    loc1_name: Optional[str] = "Location A"
+    loc2_name: Optional[str] = "Location B"
+
+
+class FalsePositiveRequest(BaseModel):
+    indicator: str
+    type: Optional[str] = ""
+
+
+class IpClassifyRequest(BaseModel):
+    ip: str
+    asn: Optional[str] = ""
+    org: Optional[str] = ""
+
+
+class UserAgentRequest(BaseModel):
+    user_agent: str
+
 
 
 @app.get("/api/status")
@@ -446,7 +490,57 @@ def sanitize_text_endpoint(req: SanitizeRequest):
         return {"result": replaced, "mode": "defang", "indicators_found": len(items)}
 
 
+# ==============================================================================
+# L1 SOC ANALYST TOOLKIT ENDPOINTS
+# ==============================================================================
+
+@app.post("/api/soc/event-lookup")
+def soc_event_lookup_endpoint(req: EventLookupRequest):
+    """Decodes Windows Event IDs, NTSTATUS error codes, and Logon Types."""
+    return lookup_windows_event(req.query)
+
+
+@app.post("/api/soc/lolbas")
+def soc_lolbas_endpoint(req: LolbasRequest):
+    """Analyzes command line for LOLBAS binaries and suspicious attack arguments."""
+    return analyze_command_line(req.command)
+
+
+@app.post("/api/soc/impossible-travel")
+def soc_impossible_travel_endpoint(req: ImpossibleTravelRequest):
+    """Calculates distance, elapsed time, and required speed between two login events."""
+    return calculate_impossible_travel(
+        lat1=req.lat1,
+        lon1=req.lon1,
+        time1_str=req.time1,
+        lat2=req.lat2,
+        lon2=req.lon2,
+        time2_str=req.time2,
+        loc1_name=req.loc1_name or "Location A",
+        loc2_name=req.loc2_name or "Location B",
+    )
+
+
+@app.post("/api/soc/fp-check")
+def soc_fp_check_endpoint(req: FalsePositiveRequest):
+    """Validates indicators against legitimate enterprise CDNs, RMM tools, and NSRL hashes."""
+    return check_false_positive_indicators(req.indicator, req.type or "")
+
+
+@app.post("/api/soc/ip-classify")
+def soc_ip_classify_endpoint(req: IpClassifyRequest):
+    """Classifies IP address into Tor, Public Cloud Datacenter, VPN, or Residential."""
+    return classify_ip_infrastructure(req.ip, asn_info=req.asn or "", org_info=req.org or "")
+
+
+@app.post("/api/soc/user-agent")
+def soc_user_agent_endpoint(req: UserAgentRequest):
+    """Dissects HTTP User-Agent string for scanners, scripting libraries, and bots."""
+    return dissect_user_agent(req.user_agent)
+
+
 @app.get("/", response_class=HTMLResponse)
+
 def serve_index():
     index_file = WEB_DIR / "index.html"
     if not index_file.exists():
