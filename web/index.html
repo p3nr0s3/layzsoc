@@ -139,6 +139,52 @@
     .glow-purple {
       box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
     }
+
+    /* Collapsible Sidebar States */
+    #app-sidebar {
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease-in-out;
+    }
+    #app-sidebar.sidebar-collapsed {
+      width: 4.75rem !important;
+      min-width: 4.75rem !important;
+    }
+    #app-sidebar.sidebar-collapsed .sidebar-label,
+    #app-sidebar.sidebar-collapsed .sidebar-full-logo,
+    #app-sidebar.sidebar-collapsed .sidebar-footer-text,
+    #app-sidebar.sidebar-collapsed .sidebar-desc {
+      display: none !important;
+    }
+    #app-sidebar.sidebar-collapsed .sidebar-group-title {
+      opacity: 0;
+      height: 4px;
+      margin: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      padding: 0;
+    }
+    #app-sidebar.sidebar-collapsed .tab-btn {
+      justify-content: center !important;
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+    #app-sidebar.sidebar-collapsed #pool-status-indicator {
+      justify-content: center !important;
+      padding: 0.5rem !important;
+    }
+    #app-sidebar.sidebar-collapsed #sidebar-footer-actions {
+      flex-direction: column !important;
+      gap: 0.5rem !important;
+    }
+    #app-sidebar.sidebar-collapsed #sidebar-footer-actions button,
+    #app-sidebar.sidebar-collapsed #sidebar-footer-actions a {
+      padding: 0.5rem !important;
+      justify-content: center !important;
+    }
+    #app-sidebar.sidebar-collapsed #sidebar-brand-container {
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+      justify-content: center !important;
+    }
   </style>
 </head>
 <body class="min-h-screen flex antialiased custom-scrollbar bg-cyber-bg text-[#f1f5f9] overflow-x-hidden">
@@ -149,22 +195,26 @@
   <!-- ============================================================
        SIDEBAR NAVIGATION (Sleek Cyberpunk Console Dock)
        ============================================================ -->
-  <aside id="app-sidebar" class="fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 h-screen bg-[#070b14]/95 border-r border-cyber-border flex flex-col justify-between transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 flex-shrink-0 select-none shadow-2xl lg:shadow-none backdrop-blur-md">
+  <aside id="app-sidebar" class="fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 h-screen bg-[#070b14]/95 border-r border-cyber-border flex flex-col justify-between transition-all duration-300 ease-in-out -translate-x-full lg:translate-x-0 flex-shrink-0 select-none shadow-2xl lg:shadow-none backdrop-blur-md">
     
     <!-- BRAND / LOGO HEADER -->
-    <div class="h-16 px-4 border-b border-cyber-border flex items-center justify-between flex-shrink-0 bg-[#080d1a]/80">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber-cyan/25 via-blue-600/15 to-emerald-500/10 border border-cyber-cyan/35 flex items-center justify-center text-base glow-cyan flex-shrink-0">
+    <div id="sidebar-brand-container" class="h-16 px-4 border-b border-cyber-border flex items-center justify-between flex-shrink-0 bg-[#080d1a]/80">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div onclick="toggleSidebarMinimize()" class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber-cyan/25 via-blue-600/15 to-emerald-500/10 border border-cyber-cyan/35 flex items-center justify-center text-base glow-cyan flex-shrink-0 cursor-pointer hover:scale-105 transition-transform" title="LazySOC // Click to Toggle Sidebar">
           🦥
         </div>
-        <div class="flex flex-col">
-          <span class="font-extrabold text-base tracking-tight text-white font-mono leading-none">LazySOC</span>
-          <span class="text-[10px] font-mono text-cyber-cyan tracking-wider mt-0.5">v3.0 CYBER OPS</span>
+        <div class="flex flex-col min-w-0 sidebar-full-logo">
+          <span class="font-extrabold text-base tracking-tight text-white font-mono leading-none truncate">LazySOC</span>
+          <span class="text-[10px] font-mono text-cyber-cyan tracking-wider mt-0.5 truncate">v3.0 CYBER OPS</span>
         </div>
       </div>
       <!-- Close button on Mobile (<lg) -->
       <button onclick="toggleSidebar(false)" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition" title="Close Sidebar">
         <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <!-- Minimize button on Desktop (>=lg) -->
+      <button onclick="toggleSidebarMinimize()" id="sidebar-collapse-btn" class="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition sidebar-full-logo" title="Minimize Sidebar">
+        <i data-lucide="chevrons-left" class="w-4 h-4"></i>
       </button>
     </div>
 
@@ -173,75 +223,75 @@
       
       <!-- GROUP 1: INVESTIGATION & TRIAGE -->
       <div class="space-y-1">
-        <div class="px-3 py-1 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+        <div class="sidebar-group-title px-3 py-1 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
           Investigation & Triage
         </div>
-        <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan text-left">
+        <button onclick="switchTab('triage')" id="tab-btn-triage" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 glow-cyan text-left" title="IoC Triage">
           <i data-lucide="target" class="w-4 h-4 flex-shrink-0"></i>
-          <span>IoC Triage</span>
+          <span class="sidebar-label">IoC Triage</span>
         </button>
-        <button onclick="switchTab('recon')" id="tab-btn-recon" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('recon')" id="tab-btn-recon" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="Network Recon">
           <i data-lucide="radar" class="w-4 h-4 flex-shrink-0"></i>
-          <span>Network Recon</span>
+          <span class="sidebar-label">Network Recon</span>
         </button>
-        <button onclick="switchTab('eml')" id="tab-btn-eml" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('eml')" id="tab-btn-eml" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="Phishing EML">
           <i data-lucide="mail-warning" class="w-4 h-4 flex-shrink-0"></i>
-          <span>Phishing EML</span>
+          <span class="sidebar-label">Phishing EML</span>
         </button>
-        <button onclick="openPlaybookModal()" class="w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/20 text-left" title="Incident Playbooks & Checklist">
+        <button onclick="openPlaybookModal()" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/20 text-left" title="Incident Playbooks & Checklist">
           <i data-lucide="book-open-check" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
-          <span>SOC Playbooks</span>
+          <span class="sidebar-label">SOC Playbooks</span>
         </button>
         <button onclick="switchTab('soctoolkit')" id="tab-btn-soctoolkit" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="L1 SOC Analyst Studio">
           <i data-lucide="cpu" class="w-4 h-4 flex-shrink-0 text-cyber-cyan"></i>
-          <span>L1 SOC Studio</span>
+          <span class="sidebar-label">L1 SOC Studio</span>
         </button>
       </div>
 
 
       <!-- GROUP 2: DEEP ANALYSIS & FORENSICS -->
       <div class="space-y-1">
-        <div class="px-3 py-1 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+        <div class="sidebar-group-title px-3 py-1 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
           Analysis & Reverse
         </div>
-        <button onclick="switchTab('urltrace')" id="tab-btn-urltrace" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('urltrace')" id="tab-btn-urltrace" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="URL Tracer">
           <i data-lucide="route" class="w-4 h-4 flex-shrink-0"></i>
-          <span>URL Tracer</span>
+          <span class="sidebar-label">URL Tracer</span>
         </button>
-        <button onclick="switchTab('deobf')" id="tab-btn-deobf" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('deobf')" id="tab-btn-deobf" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="De-obfuscator">
           <i data-lucide="binary" class="w-4 h-4 flex-shrink-0"></i>
-          <span>De-obfuscator</span>
+          <span class="sidebar-label">De-obfuscator</span>
         </button>
-        <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('mail')" id="tab-btn-mail" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="Mail Health">
           <i data-lucide="shield-check" class="w-4 h-4 flex-shrink-0"></i>
-          <span>Mail Health</span>
+          <span class="sidebar-label">Mail Health</span>
         </button>
       </div>
 
       <!-- GROUP 3: THREAT INTELLIGENCE -->
       <div class="space-y-1">
-        <div class="px-3 py-1 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+        <div class="sidebar-group-title px-3 py-1 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
           Threat Intelligence
         </div>
-        <button onclick="switchTab('feed')" id="tab-btn-feed" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('feed')" id="tab-btn-feed" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="Cyber Feeds">
           <i data-lucide="rss" class="w-4 h-4 flex-shrink-0"></i>
-          <span>Cyber Feeds</span>
+          <span class="sidebar-label">Cyber Feeds</span>
         </button>
-        <button onclick="switchTab('cve')" id="tab-btn-cve" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('cve')" id="tab-btn-cve" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="CVE / NVD">
           <i data-lucide="shield-alert" class="w-4 h-4 flex-shrink-0"></i>
-          <span>CVE / NVD</span>
+          <span class="sidebar-label">CVE / NVD</span>
         </button>
-        <button onclick="switchTab('mitre')" id="tab-btn-mitre" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('mitre')" id="tab-btn-mitre" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="MITRE ATT&CK">
           <i data-lucide="grid" class="w-4 h-4 flex-shrink-0"></i>
-          <span>MITRE ATT&CK</span>
+          <span class="sidebar-label">MITRE ATT&CK</span>
         </button>
-        <button onclick="switchTab('sanitize')" id="tab-btn-sanitize" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('sanitize')" id="tab-btn-sanitize" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="Defang Studio">
           <i data-lucide="shield-check" class="w-4 h-4 flex-shrink-0"></i>
-          <span>Defang Studio</span>
+          <span class="sidebar-label">Defang Studio</span>
         </button>
-        <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left">
+        <button onclick="switchTab('cache')" id="tab-btn-cache" class="tab-btn w-full px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all text-slate-400 hover:text-white hover:bg-white/5 text-left" title="Cache & Logs">
           <i data-lucide="database" class="w-4 h-4 flex-shrink-0"></i>
-          <span>Cache & Logs</span>
+          <span class="sidebar-label">Cache & Logs</span>
         </button>
       </div>
 
@@ -251,20 +301,20 @@
     <div class="p-3 border-t border-cyber-border space-y-2 bg-[#080d1a]/80 flex-shrink-0">
       
       <!-- ENGINE STATUS -->
-      <div id="pool-status-indicator" class="flex items-center gap-2 text-[11px] font-mono font-bold px-3 py-2 rounded-xl bg-cyber-card border border-cyber-border">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="text-slate-300">Threat Intel Online</span>
+      <div id="pool-status-indicator" class="flex items-center gap-2 text-[11px] font-mono font-bold px-3 py-2 rounded-xl bg-cyber-card border border-cyber-border" title="Threat Intel Online">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+        <span class="text-slate-300 sidebar-footer-text truncate">Threat Intel Online</span>
       </div>
 
       <!-- ABOUT & GITHUB BUTTONS -->
-      <div class="flex items-center gap-2">
+      <div id="sidebar-footer-actions" class="flex items-center gap-2">
         <button onclick="openAboutModal()" class="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyber-card hover:bg-white/10 border border-cyber-border text-xs font-mono font-bold text-slate-300 hover:text-white transition" title="About LazySOC Platform">
-          <i data-lucide="info" class="w-3.5 h-3.5 text-cyber-cyan"></i>
-          <span>About</span>
+          <i data-lucide="info" class="w-3.5 h-3.5 text-cyber-cyan flex-shrink-0"></i>
+          <span class="sidebar-footer-text">About</span>
         </button>
-        <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-xs font-mono font-bold text-slate-300 hover:text-white transition" title="Creator GitHub">
-          <i data-lucide="github" class="w-3.5 h-3.5 text-cyber-cyan"></i>
-          <span>@p3nr0s3</span>
+        <a href="https://github.com/p3nr0s3" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-xs font-mono font-bold text-slate-300 hover:text-white transition" title="Creator GitHub: @p3nr0s3">
+          <i data-lucide="github" class="w-3.5 h-3.5 text-cyber-cyan flex-shrink-0"></i>
+          <span class="sidebar-footer-text">@p3nr0s3</span>
         </a>
       </div>
 
@@ -280,18 +330,23 @@
     <!-- TOP NAVIGATION & STATUS BAR -->
     <header class="h-16 py-2.5 px-4 sm:px-6 border-b border-cyber-border bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between gap-3">
       
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2.5 min-w-0">
         <!-- MOBILE SIDEBAR TOGGLE BUTTON -->
         <button onclick="toggleSidebar(true)" class="lg:hidden p-2 rounded-lg bg-cyber-card border border-cyber-border text-slate-300 hover:text-white hover:border-cyber-cyan transition flex items-center justify-center" title="Open Navigation Menu">
           <i data-lucide="menu" class="w-4 h-4 text-cyber-cyan"></i>
         </button>
 
+        <!-- DESKTOP SIDEBAR MINIMIZE/RESTORE BUTTON -->
+        <button onclick="toggleSidebarMinimize()" id="desktop-sidebar-btn" class="hidden lg:flex p-2 rounded-lg bg-cyber-card border border-cyber-border text-slate-300 hover:text-white hover:border-cyber-cyan transition items-center justify-center" title="Minimize / Expand Sidebar">
+          <i data-lucide="panel-left-close" id="sidebar-toggle-icon" class="w-4 h-4 text-cyber-cyan"></i>
+        </button>
+
         <!-- ACTIVE SECTION TITLE & BREADCRUMB -->
-        <div class="flex items-center gap-2 font-mono">
-          <span class="text-slate-500 hidden sm:inline text-xs">Workbench /</span>
-          <span class="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-cyber-cyan animate-pulse"></span>
-            <span id="page-title-text">IoC Threat Triage</span>
+        <div class="flex items-center gap-2 font-mono min-w-0 truncate">
+          <span class="text-slate-500 hidden sm:inline text-xs flex-shrink-0">Workbench /</span>
+          <span class="text-xs sm:text-sm font-bold text-white flex items-center gap-2 min-w-0 truncate">
+            <span class="w-2 h-2 rounded-full bg-cyber-cyan animate-pulse flex-shrink-0"></span>
+            <span id="page-title-text" class="truncate">IoC Threat Triage</span>
           </span>
         </div>
       </div>
@@ -2259,38 +2314,59 @@
     </div>
   </div>
 
-  <!-- DRAWER: INSPECT TELEMETRY -->
-  <div id="drawer-inspect" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex justify-end transition-opacity duration-300" onclick="if(event.target===this)closeDrawer()">
-    <div class="bg-[#090d18] border-l border-cyber-border w-full max-w-2xl h-full p-4 sm:p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar shadow-2xl relative">
-      <!-- HEADER -->
-      <div class="flex items-start justify-between border-b border-cyber-border/80 pb-4">
-        <div class="space-y-2 flex-1 min-w-0 pr-3">
-          <div class="flex items-center gap-2 flex-wrap" id="inspect-header-badges">
+  <!-- MODAL POPUP: INSPECT TELEMETRY -->
+  <div id="drawer-inspect" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 transition-all duration-300" onclick="if(event.target===this)closeDrawer()">
+    <div id="inspect-modal-window" class="bg-[#090d18] border border-cyber-border rounded-2xl shadow-2xl flex flex-col relative transition-all duration-300 w-full max-w-4xl max-h-[90vh] overflow-hidden glow-cyan">
+      
+      <!-- WINDOW TITLEBAR / CHROME -->
+      <div class="h-12 px-4 bg-[#060a14] border-b border-cyber-border flex items-center justify-between flex-shrink-0 select-none">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button onclick="closeDrawer()" class="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-400 transition" title="Close Window (Esc)"></button>
+            <button onclick="toggleInspectMaximize()" class="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-400 transition" title="Maximize / Restore"></button>
+            <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+          </div>
+          <div class="h-4 w-px bg-white/10 hidden sm:block flex-shrink-0"></div>
+          <div class="flex items-center gap-2 min-w-0 flex-wrap" id="inspect-header-badges">
             <span id="inspect-verdict-badge" class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold border"></span>
             <span id="inspect-type-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white/5 border border-cyber-border text-slate-300 uppercase"></span>
             <span id="inspect-cache-badge" class="text-[10px] font-mono text-slate-400"></span>
           </div>
-          <h3 id="inspect-title" class="text-base sm:text-lg font-mono font-extrabold text-white break-all tracking-tight select-all"></h3>
         </div>
-        <button onclick="closeDrawer()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition text-base" title="Close Drawer (Esc)">
-          ✕
-        </button>
+
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <button onclick="toggleInspectMaximize()" id="inspect-max-btn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition" title="Maximize Window">
+            <i data-lucide="maximize-2" class="w-4 h-4"></i>
+          </button>
+          <button onclick="closeDrawer()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition text-base" title="Close Window (Esc)">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
       </div>
 
-      <!-- ACTION TOOLBAR -->
-      <div id="inspect-actions" class="flex flex-wrap items-center gap-2 py-1">
-        <!-- Injected via JS -->
+      <!-- TARGET INDICATOR & ACTION BAR -->
+      <div class="px-4 sm:px-6 py-3 bg-[#080d19] border-b border-cyber-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0">
+        <div class="min-w-0 flex-1">
+          <div class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Indicator Target</div>
+          <h3 id="inspect-title" class="text-base sm:text-lg font-mono font-extrabold text-white break-all tracking-tight select-all"></h3>
+        </div>
+        <div id="inspect-actions" class="flex flex-wrap items-center gap-2 flex-shrink-0">
+          <!-- Injected via JS -->
+        </div>
       </div>
 
       <!-- EXTERNAL PIVOTS BAR -->
-      <div id="inspect-pivots" class="flex flex-wrap items-center gap-1.5 p-2.5 bg-[#060913] border border-cyber-border rounded-xl text-[11px] font-mono">
+      <div id="inspect-pivots" class="px-4 sm:px-6 py-2 bg-[#060913] border-b border-cyber-border/60 flex flex-wrap items-center gap-1.5 text-[11px] font-mono flex-shrink-0">
         <!-- Injected via JS -->
       </div>
 
-      <!-- TELEMETRY CONTENT -->
-      <div id="inspect-content" class="space-y-4 text-xs font-mono">
-        <!-- Telemetry injected dynamically -->
+      <!-- TELEMETRY CONTENT SCROLLABLE BODY -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-4 text-xs font-mono">
+        <div id="inspect-content" class="space-y-4">
+          <!-- Telemetry injected dynamically -->
+        </div>
       </div>
+
     </div>
   </div>
 
@@ -2425,6 +2501,31 @@ Content-Type: text/html; charset=UTF-8
       }
       lucide.createIcons();
     }
+
+    function toggleSidebarMinimize() {
+      const sidebar = document.getElementById('app-sidebar');
+      if (!sidebar) return;
+      const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('lazysoc_sidebar_collapsed', isCollapsed ? '1' : '0');
+
+      const icon = document.getElementById('sidebar-toggle-icon');
+      if (icon) {
+        icon.setAttribute('data-lucide', isCollapsed ? 'panel-left-open' : 'panel-left-close');
+      }
+      lucide.createIcons();
+    }
+
+    // Auto-restore sidebar minimize preference on page load
+    (function initSidebarState() {
+      try {
+        if (localStorage.getItem('lazysoc_sidebar_collapsed') === '1') {
+          const sidebar = document.getElementById('app-sidebar');
+          if (sidebar) sidebar.classList.add('sidebar-collapsed');
+          const icon = document.getElementById('sidebar-toggle-icon');
+          if (icon) icon.setAttribute('data-lucide', 'panel-left-open');
+        }
+      } catch (e) {}
+    })();
 
     function switchTab(tabId) {
       ['triage', 'recon', 'eml', 'urltrace', 'deobf', 'mail', 'feed', 'cve', 'mitre', 'sanitize', 'cache', 'soctoolkit'].forEach(t => {
@@ -3086,14 +3187,15 @@ Content-Type: text/html; charset=UTF-8
         </details>
       `;
 
+      // Combine CTI cards into an adaptive responsive grid
+      const ctiCards = [threatfoxHtml, mbHtml, greynoiseHtml, vtHtml, abuseHtml, mailHtml].filter(Boolean);
+      const ctiGrid = ctiCards.length > 0 
+        ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">${ctiCards.join('')}</div>` 
+        : '';
+
       content.innerHTML = `
         ${summaryCard}
-        ${threatfoxHtml}
-        ${mbHtml}
-        ${greynoiseHtml}
-        ${vtHtml}
-        ${abuseHtml}
-        ${mailHtml}
+        ${ctiGrid}
         ${rawJsonCard}
       `;
 
@@ -3101,9 +3203,46 @@ Content-Type: text/html; charset=UTF-8
       lucide.createIcons();
     }
 
-    function closeDrawer() {
-      document.getElementById('drawer-inspect').classList.add('hidden');
+    let isInspectMaximized = false;
+
+    function toggleInspectMaximize() {
+      const win = document.getElementById('inspect-modal-window');
+      const maxBtn = document.getElementById('inspect-max-btn');
+      if (!win) return;
+
+      isInspectMaximized = !isInspectMaximized;
+      if (isInspectMaximized) {
+        win.classList.remove('max-w-4xl', 'max-h-[90vh]', 'rounded-2xl');
+        win.classList.add('w-[calc(100vw-1rem)]', 'sm:w-[calc(100vw-2rem)]', 'md:w-[calc(100vw-3rem)]', 'h-[calc(100vh-1rem)]', 'sm:h-[calc(100vh-2rem)]', 'md:h-[calc(100vh-3rem)]', 'max-w-none', 'max-h-none', 'rounded-xl');
+        if (maxBtn) {
+          maxBtn.title = "Restore Window Size";
+          maxBtn.innerHTML = '<i data-lucide="minimize-2" class="w-4 h-4"></i>';
+        }
+      } else {
+        win.classList.remove('w-[calc(100vw-1rem)]', 'sm:w-[calc(100vw-2rem)]', 'md:w-[calc(100vw-3rem)]', 'h-[calc(100vh-1rem)]', 'sm:h-[calc(100vh-2rem)]', 'md:h-[calc(100vh-3rem)]', 'max-w-none', 'max-h-none', 'rounded-xl');
+        win.classList.add('max-w-4xl', 'max-h-[90vh]', 'rounded-2xl');
+        if (maxBtn) {
+          maxBtn.title = "Maximize Window";
+          maxBtn.innerHTML = '<i data-lucide="maximize-2" class="w-4 h-4"></i>';
+        }
+      }
+      lucide.createIcons();
     }
+
+    function closeDrawer() {
+      const drawer = document.getElementById('drawer-inspect');
+      if (drawer) drawer.classList.add('hidden');
+    }
+
+    // Global keyboard listener for Esc key to close inspect modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const inspectModal = document.getElementById('drawer-inspect');
+        if (inspectModal && !inspectModal.classList.contains('hidden')) {
+          closeDrawer();
+        }
+      }
+    });
 
 
     function sendToTriage(ioc) {
