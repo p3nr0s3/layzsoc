@@ -8,6 +8,9 @@ from core.key_manager import KeyManager
 from core.clients.virustotal import VirusTotalClient
 from core.clients.abuseipdb import AbuseIPDBClient
 from core.clients.urlhaus import URLhausClient
+from core.clients.greynoise import GreyNoiseClient
+from core.clients.threatfox import ThreatFoxClient
+from core.clients.malwarebazaar import MalwareBazaarClient
 from core.mail_health import MailHealthChecker
 from core.recon import resolve_ptr
 from core.database import get_cached_ioc, save_cached_ioc, log_scan
@@ -19,7 +22,16 @@ VERDICT_SUSPICIOUS = "Suspicious"
 VERDICT_CLEAN = "Clean"
 VERDICT_UNKNOWN = "Unknown"
 
-DEFAULT_PROVIDERS = ["virustotal", "abuseipdb", "urlhaus", "mail_health", "reverse_dns"]
+DEFAULT_PROVIDERS = [
+    "virustotal",
+    "abuseipdb",
+    "urlhaus",
+    "greynoise",
+    "threatfox",
+    "malwarebazaar",
+    "mail_health",
+    "reverse_dns",
+]
 
 
 def determine_verdict(
@@ -28,14 +40,26 @@ def determine_verdict(
     abuse_res: Optional[Dict[str, Any]],
     urlhaus_res: Optional[Dict[str, Any]] = None,
     is_private: bool = False,
+    greynoise_res: Optional[Dict[str, Any]] = None,
+    threatfox_res: Optional[Dict[str, Any]] = None,
+    malwarebazaar_res: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Calculates overall risk verdict across integrated threat providers."""
     if is_private:
         return VERDICT_UNKNOWN
 
-    # URLhaus check (immediate malicious trigger if positive threat)
+    # Immediate malicious triggers from high-fidelity databases
     if urlhaus_res and urlhaus_res.get("found"):
         return VERDICT_MALICIOUS
+    if threatfox_res and threatfox_res.get("found"):
+        return VERDICT_MALICIOUS
+    if malwarebazaar_res and malwarebazaar_res.get("found"):
+        return VERDICT_MALICIOUS
+
+    # GreyNoise malicious scanner check
+    if greynoise_res and greynoise_res.get("found"):
+        if greynoise_res.get("classification") == "malicious":
+            return VERDICT_MALICIOUS
 
     vt_mal = 0
     vt_susp = 0
@@ -63,12 +87,19 @@ def determine_verdict(
     if abuse_score > 0 or vt_susp >= 1 or vt_mal == 1:
         return VERDICT_SUSPICIOUS
 
-    # 3. Clean rules
+    # 3. GreyNoise Benign / RIOT service filter (Rule It Out)
+    if greynoise_res and greynoise_res.get("found"):
+        if greynoise_res.get("riot") or (greynoise_res.get("noise") and greynoise_res.get("classification") == "benign"):
+            if vt_mal == 0 and abuse_score < 20:
+                return VERDICT_CLEAN
+
+    # 4. Standard Clean rules
     if vt_success or abuse_success:
         if vt_mal == 0 and vt_susp == 0 and abuse_score == 0:
             return VERDICT_CLEAN
 
     return VERDICT_UNKNOWN
+
 
 
 class EnrichmentEngine:
@@ -79,6 +110,9 @@ class EnrichmentEngine:
         self.vt_client = VirusTotalClient(self.km)
         self.abuse_client = AbuseIPDBClient(self.km)
         self.urlhaus_client = URLhausClient()
+        self.greynoise_client = GreyNoiseClient()
+        self.threatfox_client = ThreatFoxClient()
+        self.malwarebazaar_client = MalwareBazaarClient()
         self.mail_checker = MailHealthChecker()
 
     def scan_items(
@@ -169,6 +203,9 @@ class EnrichmentEngine:
                         "ptr": vt_data.get("ptr") if isinstance(vt_data, dict) else None,
                         "mail_health": vt_data.get("mail_health") if isinstance(vt_data, dict) else None,
                         "urlhaus_data": vt_data.get("urlhaus_data") if isinstance(vt_data, dict) else None,
+                        "greynoise_data": vt_data.get("greynoise_data") if isinstance(vt_data, dict) else None,
+                        "threatfox_data": vt_data.get("threatfox_data") if isinstance(vt_data, dict) else None,
+                        "malwarebazaar_data": vt_data.get("malwarebazaar_data") if isinstance(vt_data, dict) else None,
                         "is_cached": True,
                         "updated_at": cached.get("updated_at"),
                     }
@@ -198,10 +235,13 @@ class EnrichmentEngine:
             vt_res = None
             abuse_res = None
             urlhaus_res = None
+            greynoise_res = None
+            threatfox_res = None
+            malwarebazaar_res = None
             mail_res = None
             ptr_res = None
 
-            with ThreadPoolExecutor(max_workers=3) as pool:
+            with ThreadPoolExecutor(max_workers=5) as pool:
                 futures = {}
 
                 # For IPs
@@ -220,6 +260,10 @@ class EnrichmentEngine:
                             service_name="VirusTotal",
                             auto_throttle=auto_throttle,
                         )
+                    if "greynoise" in enabled:
+                        futures["greynoise"] = pool.submit(self.greynoise_client.check_ip, val)
+                    if "threatfox" in enabled:
+                        futures["threatfox"] = pool.submit(self.threatfox_client.search_ioc, val)
                     if "reverse_dns" in enabled:
                         futures["ptr"] = pool.submit(resolve_ptr, val)
 
@@ -232,6 +276,10 @@ class EnrichmentEngine:
                             service_name="VirusTotal",
                             auto_throttle=auto_throttle,
                         )
+                    if "threatfox" in enabled:
+                        futures["threatfox"] = pool.submit(self.threatfox_client.search_ioc, val)
+                    if "malwarebazaar" in enabled:
+                        futures["malwarebazaar"] = pool.submit(self.malwarebazaar_client.check_hash, val)
 
                 # For Domains
                 elif ioc_type == "domain":
@@ -242,6 +290,8 @@ class EnrichmentEngine:
                             service_name="VirusTotal",
                             auto_throttle=auto_throttle,
                         )
+                    if "threatfox" in enabled:
+                        futures["threatfox"] = pool.submit(self.threatfox_client.search_ioc, val)
                     if "urlhaus" in enabled:
                         futures["urlhaus"] = pool.submit(self.urlhaus_client.check_host, val)
                     if "mail_health" in enabled:
@@ -256,6 +306,8 @@ class EnrichmentEngine:
                             service_name="VirusTotal",
                             auto_throttle=auto_throttle,
                         )
+                    if "threatfox" in enabled:
+                        futures["threatfox"] = pool.submit(self.threatfox_client.search_ioc, val)
                     if "urlhaus" in enabled:
                         futures["urlhaus"] = pool.submit(self.urlhaus_client.check_url, val)
 
@@ -270,6 +322,21 @@ class EnrichmentEngine:
                         vt_res = futures["vt"].result()
                     except Exception:
                         vt_res = None
+                if "greynoise" in futures:
+                    try:
+                        greynoise_res = futures["greynoise"].result()
+                    except Exception:
+                        greynoise_res = None
+                if "threatfox" in futures:
+                    try:
+                        threatfox_res = futures["threatfox"].result()
+                    except Exception:
+                        threatfox_res = None
+                if "malwarebazaar" in futures:
+                    try:
+                        malwarebazaar_res = futures["malwarebazaar"].result()
+                    except Exception:
+                        malwarebazaar_res = None
                 if "ptr" in futures:
                     try:
                         ptr_res = futures["ptr"].result()
@@ -287,7 +354,16 @@ class EnrichmentEngine:
                         mail_res = None
 
             # Calculate verdict
-            verdict = determine_verdict(ioc_type, vt_res, abuse_res, urlhaus_res, item.is_private)
+            verdict = determine_verdict(
+                ioc_type,
+                vt_res,
+                abuse_res,
+                urlhaus_res,
+                item.is_private,
+                greynoise_res=greynoise_res,
+                threatfox_res=threatfox_res,
+                malwarebazaar_res=malwarebazaar_res,
+            )
             if verdict == VERDICT_MALICIOUS:
                 malicious_count += 1
             elif verdict == VERDICT_SUSPICIOUS:
@@ -305,22 +381,42 @@ class EnrichmentEngine:
                 cache_vt["mail_health"] = mail_res
             if urlhaus_res:
                 cache_vt["urlhaus_data"] = urlhaus_res
+            if greynoise_res:
+                cache_vt["greynoise_data"] = greynoise_res
+            if threatfox_res:
+                cache_vt["threatfox_data"] = threatfox_res
+            if malwarebazaar_res:
+                cache_vt["malwarebazaar_data"] = malwarebazaar_res
 
             # Prepare detail item
             item_dict = {
                 "ioc": val,
                 "type": ioc_type,
                 "verdict": verdict,
-                "notes": self._generate_notes(ioc_type, vt_res, abuse_res, urlhaus_res, mail_res, ptr_res),
+                "notes": self._generate_notes(
+                    ioc_type,
+                    vt_res,
+                    abuse_res,
+                    urlhaus_res,
+                    mail_res,
+                    ptr_res,
+                    greynoise_res=greynoise_res,
+                    threatfox_res=threatfox_res,
+                    malwarebazaar_res=malwarebazaar_res,
+                ),
                 "vt_stats": self._format_vt_summary(vt_res) if "virustotal" in enabled else "Disabled",
                 "abuse_score": self._format_abuse_summary(abuse_res) if "abuseipdb" in enabled else "Disabled",
                 "vt_data": vt_res,
                 "abuse_data": abuse_res,
                 "urlhaus_data": urlhaus_res,
+                "greynoise_data": greynoise_res,
+                "threatfox_data": threatfox_res,
+                "malwarebazaar_data": malwarebazaar_res,
                 "mail_health": mail_res,
                 "ptr": ptr_res,
                 "is_cached": False,
             }
+
 
             # Save to SQLite Cache
             if use_cache:
@@ -419,12 +515,36 @@ class EnrichmentEngine:
         urlhaus_res: Optional[Dict[str, Any]] = None,
         mail_res: Optional[Dict[str, Any]] = None,
         ptr_res: Optional[str] = None,
+        greynoise_res: Optional[Dict[str, Any]] = None,
+        threatfox_res: Optional[Dict[str, Any]] = None,
+        malwarebazaar_res: Optional[Dict[str, Any]] = None,
     ) -> str:
         notes = []
 
         # PTR note
         if ptr_res and ptr_res not in ("Private / Local", "No PTR hostname configured"):
             notes.append(f"PTR: {ptr_res}")
+
+        # GreyNoise notes
+        if greynoise_res and greynoise_res.get("found"):
+            g_class = greynoise_res.get("classification", "unknown")
+            g_name = greynoise_res.get("name", "Scanner")
+            if greynoise_res.get("riot"):
+                notes.append(f"GreyNoise: Benign RIOT ({g_name})")
+            elif greynoise_res.get("noise"):
+                notes.append(f"GreyNoise: Mass Scanner ({g_name} - {g_class})")
+
+        # ThreatFox notes
+        if threatfox_res and threatfox_res.get("found"):
+            malware = threatfox_res.get("malware", "Unknown")
+            conf = threatfox_res.get("confidence_level", 100)
+            notes.append(f"ThreatFox: {malware} (Confidence {conf}%)")
+
+        # MalwareBazaar notes
+        if malwarebazaar_res and malwarebazaar_res.get("found"):
+            sig = malwarebazaar_res.get("signature", "Malware")
+            fname = malwarebazaar_res.get("file_name") or "Sample"
+            notes.append(f"MalwareBazaar: {sig} ({fname})")
 
         # URLhaus notes
         if urlhaus_res and urlhaus_res.get("found"):
@@ -460,3 +580,4 @@ class EnrichmentEngine:
             notes.append(f"Mail: {mx_prov} | DMARC: {d_pol} ({m_rating})")
 
         return "; ".join(notes) if notes else "No threat activity reported"
+

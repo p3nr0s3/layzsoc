@@ -11,7 +11,7 @@ from typing import List, Optional, Dict, Any
 from pathlib import Path
 import json
 
-from core.config import BASE_DIR, CACHE_TTL_HOURS
+from core.config import BASE_DIR, CACHE_TTL_HOURS, CORS_ALLOWED_ORIGINS
 from core.parser import parse_raw_text, parse_uploaded_file, IoCItem
 from core.key_manager import (
     KeyManager,
@@ -44,7 +44,8 @@ from core.playbooks import get_all_playbooks, get_playbook, generate_playbook_re
 from core.url_tracer import trace_url_redirects
 from core.deobfuscator import deobfuscate_payload
 from core.hunting import generate_single_ioc_hunt_queries
-from core.mitre import get_mitre_matrix_data, analyze_mitre_coverage
+from core.containment import generate_containment_scripts
+from core.mitre import get_mitre_matrix_data, analyze_mitre_coverage, export_mitre_navigator_layer
 from core.soc_analyst import (
     lookup_windows_event,
     analyze_command_line,
@@ -54,12 +55,13 @@ from core.soc_analyst import (
     dissect_user_agent,
 )
 
+
 app = FastAPI(title="LazySOC Threat Triage & Investigation Platform", version="3.0.0")
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -166,6 +168,31 @@ class IpClassifyRequest(BaseModel):
 
 class UserAgentRequest(BaseModel):
     user_agent: str
+
+
+class ContainmentRequest(BaseModel):
+    iocs: List[Dict[str, Any]]
+    rule_name: Optional[str] = "LAZYSOC_BLOCK"
+    zone: Optional[str] = "untrust"
+
+
+class MitreExportRequest(BaseModel):
+    iocs: Optional[List[Dict[str, Any]]] = None
+    playbook_id: Optional[str] = None
+    layer_name: Optional[str] = "LazySOC Incident TTP Heatmap"
+
+
+class GreyNoiseRequest(BaseModel):
+    ip: str
+
+
+class ThreatFoxRequest(BaseModel):
+    ioc: str
+
+
+class MalwareBazaarRequest(BaseModel):
+    hash: str
+
 
 
 
@@ -539,7 +566,52 @@ def soc_user_agent_endpoint(req: UserAgentRequest):
     return dissect_user_agent(req.user_agent)
 
 
+@app.post("/api/containment/generate")
+def generate_containment_endpoint(req: ContainmentRequest):
+    """Generates ready-to-run firewall blocklists and EDR host containment scripts."""
+    return generate_containment_scripts(
+        iocs=req.iocs,
+        rule_name=req.rule_name or "LAZYSOC_BLOCK",
+        zone=req.zone or "untrust",
+    )
+
+
+@app.post("/api/mitre/export-layer")
+def export_mitre_layer_endpoint(req: MitreExportRequest):
+    """Exports MITRE ATT&CK Navigator v4.5 Layer JSON ready to drag-and-drop into Navigator."""
+    layer_data = export_mitre_navigator_layer(
+        iocs=req.iocs or [],
+        active_playbook_id=req.playbook_id,
+        layer_name=req.layer_name or "LazySOC Incident TTP Heatmap",
+    )
+    json_bytes = json.dumps(layer_data, indent=2).encode("utf-8")
+    return StreamingResponse(
+        iter([json_bytes]),
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=lazysoc_mitre_layer.json"},
+    )
+
+
+@app.post("/api/soc/greynoise")
+def soc_greynoise_endpoint(req: GreyNoiseRequest):
+    """Checks GreyNoise Community API for internet scanners and RIOT benign services."""
+    return engine.greynoise_client.check_ip(req.ip)
+
+
+@app.post("/api/soc/threatfox")
+def soc_threatfox_endpoint(req: ThreatFoxRequest):
+    """Queries abuse.ch ThreatFox database for malware attribution and C2 context."""
+    return engine.threatfox_client.search_ioc(req.ioc)
+
+
+@app.post("/api/soc/malwarebazaar")
+def soc_malwarebazaar_endpoint(req: MalwareBazaarRequest):
+    """Queries abuse.ch MalwareBazaar for sample metadata, signatures, and tags."""
+    return engine.malwarebazaar_client.check_hash(req.hash)
+
+
 @app.get("/", response_class=HTMLResponse)
+
 
 def serve_index():
     index_file = WEB_DIR / "index.html"

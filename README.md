@@ -94,7 +94,20 @@
 - **Safe Ticket Sharing**: Rapid bulk defanging of active threat bulletins (`hxxps://evil[.]com`, `1[.]1[.]1[.]1`) for pasting into Slack, Teams, or Jira.
 - **Refanger**: Instantly turns defanged indicators back into live URLs/IPs ready for investigative queries.
 
+### 🛑 14. 1-Click Enterprise Containment & Firewall Blocklist Studio
+- **Instant Gateway Blocklists**: Generates CLI configuration commands for **Palo Alto PAN-OS** (`set address`, `address-group`, security drop rules), **Fortinet FortiOS** (`config firewall address`), and **Cisco ASA / Firepower**.
+- **Host & EDR Isolation**: Instant scripts for **Linux iptables/nftables**, **PowerShell Windows Defender Advanced Firewall**, **CrowdStrike Falcon RTR** host isolation, and EDR hash blacklists.
+
+### 🌐 15. Keyless Threat Intelligence & Internet Noise Reduction
+- **GreyNoise Community**: Automatic detection of benign enterprise infrastructure (**RIOT - Rule It Out**) and internet-wide mass scanner noise to eliminate false alarms.
+- **abuse.ch ThreatFox**: Indicator correlation against live malware campaigns, C2 infrastructure, and botnet tracking with confidence levels.
+- **abuse.ch MalwareBazaar**: High-fidelity file hash verification, sample signatures, and delivery attribution without API key limits.
+
+### 🗺️ 16. MITRE ATT&CK® Navigator Layer Export
+- One-click export of incident threat coverage into official **MITRE ATT&CK Navigator v4.5** layer JSON files (`lazysoc_mitre_layer.json`) ready for direct import into the online ATT&CK Navigator.
+
 ---
+
 
 ## 🚀 Quickstart Guide
 

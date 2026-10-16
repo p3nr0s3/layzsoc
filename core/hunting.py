@@ -8,12 +8,17 @@ from typing import Dict, Any, List, Optional
 import json
 
 
+def _sanitize_val(val: str) -> str:
+    """Sanitizes IoC value to prevent SIEM query injection."""
+    return val.replace("\r", "").replace("\n", "").replace('"', '\\"').strip()
+
+
 def generate_single_ioc_hunt_queries(ioc: str, ioc_type: str, verdict: Optional[str] = "Malicious") -> Dict[str, str]:
     """
     Generates targeted threat hunting queries for a specific single IoC
     across major SIEM and EDR platforms.
     """
-    clean_ioc = ioc.strip()
+    clean_ioc = _sanitize_val(ioc)
     i_type = ioc_type.lower()
     verdict_label = (verdict or "Malicious").upper()
 

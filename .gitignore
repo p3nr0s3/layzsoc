@@ -12,12 +12,16 @@ __pycache__/
 
 # Local databases & keys
 *.db
+*.db-*
 *.sqlite3
 data/*.db
+data/*.db-*
 data/*.sqlite3
 data/keys.json
 keys.json
 .env
+data/
+
 
 # Streamlit
 .streamlit/

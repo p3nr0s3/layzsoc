@@ -38,9 +38,23 @@ SHODAN_INTERNETDB_URL = "https://internetdb.shodan.io"
 
 # NIST NVD Configuration
 NVD_API_KEY = os.getenv("NVD_API_KEY", "")
+GREYNOISE_API_KEY = os.getenv("GREYNOISE_API_KEY", "")
 
 # Free tier limits (reference)
 # VirusTotal: 4 requests / minute, 500 requests / day
 # AbuseIPDB: 1000 requests / day
 VT_MINUTE_RATE_LIMIT = 4
 VT_MINUTE_WINDOW_SECONDS = 60
+
+# CORS Configuration (Restricted by default for security)
+raw_cors = os.getenv("CORS_ALLOWED_ORIGINS", "")
+if raw_cors:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in raw_cors.split(",") if o.strip()]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+

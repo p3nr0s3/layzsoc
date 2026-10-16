@@ -551,8 +551,13 @@
               <i data-lucide="file-json" class="w-3.5 h-3.5"></i>
               <span>JSON</span>
             </button>
+            <button onclick="openContainmentModal()" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-400 flex items-center gap-1.5 transition glow-red" title="1-Click Firewall & EDR Containment Generator">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+              <span>Containment</span>
+            </button>
           </div>
         </div>
+
 
         <!-- TABLE OF RESULTS -->
         <div class="bg-cyber-card border border-cyber-border rounded-xl overflow-hidden">
@@ -1438,8 +1443,13 @@
           <div class="flex items-center gap-3 text-[11px] text-slate-400">
             <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500/30 border border-amber-500/70 inline-block"></span> Active Threat TTP</span>
             <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#0b101c] border border-cyber-border inline-block"></span> Standard Technique</span>
+            <button onclick="downloadMitreNavigatorLayer()" class="ml-2 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-cyber-cyan/15 hover:bg-cyber-cyan/25 border border-cyber-cyan/40 text-cyber-cyan flex items-center gap-1.5 transition glow-cyan" title="Download MITRE ATT&CK Navigator Layer JSON (v4.5)">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Export Navigator Layer (.json)</span>
+            </button>
           </div>
         </div>
+
 
         <div id="mitre-matrix-container" class="overflow-x-auto custom-scrollbar pb-2">
           <!-- Injected dynamically via JS -->
@@ -2005,7 +2015,66 @@
     </div>
   </div>
 
+  <!-- MODAL: 1-CLICK CONTAINMENT & FIREWALL BLOCKLIST GENERATOR -->
+  <div id="modal-containment" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-cyber-card border border-red-500/40 rounded-2xl max-w-4xl w-full p-5 sm:p-6 space-y-4 glow-red max-h-[92vh] flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/35 flex items-center justify-center text-red-400">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              1-Click Containment & Firewall Blocklist Generator
+            </h3>
+            <p class="text-xs text-slate-400 font-mono">Instant CLI remediation scripts for Palo Alto, Fortinet, Cisco, Linux iptables, Windows Firewall, and EDR</p>
+          </div>
+        </div>
+        <button onclick="closeContainmentModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-[#080d1a] p-3 rounded-xl border border-cyber-border text-xs font-mono">
+        <div class="flex items-center gap-3">
+          <label class="text-slate-400">Rule Group Name:</label>
+          <input type="text" id="containment-rule-name" value="LAZYSOC_MALICIOUS_BLOCK" class="px-2.5 py-1 bg-[#0d1424] border border-cyber-border rounded text-white font-mono focus:border-red-400 outline-none w-52 text-xs">
+          <label class="text-slate-400 ml-2">Zone:</label>
+          <input type="text" id="containment-zone" value="untrust" class="px-2.5 py-1 bg-[#0d1424] border border-cyber-border rounded text-white font-mono focus:border-red-400 outline-none w-24 text-xs">
+        </div>
+        <button onclick="refreshContainmentScripts()" class="px-3 py-1 rounded bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 text-xs font-bold transition flex items-center gap-1.5">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span>Re-generate</span>
+        </button>
+      </div>
+
+      <!-- PLATFORM TABS -->
+      <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 text-xs font-mono border-b border-cyber-border">
+        <button onclick="switchContainmentTab('palo_alto')" id="tab-containment-palo_alto" class="containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold bg-red-500/20 text-red-300 border-t border-x border-red-500/40">Palo Alto</button>
+        <button onclick="switchContainmentTab('fortinet')" id="tab-containment-fortinet" class="containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold text-slate-400 hover:text-white">Fortinet</button>
+        <button onclick="switchContainmentTab('cisco_asa')" id="tab-containment-cisco_asa" class="containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold text-slate-400 hover:text-white">Cisco ASA</button>
+        <button onclick="switchContainmentTab('iptables')" id="tab-containment-iptables" class="containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold text-slate-400 hover:text-white">Linux iptables</button>
+        <button onclick="switchContainmentTab('windows_firewall')" id="tab-containment-windows_firewall" class="containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold text-slate-400 hover:text-white">Windows Firewall</button>
+        <button onclick="switchContainmentTab('edr_isolation')" id="tab-containment-edr_isolation" class="containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold text-slate-400 hover:text-white">EDR / Isolation</button>
+        <button onclick="switchContainmentTab('hash_blocklist')" id="tab-containment-hash_blocklist" class="containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold text-slate-400 hover:text-white">Hashes</button>
+      </div>
+
+      <!-- SCRIPT DISPLAY BOX -->
+      <div class="relative flex-1 min-h-[260px] bg-[#070b14] border border-cyber-border rounded-xl p-4 overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-cyber-border/50 text-[11px] font-mono text-slate-400">
+          <span id="containment-platform-label">Palo Alto PAN-OS Commands</span>
+          <button onclick="copyContainmentScript()" class="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white font-bold transition flex items-center gap-1.5">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copy-containment-label">Copy Script</span>
+          </button>
+        </div>
+        <pre id="containment-code-output" class="flex-1 overflow-y-auto custom-scrollbar text-xs font-mono text-emerald-400 leading-relaxed select-all whitespace-pre"></pre>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: INTERACTIVE SOC INCIDENT PLAYBOOKS & CHECKLIST -->
+
   <div id="modal-soc-playbook" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
     <div class="bg-cyber-card border border-amber-500/40 rounded-2xl max-w-4xl w-full p-5 sm:p-6 space-y-4 glow-amber max-h-[92vh] flex flex-col shadow-2xl">
       
@@ -2201,6 +2270,17 @@
 
   <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
+    // Universal HTML entity sanitizer to protect against XSS
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     let currentResults = [];
     let debounceTimer = null;
     let selectedEmlFile = null;
@@ -2566,22 +2646,22 @@ Content-Type: text/html; charset=UTF-8
             <td class="py-3 px-4">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold border ${badgeClass}">
                 <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
-                ${r.verdict}
+                ${escapeHtml(r.verdict)}
               </span>
             </td>
-            <td class="py-3 px-4 font-bold text-white max-w-sm truncate">${r.ioc}</td>
-            <td class="py-3 px-4 text-slate-400 uppercase">${r.type}</td>
-            <td class="py-3 px-4 text-slate-300">${r.vt_stats || 'N/A'}</td>
+            <td class="py-3 px-4 font-bold text-white max-w-sm truncate">${escapeHtml(r.ioc)}</td>
+            <td class="py-3 px-4 text-slate-400 uppercase">${escapeHtml(r.type)}</td>
+            <td class="py-3 px-4 text-slate-300">${escapeHtml(r.vt_stats || 'N/A')}</td>
             <td class="py-3 px-4 text-slate-300">${secondaryScore}</td>
-            <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${r.notes || '-'}</td>
+            <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${escapeHtml(r.notes || '-')}</td>
             <td class="py-3 px-4 text-center">
-              <button onclick='openSingleHuntModal("${escapeHtml(r.ioc)}", "${r.type}", "${r.verdict}")' class="px-2 py-1 rounded bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 text-[11px] font-bold flex items-center gap-1 mx-auto transition" title="1-Click SIEM Threat Hunting Queries">
+              <button onclick='openSingleHuntModal("${escapeHtml(r.ioc)}", "${escapeHtml(r.type)}", "${escapeHtml(r.verdict)}")' class="px-2 py-1 rounded bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 text-[11px] font-bold flex items-center gap-1 mx-auto transition" title="1-Click SIEM Threat Hunting Queries">
                 <i data-lucide="crosshair" class="w-3 h-3"></i>
                 <span>Hunt</span>
               </button>
             </td>
             <td class="py-3 px-4 text-center">
-              <button onclick='openInspectDrawer("${r.ioc}")' class="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition" title="Inspect Indicator Telemetry">
+              <button onclick='openInspectDrawer("${escapeHtml(r.ioc)}")' class="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition" title="Inspect Indicator Telemetry">
                 <i data-lucide="eye" class="w-4 h-4"></i>
               </button>
             </td>
@@ -2607,10 +2687,10 @@ Content-Type: text/html; charset=UTF-8
         abuseHtml = `
           <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-1.5">
             <div class="font-bold text-cyber-cyan uppercase text-[11px]">AbuseIPDB Telemetry</div>
-            <div>Confidence Score: <span class="text-white font-bold">${ad.abuse_confidence_score}%</span></div>
-            <div>Total Reports: <span class="text-white font-bold">${ad.total_reports}</span></div>
-            <div>ISP: <span class="text-white">${ad.isp}</span> (${ad.country_name})</div>
-            <div>Domain: <span class="text-white">${ad.domain || 'N/A'}</span></div>
+            <div>Confidence Score: <span class="text-white font-bold">${escapeHtml(ad.abuse_confidence_score)}%</span></div>
+            <div>Total Reports: <span class="text-white font-bold">${escapeHtml(ad.total_reports)}</span></div>
+            <div>ISP: <span class="text-white">${escapeHtml(ad.isp)}</span> (${escapeHtml(ad.country_name)})</div>
+            <div>Domain: <span class="text-white">${escapeHtml(ad.domain || 'N/A')}</span></div>
           </div>
         `;
       }
@@ -2621,9 +2701,9 @@ Content-Type: text/html; charset=UTF-8
         urlhausHtml = `
           <div class="bg-[#090d16] border border-red-500/40 rounded-lg p-3 space-y-1.5 glow-red">
             <div class="font-bold text-red-400 uppercase text-[11px]">abuse.ch URLhaus Telemetry</div>
-            <div>Status: <span class="text-white font-bold uppercase">${uh.url_status || 'FLAGGED'}</span></div>
-            <div>Threat: <span class="text-red-300 font-bold">${uh.threat || 'Malware Distribution'}</span></div>
-            ${uh.tags && uh.tags.length ? `<div>Tags: <span class="text-slate-300">${uh.tags.join(', ')}</span></div>` : ''}
+            <div>Status: <span class="text-white font-bold uppercase">${escapeHtml(uh.url_status || 'FLAGGED')}</span></div>
+            <div>Threat: <span class="text-red-300 font-bold">${escapeHtml(uh.threat || 'Malware Distribution')}</span></div>
+            ${uh.tags && uh.tags.length ? `<div>Tags: <span class="text-slate-300">${escapeHtml(uh.tags.join(', '))}</span></div>` : ''}
           </div>
         `;
       }
@@ -2636,12 +2716,12 @@ Content-Type: text/html; charset=UTF-8
           <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-2">
             <div class="flex items-center justify-between">
               <span class="font-bold text-cyber-cyan uppercase text-[11px]">Mail Health & Spoof Posture</span>
-              <span class="font-bold ${ratingColor}">Score: ${mh.score}/100</span>
+              <span class="font-bold ${ratingColor}">Score: ${escapeHtml(mh.score)}/100</span>
             </div>
-            <div>MX Provider: <span class="text-white font-bold">${mh.mx?.provider || 'None'}</span></div>
-            <div>SPF Status: <span class="text-slate-200">${mh.spf?.status || 'MISSING'}</span> (${mh.spf?.mechanism || '-'})</div>
-            <div>DMARC Policy: <span class="text-slate-200 font-bold uppercase">${mh.dmarc?.policy || 'MISSING'}</span></div>
-            <div class="text-[11px] ${ratingColor}">${mh.verdict}</div>
+            <div>MX Provider: <span class="text-white font-bold">${escapeHtml(mh.mx?.provider || 'None')}</span></div>
+            <div>SPF Status: <span class="text-slate-200">${escapeHtml(mh.spf?.status || 'MISSING')}</span> (${escapeHtml(mh.spf?.mechanism || '-')})</div>
+            <div>DMARC Policy: <span class="text-slate-200 font-bold uppercase">${escapeHtml(mh.dmarc?.policy || 'MISSING')}</span></div>
+            <div class="text-[11px] ${ratingColor}">${escapeHtml(mh.verdict)}</div>
           </div>
         `;
       }
@@ -2652,25 +2732,75 @@ Content-Type: text/html; charset=UTF-8
         vtHtml = `
           <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-1.5">
             <div class="font-bold text-cyber-cyan uppercase text-[11px]">VirusTotal Telemetry</div>
-            <div>Malicious Detections: <span class="text-red-400 font-bold">${stats.malicious || 0}</span></div>
-            <div>Suspicious Detections: <span class="text-amber-400 font-bold">${stats.suspicious || 0}</span></div>
-            <div>Harmless / Undetected: ${stats.harmless || 0} / ${stats.undetected || 0}</div>
-            ${item.vt_data.threat_label ? `<div>Threat Family: <span class="text-white font-bold">${item.vt_data.threat_label}</span></div>` : ''}
-            ${item.vt_data.registrar ? `<div>Registrar: <span class="text-white">${item.vt_data.registrar}</span></div>` : ''}
+            <div>Malicious Detections: <span class="text-red-400 font-bold">${escapeHtml(stats.malicious || 0)}</span></div>
+            <div>Suspicious Detections: <span class="text-amber-400 font-bold">${escapeHtml(stats.suspicious || 0)}</span></div>
+            <div>Harmless / Undetected: ${escapeHtml(stats.harmless || 0)} / ${escapeHtml(stats.undetected || 0)}</div>
+            ${item.vt_data.threat_label ? `<div>Threat Family: <span class="text-white font-bold">${escapeHtml(item.vt_data.threat_label)}</span></div>` : ''}
+            ${item.vt_data.registrar ? `<div>Registrar: <span class="text-white">${escapeHtml(item.vt_data.registrar)}</span></div>` : ''}
+          </div>
+        `;
+      }
+
+      let greynoiseHtml = '';
+      if (item.greynoise_data && item.greynoise_data.found) {
+        const gn = item.greynoise_data;
+        const isBenign = gn.riot || gn.classification === 'benign';
+        const gnColor = isBenign ? 'border-emerald-500/40 text-emerald-400' : 'border-amber-500/40 text-amber-400';
+        greynoiseHtml = `
+          <div class="bg-[#090d16] border ${gnColor} rounded-lg p-3 space-y-1.5">
+            <div class="font-bold uppercase text-[11px] ${isBenign ? 'text-emerald-400' : 'text-amber-400'}">GreyNoise Internet Noise Filter</div>
+            <div>Classification: <span class="text-white font-bold uppercase">${escapeHtml(gn.classification)}</span></div>
+            <div>Actor / Scanner: <span class="text-white font-bold">${escapeHtml(gn.name)}</span></div>
+            <div>Internet Mass Scanner: <span class="text-white font-bold">${gn.noise ? 'YES' : 'NO'}</span></div>
+            <div>RIOT (Rule It Out): <span class="text-white font-bold">${gn.riot ? 'YES (Benign Enterprise Service)' : 'NO'}</span></div>
+            ${gn.link ? `<div><a href="${escapeHtml(gn.link)}" target="_blank" class="text-cyber-cyan hover:underline text-[11px]">Inspect in GreyNoise Visualizer ↗</a></div>` : ''}
+          </div>
+        `;
+      }
+
+      let threatfoxHtml = '';
+      if (item.threatfox_data && item.threatfox_data.found) {
+        const tf = item.threatfox_data;
+        threatfoxHtml = `
+          <div class="bg-[#090d16] border border-red-500/50 rounded-lg p-3 space-y-1.5 glow-red">
+            <div class="font-bold text-red-400 uppercase text-[11px]">abuse.ch ThreatFox Telemetry</div>
+            <div>Malware: <span class="text-red-300 font-bold">${escapeHtml(tf.malware)}</span></div>
+            <div>Threat Type: <span class="text-white">${escapeHtml(tf.threat_type)}</span></div>
+            <div>Confidence Level: <span class="text-white font-bold">${escapeHtml(tf.confidence_level)}%</span></div>
+            ${tf.tags && tf.tags.length ? `<div>Tags: <span class="text-slate-300">${escapeHtml(tf.tags.join(', '))}</span></div>` : ''}
+            ${tf.reporter ? `<div>Reporter: <span class="text-slate-400">${escapeHtml(tf.reporter)}</span></div>` : ''}
+          </div>
+        `;
+      }
+
+      let mbHtml = '';
+      if (item.malwarebazaar_data && item.malwarebazaar_data.found) {
+        const mb = item.malwarebazaar_data;
+        mbHtml = `
+          <div class="bg-[#090d16] border border-red-500/50 rounded-lg p-3 space-y-1.5 glow-red">
+            <div class="font-bold text-red-400 uppercase text-[11px]">abuse.ch MalwareBazaar Telemetry</div>
+            <div>Signature: <span class="text-red-300 font-bold">${escapeHtml(mb.signature)}</span></div>
+            <div>File Name: <span class="text-white">${escapeHtml(mb.file_name || 'N/A')}</span></div>
+            <div>File Type: <span class="text-white">${escapeHtml(mb.file_type || 'N/A')}</span></div>
+            ${mb.tags && mb.tags.length ? `<div>Tags: <span class="text-slate-300">${escapeHtml(mb.tags.join(', '))}</span></div>` : ''}
           </div>
         `;
       }
 
       content.innerHTML = `
         ${abuseHtml}
+        ${greynoiseHtml}
+        ${threatfoxHtml}
+        ${mbHtml}
         ${urlhausHtml}
         ${mailHtml}
         ${vtHtml}
         <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3">
           <div class="font-bold text-slate-400 uppercase text-[11px] mb-1">Raw API Payload</div>
-          <pre class="text-[10px] text-slate-300 overflow-x-auto custom-scrollbar p-2 bg-black/40 rounded">${JSON.stringify(item, null, 2)}</pre>
+          <pre class="text-[10px] text-slate-300 overflow-x-auto custom-scrollbar p-2 bg-black/40 rounded">${escapeHtml(JSON.stringify(item, null, 2))}</pre>
         </div>
       `;
+
 
       document.getElementById('drawer-inspect').classList.remove('hidden');
     }
@@ -2891,7 +3021,133 @@ tags:
       setTimeout(() => document.getElementById('siem-copy-status').innerText = "", 2500);
     }
 
+    // ==========================================
+    // 1-CLICK CONTAINMENT & FIREWALL SCRIPT GENERATOR
+    // ==========================================
+    let containmentData = null;
+    let activeContainmentPlatform = 'palo_alto';
+
+    async function openContainmentModal() {
+      if (!currentResults.length) {
+        alert("Please run a scan on indicators first to generate containment scripts.");
+        return;
+      }
+      document.getElementById('modal-containment').classList.remove('hidden');
+      lucide.createIcons();
+      await refreshContainmentScripts();
+    }
+
+    function closeContainmentModal() {
+      document.getElementById('modal-containment').classList.add('hidden');
+    }
+
+    async function refreshContainmentScripts() {
+      const outputElem = document.getElementById('containment-code-output');
+      outputElem.innerText = "# Generating enterprise containment scripts...";
+
+      const ruleName = document.getElementById('containment-rule-name').value.trim() || 'LAZYSOC_MALICIOUS_BLOCK';
+      const zone = document.getElementById('containment-zone').value.trim() || 'untrust';
+
+      try {
+        const res = await fetch('/api/containment/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iocs: currentResults,
+            rule_name: ruleName,
+            zone: zone
+          })
+        });
+
+        if (res.ok) {
+          containmentData = await res.json();
+          renderContainmentTab();
+        } else {
+          outputElem.innerText = "# Error generating containment scripts from server.";
+        }
+      } catch (err) {
+        outputElem.innerText = `# Connection error: ${err}`;
+      }
+    }
+
+    function switchContainmentTab(platform) {
+      activeContainmentPlatform = platform;
+      const platforms = ['palo_alto', 'fortinet', 'cisco_asa', 'iptables', 'windows_firewall', 'edr_isolation', 'hash_blocklist'];
+      platforms.forEach(p => {
+        const btn = document.getElementById(`tab-containment-${p}`);
+        if (btn) {
+          if (p === platform) {
+            btn.className = "containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold bg-red-500/20 text-red-300 border-t border-x border-red-500/40";
+          } else {
+            btn.className = "containment-tab-btn px-3 py-1.5 rounded-t-lg font-bold text-slate-400 hover:text-white";
+          }
+        }
+      });
+      renderContainmentTab();
+    }
+
+    function renderContainmentTab() {
+      if (!containmentData) return;
+      const outputElem = document.getElementById('containment-code-output');
+      const labelElem = document.getElementById('containment-platform-label');
+      
+      const labels = {
+        palo_alto: 'Palo Alto PAN-OS CLI Commands',
+        fortinet: 'Fortinet FortiOS Firewall CLI',
+        cisco_asa: 'Cisco ASA / Firepower CLI Objects',
+        iptables: 'Linux iptables / nftables Script',
+        windows_firewall: 'PowerShell Windows Advanced Firewall Rules',
+        edr_isolation: 'EDR Host Isolation & C2 Severing Snippets',
+        hash_blocklist: 'Malicious File Hashes (EDR Blacklist)'
+      };
+
+      labelElem.innerText = labels[activeContainmentPlatform] || 'CLI Commands';
+      outputElem.innerText = containmentData[activeContainmentPlatform] || '# No rules generated for this category.';
+    }
+
+    function copyContainmentScript() {
+      const outputElem = document.getElementById('containment-code-output');
+      if (!outputElem) return;
+      navigator.clipboard.writeText(outputElem.innerText);
+      const label = document.getElementById('copy-containment-label');
+      label.innerText = 'Copied!';
+      setTimeout(() => label.innerText = 'Copy Script', 2000);
+    }
+
+    // ==========================================
+    // MITRE ATT&CK NAVIGATOR LAYER EXPORT
+    // ==========================================
+    async function downloadMitreNavigatorLayer() {
+      try {
+        const res = await fetch('/api/mitre/export-layer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iocs: currentResults || [],
+            playbook_id: currentPlaybookId || 'phishing',
+            layer_name: 'LazySOC Incident TTP Heatmap'
+          })
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'lazysoc_mitre_layer.json';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } else {
+          alert("Failed to export MITRE ATT&CK Navigator layer.");
+        }
+      } catch (err) {
+        alert("Error exporting layer: " + err);
+      }
+    }
+
     function openSocTicketModal() {
+
       if (!currentResults.length) {
         alert("Please run a scan on indicators first to generate a SOC incident handover note.");
         return;
@@ -3569,7 +3825,7 @@ tags:
       const alertsList = document.getElementById('eml-alerts-list');
       if (data.alerts && data.alerts.length) {
         alertsBox.classList.remove('hidden');
-        alertsList.innerHTML = data.alerts.map(a => `<li>${a}</li>`).join('');
+        alertsList.innerHTML = data.alerts.map(a => `<li>${escapeHtml(a)}</li>`).join('');
       } else {
         alertsBox.classList.add('hidden');
       }
@@ -3592,15 +3848,15 @@ tags:
         attachList.innerHTML = attachments.map(att => `
           <div class="p-2.5 rounded bg-[#090d16] border ${att.is_dangerous ? 'border-red-500/50 glow-red' : 'border-cyber-border'} space-y-1">
             <div class="flex items-center justify-between">
-              <span class="font-bold ${att.is_dangerous ? 'text-red-300' : 'text-white'}">${att.filename}</span>
+              <span class="font-bold ${att.is_dangerous ? 'text-red-300' : 'text-white'}">${escapeHtml(att.filename)}</span>
               <span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${att.is_dangerous ? 'bg-red-500/20 text-red-400' : 'bg-slate-500/20 text-slate-300'}">
-                ${att.is_dangerous ? 'DANGEROUS EXTENSION' : att.extension}
+                ${att.is_dangerous ? 'DANGEROUS EXTENSION' : escapeHtml(att.extension)}
               </span>
             </div>
             <div class="text-[11px] text-slate-400">Size: ${(att.size_bytes / 1024).toFixed(1)} KB</div>
-            <div class="text-[10px] text-slate-500 break-all">SHA256: <span class="text-slate-300">${att.sha256}</span></div>
+            <div class="text-[10px] text-slate-500 break-all">SHA256: <span class="text-slate-300">${escapeHtml(att.sha256)}</span></div>
             <div class="pt-1 flex items-center gap-2">
-              <button onclick="sendToTriage('${att.sha256}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 transition">
+              <button onclick="sendToTriage('${escapeHtml(att.sha256)}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 hover:bg-cyber-cyan/25 transition">
                 Triage Hash in Engine
               </button>
             </div>
@@ -3619,13 +3875,13 @@ tags:
       if (links.length) {
         linksList.innerHTML = links.map(link => `
           <div class="p-2 rounded bg-[#090d16] border border-cyber-border flex items-center justify-between gap-2">
-            <span class="text-[11px] text-cyber-cyan truncate max-w-sm">${link}</span>
+            <span class="text-[11px] text-cyber-cyan truncate max-w-sm">${escapeHtml(link)}</span>
             <div class="flex items-center gap-1.5 shrink-0">
-              <button onclick="traceExtractedUrl('${link}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 transition flex items-center gap-1" title="Trace Redirect Chain">
+              <button onclick="traceExtractedUrl('${escapeHtml(link)}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 transition flex items-center gap-1" title="Trace Redirect Chain">
                 <i data-lucide="route" class="w-3 h-3"></i>
                 <span>Trace</span>
               </button>
-              <button onclick="sendToTriage('${link}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border transition">
+              <button onclick="sendToTriage('${escapeHtml(link)}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border transition">
                 Triage URL
               </button>
             </div>
@@ -3797,26 +4053,26 @@ tags:
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isFinal ? 'bg-cyber-cyan/20 text-cyber-cyan' : 'bg-white/5 text-slate-400'}">
-                    Hop #${h.hop} ${isFinal ? '(LANDING)' : ''}
+                    Hop #${escapeHtml(h.hop)} ${isFinal ? '(LANDING)' : ''}
                   </span>
                   <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${statusBadgeClass}">
-                    HTTP ${h.status_code}
+                    HTTP ${escapeHtml(h.status_code)}
                   </span>
-                  <span class="text-slate-400 text-[11px] truncate hidden sm:inline">Server: ${h.server || 'Unknown'}</span>
+                  <span class="text-slate-400 text-[11px] truncate hidden sm:inline">Server: ${escapeHtml(h.server || 'Unknown')}</span>
                 </div>
-                <button onclick="sendToTriage('${h.url}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border transition">
+                <button onclick="sendToTriage('${escapeHtml(h.url)}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border transition">
                   Triage Hop
                 </button>
               </div>
-              <div class="text-[11px] text-white break-all select-all font-mono">${h.url}</div>
+              <div class="text-[11px] text-white break-all select-all font-mono">${escapeHtml(h.url)}</div>
               ${h.redirect_to ? `
                 <div class="text-[10px] text-amber-300 flex items-center gap-1">
                   <i data-lucide="corner-down-right" class="w-3 h-3 text-amber-400 shrink-0"></i>
-                  <span class="truncate">Redirects to: <span class="font-bold">${h.redirect_to}</span></span>
+                  <span class="truncate">Redirects to: <span class="font-bold">${escapeHtml(h.redirect_to)}</span></span>
                 </div>
               ` : ''}
               ${h.error ? `
-                <div class="text-[10px] text-red-400">Error: ${h.error}</div>
+                <div class="text-[10px] text-red-400">Error: ${escapeHtml(h.error)}</div>
               ` : ''}
             </div>
           `;
@@ -3939,14 +4195,14 @@ tags:
       if (data.powershell && data.powershell.length) {
         data.powershell.forEach((ps, idx) => {
           const cmdletsHtml = ps.suspicious_cmdlets && ps.suspicious_cmdlets.length
-            ? ps.suspicious_cmdlets.map(c => `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 uppercase">${c}</span>`).join(' ')
+            ? ps.suspicious_cmdlets.map(c => `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 uppercase">${escapeHtml(c)}</span>`).join(' ')
             : `<span class="text-slate-500 text-[11px]">No high-risk cmdlet names detected</span>`;
 
           const urlsHtml = ps.extracted_urls && ps.extracted_urls.length
             ? ps.extracted_urls.map(u => `
                 <div class="flex items-center justify-between gap-2 p-1.5 rounded bg-[#090d16] border border-cyber-border">
-                  <span class="text-cyber-cyan truncate text-[11px]">${u}</span>
-                  <button onclick="sendDeobfUrlToTriage('${u}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/15 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 shrink-0">
+                  <span class="text-cyber-cyan truncate text-[11px]">${escapeHtml(u)}</span>
+                  <button onclick="sendDeobfUrlToTriage('${escapeHtml(u)}')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-cyan/15 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 shrink-0">
                     Triage URL
                   </button>
                 </div>
@@ -3974,7 +4230,7 @@ tags:
               ` : ''}
               <div class="space-y-1">
                 <div class="text-[10px] font-mono text-slate-400 font-bold uppercase">De-obfuscated Command Output:</div>
-                <textarea readonly class="w-full min-h-[100px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${ps.decoded_command}</textarea>
+                <textarea readonly class="w-full min-h-[100px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${escapeHtml(ps.decoded_command)}</textarea>
               </div>
             </div>
           `);
@@ -3992,7 +4248,7 @@ tags:
               </span>
               <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan">Decoded</span>
             </div>
-            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.base64_standard}</textarea>
+            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${escapeHtml(data.base64_standard)}</textarea>
           </div>
         `);
       }
@@ -4008,7 +4264,7 @@ tags:
               </span>
               <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan">Decoded</span>
             </div>
-            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.hex_decoded}</textarea>
+            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${escapeHtml(data.hex_decoded)}</textarea>
           </div>
         `);
       }
@@ -4024,7 +4280,7 @@ tags:
               </span>
               <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyber-cyan/15 text-cyber-cyan">Unquoted</span>
             </div>
-            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.url_decoded}</textarea>
+            <textarea readonly class="w-full min-h-[80px] p-2.5 rounded-lg bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${escapeHtml(data.url_decoded)}</textarea>
           </div>
         `);
       }
@@ -4038,7 +4294,7 @@ tags:
                 <div class="text-xs font-mono font-bold text-white uppercase flex items-center gap-1.5">
                   <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-cyber-cyan"></i> ROT13 Caesar Substitution
                 </div>
-                <textarea readonly class="w-full min-h-[60px] p-2 rounded bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.rot13}</textarea>
+                <textarea readonly class="w-full min-h-[60px] p-2 rounded bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${escapeHtml(data.rot13)}</textarea>
               </div>
             ` : ''}
             ${data.reversed ? `
@@ -4046,7 +4302,7 @@ tags:
                 <div class="text-xs font-mono font-bold text-white uppercase flex items-center gap-1.5">
                   <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-cyber-cyan"></i> Reversed String
                 </div>
-                <textarea readonly class="w-full min-h-[60px] p-2 rounded bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${data.reversed}</textarea>
+                <textarea readonly class="w-full min-h-[60px] p-2 rounded bg-[#070a10] border border-cyber-border text-xs font-mono text-slate-200 focus:outline-none select-all custom-scrollbar">${escapeHtml(data.reversed)}</textarea>
               </div>
             ` : ''}
           </div>
@@ -4068,10 +4324,10 @@ tags:
               ${data.xor_candidates.map(xc => `
                 <div class="p-2.5 rounded bg-[#090d16] border border-cyber-border space-y-1">
                   <div class="flex items-center justify-between text-xs font-mono">
-                    <span class="text-amber-400 font-bold">Key: ${xc.key}</span>
-                    <span class="text-[10px] text-slate-400">Matches: ${xc.matches.join(', ')}</span>
+                    <span class="text-amber-400 font-bold">Key: ${escapeHtml(xc.key)}</span>
+                    <span class="text-[10px] text-slate-400">Matches: ${escapeHtml(xc.matches.join(', '))}</span>
                   </div>
-                  <div class="text-xs font-mono text-slate-200 break-all select-all">${xc.preview}</div>
+                  <div class="text-xs font-mono text-slate-200 break-all select-all">${escapeHtml(xc.preview)}</div>
                 </div>
               `).join('')}
             </div>
@@ -4482,37 +4738,38 @@ tags:
         const srcClass = sourceColors[a.source] || 'bg-slate-800 text-slate-300 border-slate-700';
         const cleanDate = a.pub_date ? a.pub_date.substring(0, 16) : '';
         const globalIdx = offsetIndex + idx;
+        const safeLink = (a.link && (a.link.startsWith('http://') || a.link.startsWith('https://'))) ? escapeHtml(a.link) : '#';
 
         return `
           <div class="bg-[#090d16] border border-cyber-border hover:border-cyber-cyan/40 rounded-xl p-4 flex flex-col justify-between space-y-3 transition-all group hover:shadow-lg">
             <div class="space-y-2.5">
               <div class="flex items-center justify-between gap-2 text-[10px] font-mono">
                 <span class="px-2 py-0.5 rounded border font-semibold ${srcClass}">
-                  ${a.source}
+                  ${escapeHtml(a.source)}
                 </span>
                 <span class="px-2 py-0.5 rounded border font-semibold ${catClass}">
-                  ${a.category}
+                  ${escapeHtml(a.category)}
                 </span>
               </div>
 
-              <a href="${a.link}" target="_blank" rel="noopener noreferrer" class="block text-xs font-bold text-slate-100 hover:text-cyber-cyan transition line-clamp-2 leading-relaxed">
-                ${a.title}
+              <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="block text-xs font-bold text-slate-100 hover:text-cyber-cyan transition line-clamp-2 leading-relaxed">
+                ${escapeHtml(a.title)}
                 <i data-lucide="external-link" class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 text-cyber-cyan transition"></i>
               </a>
 
               <p class="text-[11px] text-slate-400 line-clamp-3 leading-relaxed font-sans">
-                ${a.summary || 'Click link to read full advisory and technical analysis on publisher website.'}
+                ${escapeHtml(a.summary || 'Click link to read full advisory and technical analysis on publisher website.')}
               </p>
             </div>
 
             <div class="pt-3 border-t border-cyber-border/60 flex items-center justify-between text-[11px] font-mono">
-              <span class="text-slate-500 text-[10px]">${cleanDate}</span>
+              <span class="text-slate-500 text-[10px]">${escapeHtml(cleanDate)}</span>
               <div class="flex items-center gap-2">
                 <button onclick="sendArticleToTriage(${globalIdx})" class="px-2 py-1 rounded bg-white/5 hover:bg-cyber-cyan/15 text-slate-400 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[10px] font-mono transition flex items-center gap-1" title="Extract and scan indicators found in this article">
                   <i data-lucide="crosshair" class="w-3 h-3"></i>
                   <span>Scan IoCs</span>
                 </button>
-                <a href="${a.link}" target="_blank" rel="noopener noreferrer" class="text-cyber-cyan hover:underline text-[10px] font-bold flex items-center gap-0.5">
+                <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="text-cyber-cyan hover:underline text-[10px] font-bold flex items-center gap-0.5">
                   Read ↗
                 </a>
               </div>
@@ -4692,16 +4949,18 @@ tags:
 
         const globalIdx = offsetIndex + idx;
 
+        const safeLink = (cve.link && (cve.link.startsWith('http://') || cve.link.startsWith('https://'))) ? escapeHtml(cve.link) : '#';
+
         return `
           <div class="bg-[#090d16] border border-cyber-border hover:border-cyber-cyan/40 rounded-xl p-5 space-y-3.5 transition-all">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyber-border/60 pb-3">
               <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <a href="${cve.link}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold font-mono text-white hover:text-cyber-cyan transition flex items-center gap-1.5">
-                  ${cve.id}
+                <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold font-mono text-white hover:text-cyber-cyan transition flex items-center gap-1.5">
+                  ${escapeHtml(cve.id)}
                   <i data-lucide="external-link" class="w-3.5 h-3.5 text-cyber-cyan"></i>
                 </a>
                 <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold border ${sevBadge}">
-                  ${cve.severity} (CVSS ${cve.cvss})
+                  ${escapeHtml(cve.severity)} (CVSS ${escapeHtml(cve.cvss)})
                 </span>
                 ${cve.known_exploited ? `
                   <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
@@ -4712,29 +4971,29 @@ tags:
               </div>
 
               <div class="text-[11px] font-mono text-slate-500">
-                Published: <span class="text-slate-300">${cve.published || 'N/A'}</span>
+                Published: <span class="text-slate-300">${escapeHtml(cve.published || 'N/A')}</span>
               </div>
             </div>
 
             <p class="text-xs text-slate-300 font-sans leading-relaxed">
-              ${cve.description || 'No description provided by NIST.'}
+              ${escapeHtml(cve.description || 'No description provided by NIST.')}
             </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs font-mono">
               <div class="bg-black/30 border border-cyber-border/60 rounded-lg p-2.5">
                 <span class="text-slate-400 text-[10px] uppercase font-bold block mb-1">CWE Weakness Type</span>
-                <span class="text-slate-200 text-[11px]">${cve.cwe}</span>
+                <span class="text-slate-200 text-[11px]">${escapeHtml(cve.cwe)}</span>
               </div>
               <div class="bg-black/30 border border-cyber-border/60 rounded-lg p-2.5">
                 <span class="text-slate-400 text-[10px] uppercase font-bold block mb-1">CVSS Vector String</span>
-                <span class="text-slate-400 text-[10px] break-all select-all font-mono">${cve.vector || 'Not Available'}</span>
+                <span class="text-slate-400 text-[10px] break-all select-all font-mono">${escapeHtml(cve.vector || 'Not Available')}</span>
               </div>
             </div>
 
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pt-2 border-t border-cyber-border/60 text-xs font-mono">
               <span class="text-slate-500 text-[11px] flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                Source: <span class="text-slate-300 font-semibold">${cve.source}</span>
+                Source: <span class="text-slate-300 font-semibold">${escapeHtml(cve.source)}</span>
               </span>
               <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                 <button onclick="sendCveToTriage(${globalIdx})" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-cyber-cyan/15 text-slate-300 hover:text-cyber-cyan border border-cyber-border hover:border-cyber-cyan/30 text-[11px] transition flex items-center gap-1">

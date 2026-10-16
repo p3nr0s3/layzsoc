@@ -1,4 +1,4 @@
-"""SQLite caching and history layer for Slothery."""
+"""SQLite caching and history layer for LazySOC."""
 
 import sqlite3
 import json
@@ -14,8 +14,10 @@ def utc_now() -> datetime:
 
 
 def get_db_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(CACHE_DB_FILE)
+    conn = sqlite3.connect(CACHE_DB_FILE, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
     return conn
 
 
@@ -77,12 +79,15 @@ def get_cached_ioc(ioc_value: str) -> Optional[Dict[str, Any]]:
         if not row:
             return None
 
-        # Increment hit counter
-        cursor.execute(
-            "UPDATE ioc_cache SET hit_count = hit_count + 1 WHERE ioc_value = ?",
-            (val,),
-        )
-        conn.commit()
+        # Safely increment hit counter without failing cache retrieval
+        try:
+            cursor.execute(
+                "UPDATE ioc_cache SET hit_count = hit_count + 1 WHERE ioc_value = ?",
+                (val,),
+            )
+            conn.commit()
+        except Exception:
+            pass
 
         vt_parsed = json.loads(row["vt_data"]) if row["vt_data"] else None
         abuse_parsed = json.loads(row["abuse_data"]) if row["abuse_data"] else None

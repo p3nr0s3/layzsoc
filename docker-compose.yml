@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  lazysoc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lazysoc
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - ENV=production
+      - CACHE_TTL_HOURS=24
+      - RATE_LIMIT_COOLDOWN_SECONDS=65
+      - ALLOW_KEY_MANAGEMENT=false
+      # Optional: Add API keys or set via .env file
+      # - VIRUSTOTAL_API_KEYS=your_key_1,your_key_2
+      # - ABUSEIPDB_API_KEYS=your_key_1
+      # - NVD_API_KEY=your_nvd_key
+      # - CORS_ALLOWED_ORIGINS=http://localhost:8000
+    volumes:
+      - lazysoc-data:/app/data
+
+volumes:
+  lazysoc-data:
+    driver: local

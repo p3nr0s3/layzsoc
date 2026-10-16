@@ -6,7 +6,10 @@ Fetches and caches live security advisories and news from top cybersecurity feed
 import time
 import re
 import requests
-import xml.etree.ElementTree as ET
+try:
+    import defusedxml.ElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 from typing import List, Dict, Any, Optional
 
 FEED_SOURCES = {

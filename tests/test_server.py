@@ -53,7 +53,11 @@ def test_scan_with_selected_providers():
 
 
 
-def test_mail_health_endpoint():
+def test_mail_health_endpoint(monkeypatch):
+    from server import mail_checker
+    monkeypatch.setattr(mail_checker, "check_domain", lambda d: {
+        "domain": d, "score": 90, "rating": "PROTECTED", "dmarc": {"has_dmarc": True}
+    })
     res = client.get("/api/mail-health?domain=google.com")
     assert res.status_code == 200
     data = res.json()
@@ -62,7 +66,11 @@ def test_mail_health_endpoint():
     assert "dmarc" in data
 
 
-def test_recon_endpoint():
+def test_recon_endpoint(monkeypatch):
+    import server
+    monkeypatch.setattr(server, "perform_recon", lambda t: {
+        "target": t, "type": "ip", "ptr": "dns.google"
+    })
     res = client.get("/api/recon?target=8.8.8.8")
     assert res.status_code == 200
     data = res.json()
@@ -187,7 +195,12 @@ def test_playbooks_endpoints():
     assert rep["completed_count"] == 2
 
 
-def test_trace_url_endpoint():
+def test_trace_url_endpoint(monkeypatch):
+    import server
+    monkeypatch.setattr(server, "trace_url_redirects", lambda u, max_hops=8: {
+        "initial_url": u, "final_url": u, "hops": [{"hop": 1, "url": u, "status_code": 200}],
+        "total_hops": 1, "is_shortener": False, "has_redirects": False
+    })
     res = client.post("/api/trace-url", json={"url": "https://example.com"})
     assert res.status_code == 200
     data = res.json()
@@ -292,7 +305,11 @@ def test_trace_url_ssrf_protection():
     assert data_meta.get("blocked_ssrf") is True
 
 
-def test_recon_includes_shodan_exposure():
+def test_recon_includes_shodan_exposure(monkeypatch):
+    import server
+    monkeypatch.setattr(server, "perform_recon", lambda t: {
+        "target": t, "type": "ip", "shodan": {"ports": [80, 443], "vulns": []}
+    })
     res = client.get("/api/recon?target=1.1.1.1")
     assert res.status_code == 200
     data = res.json()

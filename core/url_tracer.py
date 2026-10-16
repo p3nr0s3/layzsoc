@@ -234,73 +234,73 @@ def trace_url_redirects(target_url: str, max_hops: int = 8) -> Dict[str, Any]:
 
     hops: List[Dict[str, Any]] = []
     current_url = raw_url
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 LazySOC/3.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    })
 
     try:
-        for step in range(1, max_hops + 1):
-            parsed = urlparse(current_url)
-            hostname = parsed.hostname or ""
+        with requests.Session() as session:
+            session.headers.update({
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 LazySOC/3.0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            })
+            for step in range(1, max_hops + 1):
+                parsed = urlparse(current_url)
+                hostname = parsed.hostname or ""
 
-            # Guard each redirect hop against SSRF pivots
-            hop_blocked, hop_reason = is_private_or_internal_host(hostname)
-            if hop_blocked:
-                hops.append({
-                    "hop": step,
-                    "url": current_url,
-                    "domain": hostname,
-                    "status_code": "BLOCKED_SSRF",
-                    "error": f"SSRF Guard: Redirect destination blocked ({hop_reason})",
-                })
-                break
-
-            try:
-                # Do NOT follow redirects automatically to capture every step
-                resp = session.get(current_url, allow_redirects=False, timeout=6, stream=True)
-                status_code = resp.status_code
-                headers = dict(resp.headers)
-                location = headers.get("Location") or headers.get("location")
-                server = headers.get("Server") or headers.get("server") or "Not Disclosed"
-                content_type = headers.get("Content-Type") or headers.get("content-type") or "Unknown"
-
-                # Immediately close stream to avoid downloading malware binaries
-                resp.close()
-
-                hop_info = {
-                    "hop": step,
-                    "url": current_url,
-                    "domain": hostname,
-                    "status_code": status_code,
-                    "server": server,
-                    "content_type": content_type[:40],
-                    "redirect_to": location,
-                }
-                hops.append(hop_info)
-
-                # Check if this status code represents a redirection
-                if status_code in (301, 302, 303, 307, 308) and location:
-                    if location.startswith("/"):
-                        # Relative redirect
-                        current_url = f"{parsed.scheme}://{parsed.netloc}{location}"
-                    elif not location.startswith("http://") and not location.startswith("https://"):
-                        current_url = f"{parsed.scheme}://{parsed.netloc}/{location.lstrip('/')}"
-                    else:
-                        current_url = location
-                else:
-                    # Final landing destination reached
+                # Guard each redirect hop against SSRF pivots
+                hop_blocked, hop_reason = is_private_or_internal_host(hostname)
+                if hop_blocked:
+                    hops.append({
+                        "hop": step,
+                        "url": current_url,
+                        "domain": hostname,
+                        "status_code": "BLOCKED_SSRF",
+                        "error": f"SSRF Guard: Redirect destination blocked ({hop_reason})",
+                    })
                     break
-            except Exception as hop_err:
-                hops.append({
-                    "hop": step,
-                    "url": current_url,
-                    "domain": hostname,
-                    "status_code": "ERROR",
-                    "error": str(hop_err)[:100],
-                })
-                break
+
+                try:
+                    # Do NOT follow redirects automatically to capture every step
+                    resp = session.get(current_url, allow_redirects=False, timeout=6, stream=True)
+                    status_code = resp.status_code
+                    headers = dict(resp.headers)
+                    location = headers.get("Location") or headers.get("location")
+                    server = headers.get("Server") or headers.get("server") or "Not Disclosed"
+                    content_type = headers.get("Content-Type") or headers.get("content-type") or "Unknown"
+
+                    # Immediately close stream to avoid downloading malware binaries
+                    resp.close()
+
+                    hop_info = {
+                        "hop": step,
+                        "url": current_url,
+                        "domain": hostname,
+                        "status_code": status_code,
+                        "server": server,
+                        "content_type": content_type[:40],
+                        "redirect_to": location,
+                    }
+                    hops.append(hop_info)
+
+                    # Check if this status code represents a redirection
+                    if status_code in (301, 302, 303, 307, 308) and location:
+                        if location.startswith("/"):
+                            # Relative redirect
+                            current_url = f"{parsed.scheme}://{parsed.netloc}{location}"
+                        elif not location.startswith("http://") and not location.startswith("https://"):
+                            current_url = f"{parsed.scheme}://{parsed.netloc}/{location.lstrip('/')}"
+                        else:
+                            current_url = location
+                    else:
+                        # Final landing destination reached
+                        break
+                except Exception as hop_err:
+                    hops.append({
+                        "hop": step,
+                        "url": current_url,
+                        "domain": hostname,
+                        "status_code": "ERROR",
+                        "error": str(hop_err)[:100],
+                    })
+                    break
     except Exception:
         pass
 

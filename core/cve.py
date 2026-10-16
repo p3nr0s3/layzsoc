@@ -247,80 +247,80 @@ def query_cve(search: Optional[str] = None, limit: int = 30, page: int = 1) -> D
 
     # 3. Vendor / Product / Keyword query with smart latest-first pagination
     try:
-        session = requests.Session()
-        # Step A: Probe totalResults for the query
-        probe_resp = session.get(
-            NVD_API_URL,
-            headers=headers,
-            params={"keywordSearch": query, "resultsPerPage": 1},
-            timeout=8
-        )
-        if probe_resp.status_code == 200:
-            probe_data = probe_resp.json()
-            total_results = probe_data.get("totalResults", 0)
-
-            if total_results == 0:
-                result = {
-                    "total": 0,
-                    "page": page,
-                    "limit": limit,
-                    "has_more": False,
-                    "query": query,
-                    "realtime": True,
-                    "items": [],
-                    "cached": False,
-                }
-                _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
-                return result
-
-            # Step B: Calculate startIndex from the end to get the newest CVEs
-            # Since NVD stores CVEs chronologically ascending (oldest at index 0, newest at totalResults - 1)
-            target_end = total_results - ((page - 1) * limit)
-            if target_end <= 0:
-                return {
-                    "total": total_results,
-                    "page": page,
-                    "limit": limit,
-                    "has_more": False,
-                    "query": query,
-                    "realtime": True,
-                    "items": [],
-                    "cached": False,
-                }
-
-            start_idx = max(0, target_end - limit)
-            fetch_count = target_end - start_idx
-            has_more = (start_idx > 0)
-
-            fetch_resp = session.get(
+        with requests.Session() as session:
+            # Step A: Probe totalResults for the query
+            probe_resp = session.get(
                 NVD_API_URL,
                 headers=headers,
-                params={
-                    "keywordSearch": query,
-                    "startIndex": start_idx,
-                    "resultsPerPage": fetch_count
-                },
-                timeout=12
+                params={"keywordSearch": query, "resultsPerPage": 1},
+                timeout=8
             )
-            if fetch_resp.status_code == 200:
-                fetch_data = fetch_resp.json()
-                raw_vulns = fetch_data.get("vulnerabilities", [])
-                items = [_parse_nvd_item(v) for v in raw_vulns]
-                # Sort descending by published date so the absolute latest is at index 0
-                items.sort(key=lambda x: x.get("published", ""), reverse=True)
+            if probe_resp.status_code == 200:
+                probe_data = probe_resp.json()
+                total_results = probe_data.get("totalResults", 0)
 
-                result = {
-                    "total": total_results,
-                    "page": page,
-                    "limit": limit,
-                    "has_more": has_more,
-                    "query": query,
-                    "realtime": True,
-                    "items": items,
-                    "cached": False,
-                }
-                _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
-                return result
+                if total_results == 0:
+                    result = {
+                        "total": 0,
+                        "page": page,
+                        "limit": limit,
+                        "has_more": False,
+                        "query": query,
+                        "realtime": True,
+                        "items": [],
+                        "cached": False,
+                    }
+                    _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
+                    return result
+
+                # Step B: Calculate startIndex from the end to get the newest CVEs
+                # Since NVD stores CVEs chronologically ascending (oldest at index 0, newest at totalResults - 1)
+                target_end = total_results - ((page - 1) * limit)
+                if target_end <= 0:
+                    return {
+                        "total": total_results,
+                        "page": page,
+                        "limit": limit,
+                        "has_more": False,
+                        "query": query,
+                        "realtime": True,
+                        "items": [],
+                        "cached": False,
+                    }
+
+                start_idx = max(0, target_end - limit)
+                fetch_count = target_end - start_idx
+                has_more = (start_idx > 0)
+
+                fetch_resp = session.get(
+                    NVD_API_URL,
+                    headers=headers,
+                    params={
+                        "keywordSearch": query,
+                        "startIndex": start_idx,
+                        "resultsPerPage": fetch_count
+                    },
+                    timeout=12
+                )
+                if fetch_resp.status_code == 200:
+                    fetch_data = fetch_resp.json()
+                    raw_vulns = fetch_data.get("vulnerabilities", [])
+                    items = [_parse_nvd_item(v) for v in raw_vulns]
+                    # Sort descending by published date so the absolute latest is at index 0
+                    items.sort(key=lambda x: x.get("published", ""), reverse=True)
+
+                    result = {
+                        "total": total_results,
+                        "page": page,
+                        "limit": limit,
+                        "has_more": has_more,
+                        "query": query,
+                        "realtime": True,
+                        "items": items,
+                        "cached": False,
+                    }
+                    _CVE_CACHE[cache_key] = {"timestamp": now, "data": result}
+                    return result
     except Exception:
         pass
 
