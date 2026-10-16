@@ -543,6 +543,14 @@
               <input type="checkbox" id="export-defang" checked class="w-3.5 h-3.5 accent-cyber-cyan rounded">
               <span class="font-mono text-[11px]">Defang [.]</span>
             </label>
+            <button onclick="copyTableFormat('markdown')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition" title="Copy Table as Markdown for GitHub / Slack / TheHive">
+              <i data-lucide="clipboard" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+              <span>MD Table</span>
+            </button>
+            <button onclick="copyTableFormat('jira')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition" title="Copy Table as Jira / Confluence markup">
+              <i data-lucide="table" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>Jira Table</span>
+            </button>
             <button onclick="downloadExport('csv')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 flex items-center gap-1.5 transition">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
               <span>CSV</span>
@@ -2252,21 +2260,43 @@
   </div>
 
   <!-- DRAWER: INSPECT TELEMETRY -->
-  <div id="drawer-inspect" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end">
-    <div class="bg-cyber-card border-l border-cyber-border w-full max-w-xl h-full p-4 sm:p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
-      <div class="flex items-center justify-between border-b border-cyber-border/80 pb-3">
-        <div>
-          <h3 id="inspect-title" class="text-sm font-mono font-bold text-white">Indicator Deep Dive</h3>
-          <p id="inspect-subtitle" class="text-xs font-mono text-cyber-cyan mt-0.5"></p>
+  <div id="drawer-inspect" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex justify-end transition-opacity duration-300" onclick="if(event.target===this)closeDrawer()">
+    <div class="bg-[#090d18] border-l border-cyber-border w-full max-w-2xl h-full p-4 sm:p-6 flex flex-col space-y-4 overflow-y-auto custom-scrollbar shadow-2xl relative">
+      <!-- HEADER -->
+      <div class="flex items-start justify-between border-b border-cyber-border/80 pb-4">
+        <div class="space-y-2 flex-1 min-w-0 pr-3">
+          <div class="flex items-center gap-2 flex-wrap" id="inspect-header-badges">
+            <span id="inspect-verdict-badge" class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold border"></span>
+            <span id="inspect-type-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white/5 border border-cyber-border text-slate-300 uppercase"></span>
+            <span id="inspect-cache-badge" class="text-[10px] font-mono text-slate-400"></span>
+          </div>
+          <h3 id="inspect-title" class="text-base sm:text-lg font-mono font-extrabold text-white break-all tracking-tight select-all"></h3>
         </div>
-        <button onclick="closeDrawer()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+        <button onclick="closeDrawer()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition text-base" title="Close Drawer (Esc)">
+          ✕
+        </button>
       </div>
 
+      <!-- ACTION TOOLBAR -->
+      <div id="inspect-actions" class="flex flex-wrap items-center gap-2 py-1">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- EXTERNAL PIVOTS BAR -->
+      <div id="inspect-pivots" class="flex flex-wrap items-center gap-1.5 p-2.5 bg-[#060913] border border-cyber-border rounded-xl text-[11px] font-mono">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- TELEMETRY CONTENT -->
       <div id="inspect-content" class="space-y-4 text-xs font-mono">
         <!-- Telemetry injected dynamically -->
       </div>
     </div>
   </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-[999] pointer-events-none flex flex-col gap-2"></div>
+
 
   <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
@@ -2281,7 +2311,39 @@
         .replace(/'/g, '&#39;');
     }
 
+    function defangIndicator(val) {
+      if (!val) return '';
+      let res = String(val);
+      res = res.replace(/https:\/\//gi, 'hxxps://').replace(/http:\/\//gi, 'hxxp://');
+      res = res.replace(/\./g, '[.]');
+      return res;
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const borderCol = type === 'error' ? 'border-red-500/50 bg-red-950/90 text-red-200' : 'border-cyber-cyan/50 bg-[#090d1a]/95 text-cyan-300';
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border ${borderCol} shadow-2xl backdrop-blur-md text-xs font-mono font-bold flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0`;
+      toast.innerHTML = `<span class="w-2 h-2 rounded-full ${type === 'error' ? 'bg-red-400' : 'bg-cyber-cyan'} animate-ping"></span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('translate-y-4', 'opacity-0');
+        setTimeout(() => toast.remove(), 350);
+      }, 2500);
+    }
+
+    function copyToClipboard(text, message) {
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+      showToast(message || "Copied to clipboard!");
+    }
+
     let currentResults = [];
+
     let debounceTimer = null;
     let selectedEmlFile = null;
 
@@ -2618,7 +2680,7 @@ Content-Type: text/html; charset=UTF-8
       }
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500 font-mono">No indicators matching filter criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-500 font-mono">No indicators matching filter criteria.</td></tr>`;
         return;
       }
 
@@ -2636,10 +2698,40 @@ Content-Type: text/html; charset=UTF-8
           dotColor = "bg-emerald-400";
         }
 
-        let secondaryScore = r.abuse_score || 'N/A';
-        if (r.urlhaus_data && r.urlhaus_data.found) {
-          secondaryScore = `<span class="text-red-400 font-bold">URLhaus Flagged</span>`;
+        // Secondary score & CTI Badges (AbuseIPDB, URLhaus, GreyNoise)
+        let secondaryParts = [];
+        if (r.abuse_score && r.abuse_score !== 'N/A' && r.abuse_score !== 'Disabled') {
+          secondaryParts.push(`<span class="text-slate-300 font-semibold">${escapeHtml(r.abuse_score)}</span>`);
         }
+        if (r.urlhaus_data && r.urlhaus_data.found) {
+          secondaryParts.push(`<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40">URLhaus Flagged</span>`);
+        }
+        if (r.greynoise_data) {
+          if (r.greynoise_data.riot) {
+            secondaryParts.push(`<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" title="GreyNoise RIOT: Known Benign Enterprise Service">GN: RIOT</span>`);
+          } else if (r.greynoise_data.noise) {
+            secondaryParts.push(`<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40" title="GreyNoise: Internet Mass Scanner">GN: Scanner</span>`);
+          }
+        }
+        let secondaryScore = secondaryParts.length ? secondaryParts.join('<div class="my-0.5"></div>') : `<span class="text-slate-500">N/A</span>`;
+
+        // Notes and extra threat intel tags (ThreatFox, MalwareBazaar)
+        let tagBadges = [];
+        if (r.threatfox_data && r.threatfox_data.found) {
+          tagBadges.push(`<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40" title="ThreatFox C2 / Malware correlation">ThreatFox: ${escapeHtml(r.threatfox_data.malware || 'Malware')}</span>`);
+        }
+        if (r.malwarebazaar_data && r.malwarebazaar_data.found) {
+          tagBadges.push(`<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40" title="MalwareBazaar Known Signature">Bazaar: ${escapeHtml(r.malwarebazaar_data.signature || 'Malware')}</span>`);
+        }
+
+        let notesHtml = `
+          <div class="space-y-1">
+            <div class="text-slate-300 max-w-xs truncate" title="${escapeHtml(r.notes || '-')}">${escapeHtml(r.notes || '-')}</div>
+            ${tagBadges.length ? `<div class="flex flex-wrap gap-1 mt-1">${tagBadges.join('')}</div>` : ''}
+          </div>
+        `;
+
+        const escapedIoc = escapeHtml(r.ioc);
 
         return `
           <tr class="hover:bg-white/[0.02] transition">
@@ -2649,19 +2741,31 @@ Content-Type: text/html; charset=UTF-8
                 ${escapeHtml(r.verdict)}
               </span>
             </td>
-            <td class="py-3 px-4 font-bold text-white max-w-sm truncate">${escapeHtml(r.ioc)}</td>
-            <td class="py-3 px-4 text-slate-400 uppercase">${escapeHtml(r.type)}</td>
+            <td class="py-3 px-4 font-mono">
+              <div class="flex items-center justify-between gap-2 max-w-sm group">
+                <span class="font-bold text-white truncate select-all" title="${escapedIoc}">${escapedIoc}</span>
+                <div class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <button onclick="copyToClipboard(defangIndicator('${escapedIoc}'), 'Copied defanged IoC: ${escapedIoc}')" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/5 hover:bg-cyber-cyan/20 text-slate-400 hover:text-cyber-cyan border border-cyber-border transition" title="Copy Defanged [.]">
+                    [.]
+                  </button>
+                  <button onclick="copyToClipboard('${escapedIoc}', 'Copied raw IoC: ${escapedIoc}')" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-cyber-border transition" title="Copy Raw IoC">
+                    raw
+                  </button>
+                </div>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-slate-400 uppercase font-semibold text-[11px]">${escapeHtml(r.type)}</td>
             <td class="py-3 px-4 text-slate-300">${escapeHtml(r.vt_stats || 'N/A')}</td>
-            <td class="py-3 px-4 text-slate-300">${secondaryScore}</td>
-            <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${escapeHtml(r.notes || '-')}</td>
+            <td class="py-3 px-4 text-slate-300 text-xs">${secondaryScore}</td>
+            <td class="py-3 px-4">${notesHtml}</td>
             <td class="py-3 px-4 text-center">
-              <button onclick='openSingleHuntModal("${escapeHtml(r.ioc)}", "${escapeHtml(r.type)}", "${escapeHtml(r.verdict)}")' class="px-2 py-1 rounded bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 text-[11px] font-bold flex items-center gap-1 mx-auto transition" title="1-Click SIEM Threat Hunting Queries">
+              <button onclick='openSingleHuntModal("${escapedIoc}", "${escapeHtml(r.type)}", "${escapeHtml(r.verdict)}")' class="px-2 py-1 rounded bg-cyber-cyan/10 hover:bg-cyber-cyan/25 text-cyber-cyan border border-cyber-cyan/30 text-[11px] font-bold flex items-center gap-1 mx-auto transition" title="1-Click SIEM Threat Hunting Queries">
                 <i data-lucide="crosshair" class="w-3 h-3"></i>
                 <span>Hunt</span>
               </button>
             </td>
             <td class="py-3 px-4 text-center">
-              <button onclick='openInspectDrawer("${escapeHtml(r.ioc)}")' class="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition" title="Inspect Indicator Telemetry">
+              <button onclick='openInspectDrawer("${escapedIoc}")' class="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition" title="Inspect Indicator Telemetry">
                 <i data-lucide="eye" class="w-4 h-4"></i>
               </button>
             </td>
@@ -2676,138 +2780,331 @@ Content-Type: text/html; charset=UTF-8
       const item = currentResults.find(r => r.ioc === iocVal);
       if (!item) return;
 
+      const verdict = item.verdict || 'Unknown';
+      let verdictBadgeClass = 'bg-slate-500/20 text-slate-300 border-slate-500/35';
+      let dotColor = 'bg-slate-400';
+      if (verdict === 'Malicious') {
+        verdictBadgeClass = 'bg-red-500/20 text-red-300 border-red-500/50 glow-red';
+        dotColor = 'bg-red-500 animate-pulse';
+      } else if (verdict === 'Suspicious') {
+        verdictBadgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/50 glow-amber';
+        dotColor = 'bg-amber-400';
+      } else if (verdict === 'Clean') {
+        verdictBadgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 glow-green';
+        dotColor = 'bg-emerald-400';
+      }
+
+      // 1. Header Badges & Title
+      const vBadge = document.getElementById('inspect-verdict-badge');
+      vBadge.className = `inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold border ${verdictBadgeClass}`;
+      vBadge.innerHTML = `<span class="w-2 h-2 rounded-full ${dotColor}"></span>${verdict.toUpperCase()}`;
+
+      const tBadge = document.getElementById('inspect-type-badge');
+      tBadge.innerText = item.type.toUpperCase();
+
+      const cBadge = document.getElementById('inspect-cache-badge');
+      cBadge.innerHTML = item.is_cached
+        ? `<span class="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/25 text-blue-300 text-[10px]">⚡ Cache Hit (${escapeHtml(item.updated_at ? item.updated_at.split(' ')[0] : 'Local')})</span>`
+        : `<span class="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px]">⚡ Live Enrichment</span>`;
+
       document.getElementById('inspect-title').innerText = item.ioc;
-      document.getElementById('inspect-subtitle').innerText = `${item.type.toUpperCase()} • Verdict: ${item.verdict.toUpperCase()}`;
 
+      // 2. Action Toolbar
+      const actionsElem = document.getElementById('inspect-actions');
+      const defanged = defangIndicator(item.ioc);
+      actionsElem.innerHTML = `
+        <button onclick="copyToClipboard('${escapeHtml(defanged)}', 'Defanged IoC copied!')" class="px-3 py-1.5 rounded-lg bg-cyber-cyan/15 hover:bg-cyber-cyan/25 border border-cyber-cyan/40 text-cyber-cyan font-bold transition flex items-center gap-1.5 glow-cyan" title="Copy defanged string for ticket">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          <span>Copy Defanged [.]</span>
+        </button>
+        <button onclick="copyToClipboard('${escapeHtml(item.ioc)}', 'Raw IoC copied!')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-cyber-border text-slate-200 font-bold transition flex items-center gap-1.5" title="Copy live indicator">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>Copy Raw</span>
+        </button>
+        <button onclick='openSingleHuntModal("${escapeHtml(item.ioc)}", "${escapeHtml(item.type)}", "${escapeHtml(item.verdict)}")' class="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold transition flex items-center gap-1.5 glow-amber" title="SIEM Threat Hunting queries">
+          <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+          <span>Hunt</span>
+        </button>
+        <button onclick='openContainmentModal()' class="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 font-bold transition flex items-center gap-1.5 glow-red" title="Generate firewall blocklist scripts">
+          <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+          <span>Containment</span>
+        </button>
+      `;
+
+      // 3. External Pivots Bar
+      const pivotsElem = document.getElementById('inspect-pivots');
+      const iocValClean = item.ioc.trim();
+      const pivots = [];
+
+      if (item.type === 'ipv4' || item.type === 'ipv6') {
+        pivots.push(`<a href="https://www.virustotal.com/gui/ip-address/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-blue-500/20 text-slate-300 hover:text-blue-300 border border-white/10 hover:border-blue-500/30 transition flex items-center gap-1">VirusTotal ↗</a>`);
+        pivots.push(`<a href="https://www.abuseipdb.com/check/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border border-white/10 hover:border-amber-500/30 transition flex items-center gap-1">AbuseIPDB ↗</a>`);
+        pivots.push(`<a href="https://www.shodan.io/host/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 hover:border-red-500/30 transition flex items-center gap-1">Shodan ↗</a>`);
+        pivots.push(`<a href="https://viz.greynoise.io/ip/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition flex items-center gap-1">GreyNoise ↗</a>`);
+        pivots.push(`<a href="https://threatfox.abuse.ch/browse.php?search=ioc%3A${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-purple-500/20 text-slate-300 hover:text-purple-300 border border-white/10 hover:border-purple-500/30 transition flex items-center gap-1">ThreatFox ↗</a>`);
+      } else if (item.type === 'domain') {
+        pivots.push(`<a href="https://www.virustotal.com/gui/domain/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-blue-500/20 text-slate-300 hover:text-blue-300 border border-white/10 hover:border-blue-500/30 transition flex items-center gap-1">VirusTotal ↗</a>`);
+        pivots.push(`<a href="https://urlhaus.abuse.ch/host/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 hover:border-red-500/30 transition flex items-center gap-1">URLhaus ↗</a>`);
+        pivots.push(`<a href="https://threatfox.abuse.ch/browse.php?search=ioc%3A${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-purple-500/20 text-slate-300 hover:text-purple-300 border border-white/10 hover:border-purple-500/30 transition flex items-center gap-1">ThreatFox ↗</a>`);
+        pivots.push(`<a href="https://mxtoolbox.com/SuperTool.aspx?action=mx%3a${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/30 transition flex items-center gap-1">MXToolbox ↗</a>`);
+      } else if (item.type === 'url') {
+        pivots.push(`<a href="https://www.virustotal.com/gui/search/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-blue-500/20 text-slate-300 hover:text-blue-300 border border-white/10 hover:border-blue-500/30 transition flex items-center gap-1">VirusTotal ↗</a>`);
+        pivots.push(`<a href="https://urlhaus.abuse.ch/browse/" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 hover:border-red-500/30 transition flex items-center gap-1">URLhaus ↗</a>`);
+        pivots.push(`<a href="https://threatfox.abuse.ch/browse.php?search=ioc%3A${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-purple-500/20 text-slate-300 hover:text-purple-300 border border-white/10 hover:border-purple-500/30 transition flex items-center gap-1">ThreatFox ↗</a>`);
+      } else if (['md5', 'sha1', 'sha256'].includes(item.type)) {
+        pivots.push(`<a href="https://www.virustotal.com/gui/file/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-blue-500/20 text-slate-300 hover:text-blue-300 border border-white/10 hover:border-blue-500/30 transition flex items-center gap-1">VirusTotal ↗</a>`);
+        pivots.push(`<a href="https://bazaar.abuse.ch/sample/${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-white/10 hover:border-red-500/30 transition flex items-center gap-1">MalwareBazaar ↗</a>`);
+        pivots.push(`<a href="https://threatfox.abuse.ch/browse.php?search=ioc%3A${encodeURIComponent(iocValClean)}" target="_blank" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-purple-500/20 text-slate-300 hover:text-purple-300 border border-white/10 hover:border-purple-500/30 transition flex items-center gap-1">ThreatFox ↗</a>`);
+      }
+
+      pivotsElem.innerHTML = `
+        <span class="text-slate-500 font-bold flex items-center gap-1 mr-1">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          Pivots:
+        </span>
+        ${pivots.join('')}
+      `;
+
+      // 4. TELEMETRY CARDS BUILDER
       const content = document.getElementById('inspect-content');
-      
-      let abuseHtml = '';
-      if (item.abuse_data && item.abuse_data.success) {
-        const ad = item.abuse_data.data;
-        abuseHtml = `
-          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-1.5">
-            <div class="font-bold text-cyber-cyan uppercase text-[11px]">AbuseIPDB Telemetry</div>
-            <div>Confidence Score: <span class="text-white font-bold">${escapeHtml(ad.abuse_confidence_score)}%</span></div>
-            <div>Total Reports: <span class="text-white font-bold">${escapeHtml(ad.total_reports)}</span></div>
-            <div>ISP: <span class="text-white">${escapeHtml(ad.isp)}</span> (${escapeHtml(ad.country_name)})</div>
-            <div>Domain: <span class="text-white">${escapeHtml(ad.domain || 'N/A')}</span></div>
-          </div>
-        `;
-      }
 
-      let urlhausHtml = '';
-      if (item.urlhaus_data && item.urlhaus_data.found) {
-        const uh = item.urlhaus_data;
-        urlhausHtml = `
-          <div class="bg-[#090d16] border border-red-500/40 rounded-lg p-3 space-y-1.5 glow-red">
-            <div class="font-bold text-red-400 uppercase text-[11px]">abuse.ch URLhaus Telemetry</div>
-            <div>Status: <span class="text-white font-bold uppercase">${escapeHtml(uh.url_status || 'FLAGGED')}</span></div>
-            <div>Threat: <span class="text-red-300 font-bold">${escapeHtml(uh.threat || 'Malware Distribution')}</span></div>
-            ${uh.tags && uh.tags.length ? `<div>Tags: <span class="text-slate-300">${escapeHtml(uh.tags.join(', '))}</span></div>` : ''}
+      // Card 1: Executive Synopsis Card
+      const summaryCard = `
+        <div class="bg-[#0b101e] border border-cyber-border rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <span class="flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 text-cyber-cyan"></i> Analyst Executive Synopsis</span>
+            <span class="text-slate-500 font-mono">LazySOC AI / Triage Engine</span>
           </div>
-        `;
-      }
+          <p class="text-slate-200 text-xs leading-relaxed font-sans">${escapeHtml(item.notes || 'No critical threat indicator observed.')}</p>
+        </div>
+      `;
 
-      let mailHtml = '';
-      if (item.mail_health) {
-        const mh = item.mail_health;
-        let ratingColor = mh.rating === 'PROTECTED' ? 'text-emerald-400' : (mh.rating === 'PARTIALLY_PROTECTED' ? 'text-amber-400' : 'text-red-400');
-        mailHtml = `
-          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-cyber-cyan uppercase text-[11px]">Mail Health & Spoof Posture</span>
-              <span class="font-bold ${ratingColor}">Score: ${escapeHtml(mh.score)}/100</span>
-            </div>
-            <div>MX Provider: <span class="text-white font-bold">${escapeHtml(mh.mx?.provider || 'None')}</span></div>
-            <div>SPF Status: <span class="text-slate-200">${escapeHtml(mh.spf?.status || 'MISSING')}</span> (${escapeHtml(mh.spf?.mechanism || '-')})</div>
-            <div>DMARC Policy: <span class="text-slate-200 font-bold uppercase">${escapeHtml(mh.dmarc?.policy || 'MISSING')}</span></div>
-            <div class="text-[11px] ${ratingColor}">${escapeHtml(mh.verdict)}</div>
-          </div>
-        `;
-      }
-
-      let vtHtml = '';
-      if (item.vt_data && item.vt_data.success && !item.vt_data.not_found) {
-        const stats = item.vt_data.stats || {};
-        vtHtml = `
-          <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3 space-y-1.5">
-            <div class="font-bold text-cyber-cyan uppercase text-[11px]">VirusTotal Telemetry</div>
-            <div>Malicious Detections: <span class="text-red-400 font-bold">${escapeHtml(stats.malicious || 0)}</span></div>
-            <div>Suspicious Detections: <span class="text-amber-400 font-bold">${escapeHtml(stats.suspicious || 0)}</span></div>
-            <div>Harmless / Undetected: ${escapeHtml(stats.harmless || 0)} / ${escapeHtml(stats.undetected || 0)}</div>
-            ${item.vt_data.threat_label ? `<div>Threat Family: <span class="text-white font-bold">${escapeHtml(item.vt_data.threat_label)}</span></div>` : ''}
-            ${item.vt_data.registrar ? `<div>Registrar: <span class="text-white">${escapeHtml(item.vt_data.registrar)}</span></div>` : ''}
-          </div>
-        `;
-      }
-
-      let greynoiseHtml = '';
-      if (item.greynoise_data && item.greynoise_data.found) {
-        const gn = item.greynoise_data;
-        const isBenign = gn.riot || gn.classification === 'benign';
-        const gnColor = isBenign ? 'border-emerald-500/40 text-emerald-400' : 'border-amber-500/40 text-amber-400';
-        greynoiseHtml = `
-          <div class="bg-[#090d16] border ${gnColor} rounded-lg p-3 space-y-1.5">
-            <div class="font-bold uppercase text-[11px] ${isBenign ? 'text-emerald-400' : 'text-amber-400'}">GreyNoise Internet Noise Filter</div>
-            <div>Classification: <span class="text-white font-bold uppercase">${escapeHtml(gn.classification)}</span></div>
-            <div>Actor / Scanner: <span class="text-white font-bold">${escapeHtml(gn.name)}</span></div>
-            <div>Internet Mass Scanner: <span class="text-white font-bold">${gn.noise ? 'YES' : 'NO'}</span></div>
-            <div>RIOT (Rule It Out): <span class="text-white font-bold">${gn.riot ? 'YES (Benign Enterprise Service)' : 'NO'}</span></div>
-            ${gn.link ? `<div><a href="${escapeHtml(gn.link)}" target="_blank" class="text-cyber-cyan hover:underline text-[11px]">Inspect in GreyNoise Visualizer ↗</a></div>` : ''}
-          </div>
-        `;
-      }
-
+      // Card 2: ThreatFox (Malware Attribution)
       let threatfoxHtml = '';
       if (item.threatfox_data && item.threatfox_data.found) {
         const tf = item.threatfox_data;
         threatfoxHtml = `
-          <div class="bg-[#090d16] border border-red-500/50 rounded-lg p-3 space-y-1.5 glow-red">
-            <div class="font-bold text-red-400 uppercase text-[11px]">abuse.ch ThreatFox Telemetry</div>
-            <div>Malware: <span class="text-red-300 font-bold">${escapeHtml(tf.malware)}</span></div>
-            <div>Threat Type: <span class="text-white">${escapeHtml(tf.threat_type)}</span></div>
-            <div>Confidence Level: <span class="text-white font-bold">${escapeHtml(tf.confidence_level)}%</span></div>
-            ${tf.tags && tf.tags.length ? `<div>Tags: <span class="text-slate-300">${escapeHtml(tf.tags.join(', '))}</span></div>` : ''}
-            ${tf.reporter ? `<div>Reporter: <span class="text-slate-400">${escapeHtml(tf.reporter)}</span></div>` : ''}
+          <div class="bg-gradient-to-br from-red-950/40 via-[#0d1322] to-[#090d18] border border-red-500/40 rounded-xl p-4 space-y-3 glow-red">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                <span class="font-extrabold text-red-400 uppercase text-xs tracking-wider">abuse.ch ThreatFox // Active Malware</span>
+              </div>
+              <span class="px-2 py-0.5 rounded bg-red-500/20 border border-red-500/40 text-red-300 font-bold text-[11px]">${escapeHtml(tf.threat_type || 'Malicious IoC')}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[11px]">Malware Family:</span>
+                <span class="text-white font-extrabold text-sm text-red-300">${escapeHtml(tf.malware)}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Confidence Level:</span>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <div class="w-full bg-black/50 h-2 rounded-full overflow-hidden border border-red-500/20">
+                    <div class="bg-red-500 h-full" style="width: ${tf.confidence_level || 100}%"></div>
+                  </div>
+                  <span class="text-white font-bold text-xs">${tf.confidence_level || 100}%</span>
+                </div>
+              </div>
+            </div>
+            ${tf.tags && tf.tags.length ? `
+              <div class="flex items-center gap-1.5 flex-wrap pt-1 border-t border-white/5">
+                <span class="text-[10px] text-slate-500 font-bold">TAGS:</span>
+                ${tf.tags.map(t => `<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300 text-[10px]">${escapeHtml(t)}</span>`).join('')}
+              </div>
+            ` : ''}
           </div>
         `;
       }
 
+      // Card 3: GreyNoise Internet Noise Filter
+      let greynoiseHtml = '';
+      if (item.greynoise_data && item.greynoise_data.found) {
+        const gn = item.greynoise_data;
+        const isBenign = gn.riot || gn.classification === 'benign';
+        const cardBorder = isBenign ? 'border-emerald-500/40 from-emerald-950/30' : 'border-amber-500/40 from-amber-950/30';
+        const titleColor = isBenign ? 'text-emerald-400' : 'text-amber-400';
+        greynoiseHtml = `
+          <div class="bg-gradient-to-br ${cardBorder} via-[#0d1322] to-[#090d18] border rounded-xl p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="font-extrabold uppercase text-xs ${titleColor} flex items-center gap-1.5">
+                <i data-lucide="radio" class="w-3.5 h-3.5"></i> GreyNoise Internet Intelligence
+              </span>
+              <span class="px-2 py-0.5 rounded font-bold text-[11px] ${isBenign ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}">
+                ${isBenign ? 'RIOT // Rule It Out (Benign)' : 'Internet Scanner / Noise'}
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[11px]">Actor / Service Name:</span>
+                <span class="text-white font-bold">${escapeHtml(gn.name)}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Classification:</span>
+                <span class="text-white font-bold uppercase">${escapeHtml(gn.classification)}</span>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 font-sans pt-1 border-t border-white/5">
+              ${isBenign ? '✓ This IP belongs to verified benign cloud/business infrastructure. Unlikely to be targeted attack.' : '⚠️ Observed actively scanning the public internet. Mass scanning behavior.'}
+            </div>
+          </div>
+        `;
+      }
+
+      // Card 4: MalwareBazaar (Sample Signature)
       let mbHtml = '';
       if (item.malwarebazaar_data && item.malwarebazaar_data.found) {
         const mb = item.malwarebazaar_data;
         mbHtml = `
-          <div class="bg-[#090d16] border border-red-500/50 rounded-lg p-3 space-y-1.5 glow-red">
-            <div class="font-bold text-red-400 uppercase text-[11px]">abuse.ch MalwareBazaar Telemetry</div>
-            <div>Signature: <span class="text-red-300 font-bold">${escapeHtml(mb.signature)}</span></div>
-            <div>File Name: <span class="text-white">${escapeHtml(mb.file_name || 'N/A')}</span></div>
-            <div>File Type: <span class="text-white">${escapeHtml(mb.file_type || 'N/A')}</span></div>
-            ${mb.tags && mb.tags.length ? `<div>Tags: <span class="text-slate-300">${escapeHtml(mb.tags.join(', '))}</span></div>` : ''}
+          <div class="bg-gradient-to-br from-red-950/40 via-[#0d1322] to-[#090d18] border border-red-500/40 rounded-xl p-4 space-y-2.5 glow-red">
+            <div class="flex items-center justify-between">
+              <span class="font-extrabold text-red-400 uppercase text-xs flex items-center gap-1.5">
+                <i data-lucide="binary" class="w-3.5 h-3.5"></i> abuse.ch MalwareBazaar Sample
+              </span>
+              <span class="px-2 py-0.5 rounded bg-red-500/20 border border-red-500/40 text-red-300 font-bold text-[11px]">${escapeHtml(mb.signature)}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div><span class="text-slate-400 text-[11px]">Sample Name:</span> <span class="text-white font-bold">${escapeHtml(mb.file_name || 'N/A')}</span></div>
+              <div><span class="text-slate-400 text-[11px]">MIME Type:</span> <span class="text-white">${escapeHtml(mb.file_type || 'N/A')}</span></div>
+              <div><span class="text-slate-400 text-[11px]">File Size:</span> <span class="text-white">${mb.file_size ? Math.round(mb.file_size / 1024) + ' KB' : 'N/A'}</span></div>
+              <div><span class="text-slate-400 text-[11px]">First Seen:</span> <span class="text-white">${escapeHtml(mb.first_seen || 'N/A')}</span></div>
+            </div>
           </div>
         `;
       }
 
-      content.innerHTML = `
-        ${abuseHtml}
-        ${greynoiseHtml}
-        ${threatfoxHtml}
-        ${mbHtml}
-        ${urlhausHtml}
-        ${mailHtml}
-        ${vtHtml}
-        <div class="bg-[#090d16] border border-cyber-border rounded-lg p-3">
-          <div class="font-bold text-slate-400 uppercase text-[11px] mb-1">Raw API Payload</div>
-          <pre class="text-[10px] text-slate-300 overflow-x-auto custom-scrollbar p-2 bg-black/40 rounded">${escapeHtml(JSON.stringify(item, null, 2))}</pre>
-        </div>
+      // Card 5: VirusTotal Multi-Engine Breakdown
+      let vtHtml = '';
+      if (item.vt_data && item.vt_data.success && !item.vt_data.not_found) {
+        const stats = item.vt_data.stats || {};
+        const mal = stats.malicious || 0;
+        const susp = stats.suspicious || 0;
+        const harmless = stats.harmless || 0;
+        const undetected = stats.undetected || 0;
+        const total = mal + susp + harmless + undetected || 70;
+        const malPct = Math.round((mal / total) * 100);
+        const suspPct = Math.round((susp / total) * 100);
+        const cleanPct = 100 - malPct - suspPct;
+
+        vtHtml = `
+          <div class="bg-[#0b101d] border border-cyber-border rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-cyber-cyan uppercase text-xs flex items-center gap-1.5">
+                <i data-lucide="shield" class="w-3.5 h-3.5"></i> VirusTotal Engine Detections
+              </span>
+              <span class="font-extrabold ${mal > 0 ? 'text-red-400' : 'text-emerald-400'} text-xs">${mal} / ${total} Engines Flagged</span>
+            </div>
+            
+            <!-- Engine Ratio Bar -->
+            <div class="w-full bg-black/60 h-2.5 rounded-full overflow-hidden flex border border-white/5">
+              <div class="bg-red-500 h-full transition-all" style="width: ${malPct}%" title="Malicious: ${mal}"></div>
+              <div class="bg-amber-400 h-full transition-all" style="width: ${suspPct}%" title="Suspicious: ${susp}"></div>
+              <div class="bg-emerald-500 h-full transition-all" style="width: ${cleanPct}%" title="Clean/Undetected"></div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px] pt-1 border-t border-white/5">
+              <div class="bg-black/30 p-1.5 rounded"><span class="text-red-400 font-bold block">${mal}</span><span class="text-slate-500">Malicious</span></div>
+              <div class="bg-black/30 p-1.5 rounded"><span class="text-amber-400 font-bold block">${susp}</span><span class="text-slate-500">Suspicious</span></div>
+              <div class="bg-black/30 p-1.5 rounded"><span class="text-emerald-400 font-bold block">${harmless}</span><span class="text-slate-500">Harmless</span></div>
+              <div class="bg-black/30 p-1.5 rounded"><span class="text-slate-300 font-bold block">${undetected}</span><span class="text-slate-500">Undetected</span></div>
+            </div>
+
+            ${(item.vt_data.threat_label || item.vt_data.as_owner) ? `
+              <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+                ${item.vt_data.threat_label ? `<div><span class="text-slate-500 block">Threat Classification:</span> <span class="font-bold text-red-300">${escapeHtml(item.vt_data.threat_label)}</span></div>` : ''}
+                ${item.vt_data.as_owner ? `<div><span class="text-slate-500 block">Autonomous System (ASN):</span> <span class="font-bold text-white">${escapeHtml(item.vt_data.as_owner)}</span></div>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // Card 6: AbuseIPDB Reputation
+      let abuseHtml = '';
+      if (item.abuse_data && item.abuse_data.success) {
+        const ad = item.abuse_data.data;
+        const score = ad.abuse_confidence_score || 0;
+        abuseHtml = `
+          <div class="bg-[#0b101d] border border-cyber-border rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-amber-400 uppercase text-xs flex items-center gap-1.5">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> AbuseIPDB Community Reputation
+              </span>
+              <span class="font-extrabold ${score >= 50 ? 'text-red-400' : (score > 0 ? 'text-amber-400' : 'text-emerald-400')} text-xs">${score}% Confidence Score</span>
+            </div>
+
+            <div class="w-full bg-black/60 h-2.5 rounded-full overflow-hidden border border-white/5">
+              <div class="${score >= 50 ? 'bg-red-500' : 'bg-amber-400'} h-full transition-all" style="width: ${score}%"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+              <div><span class="text-slate-500 text-[11px] block">Total Reports:</span> <span class="text-white font-bold">${ad.total_reports || 0} user reports</span></div>
+              <div><span class="text-slate-500 text-[11px] block">Hosting ISP:</span> <span class="text-white font-bold">${escapeHtml(ad.isp || 'Unknown')}</span></div>
+              <div><span class="text-slate-500 text-[11px] block">Country Origin:</span> <span class="text-white">${escapeHtml(ad.country_name || 'N/A')}</span></div>
+              <div><span class="text-slate-500 text-[11px] block">Registered Domain:</span> <span class="text-white">${escapeHtml(ad.domain || 'N/A')}</span></div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Card 7: Mail Health (for domains)
+      let mailHtml = '';
+      if (item.mail_health) {
+        const mh = item.mail_health;
+        let ratingColor = mh.rating === 'PROTECTED' ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' : (mh.rating === 'PARTIALLY_PROTECTED' ? 'text-amber-400 border-amber-500/40 bg-amber-500/10' : 'text-red-400 border-red-500/40 bg-red-500/10');
+        mailHtml = `
+          <div class="bg-[#0b101d] border border-cyber-border rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-cyber-cyan uppercase text-xs flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Email Authentication & Spoofing Posture
+              </span>
+              <span class="px-2 py-0.5 rounded border font-bold text-xs ${ratingColor}">${escapeHtml(mh.rating || 'AUDIT')} (${mh.score || 0}/100)</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-white/5">
+              <div class="bg-black/30 p-2 rounded"><span class="text-slate-500 text-[10px] block">MX Provider:</span><span class="text-white font-bold truncate block">${escapeHtml(mh.mx?.provider || 'None')}</span></div>
+              <div class="bg-black/30 p-2 rounded"><span class="text-slate-500 text-[10px] block">SPF Status:</span><span class="text-slate-200 font-bold block">${escapeHtml(mh.spf?.status || 'MISSING')}</span></div>
+              <div class="bg-black/30 p-2 rounded"><span class="text-slate-500 text-[10px] block">DMARC Policy:</span><span class="text-slate-200 font-bold uppercase block">${escapeHtml(mh.dmarc?.policy || 'MISSING')}</span></div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Card 8: Raw JSON Telemetry Details Accordion
+      const rawJson = JSON.stringify(item, null, 2);
+      const rawJsonCard = `
+        <details class="bg-[#060913] border border-cyber-border rounded-xl overflow-hidden group">
+          <summary class="p-3.5 cursor-pointer font-bold text-slate-400 hover:text-white flex items-center justify-between text-xs font-mono select-none">
+            <span class="flex items-center gap-2">
+              <i data-lucide="code" class="w-3.5 h-3.5 text-cyber-cyan"></i>
+              <span>Raw Telemetry JSON Payload</span>
+            </span>
+            <button type="button" onclick="event.stopPropagation(); copyToClipboard(document.getElementById('raw-json-inspector-box').innerText, 'Raw JSON copied!')" class="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-slate-300 font-normal text-[11px]">Copy JSON</button>
+          </summary>
+          <div class="p-3 pt-0 border-t border-cyber-border/40">
+            <pre id="raw-json-inspector-box" class="text-[11px] text-emerald-400 font-mono overflow-x-auto custom-scrollbar p-3 bg-black/60 rounded-lg max-h-72 select-all">${escapeHtml(rawJson)}</pre>
+          </div>
+        </details>
       `;
 
+      content.innerHTML = `
+        ${summaryCard}
+        ${threatfoxHtml}
+        ${mbHtml}
+        ${greynoiseHtml}
+        ${vtHtml}
+        ${abuseHtml}
+        ${mailHtml}
+        ${rawJsonCard}
+      `;
 
       document.getElementById('drawer-inspect').classList.remove('hidden');
+      lucide.createIcons();
     }
 
     function closeDrawer() {
       document.getElementById('drawer-inspect').classList.add('hidden');
     }
+
 
     function sendToTriage(ioc) {
       if (!ioc) return;
@@ -4434,8 +4731,81 @@ tags:
     }
 
     // ==========================================
-    // EXPORTS
+    // EXPORTS & TABLE FORMATTERS
     // ==========================================
+    function copyTableFormat(format) {
+      if (!currentResults || !currentResults.length) {
+        showToast("No scan results to copy", "error");
+        return;
+      }
+      const defang = document.getElementById('export-defang')?.checked ?? true;
+      const search = (document.getElementById('search-filter')?.value || '').toLowerCase();
+      const verdictFilter = document.getElementById('verdict-filter')?.value || 'ALL';
+
+      let items = currentResults;
+      if (verdictFilter !== 'ALL') {
+        items = items.filter(r => r.verdict === verdictFilter);
+      }
+      if (search) {
+        items = items.filter(r => 
+          r.ioc.toLowerCase().includes(search) || 
+          (r.notes && r.notes.toLowerCase().includes(search)) ||
+          r.type.toLowerCase().includes(search)
+        );
+      }
+      if (!items.length) {
+        showToast("No indicators matching filter criteria", "error");
+        return;
+      }
+
+      let output = "";
+      if (format === 'markdown') {
+        output += "| Verdict | Indicator | Type | VirusTotal | Abuse / URLhaus | Telemetry Notes |\n";
+        output += "|:---|:---|:---|:---|:---|:---|\n";
+        items.forEach(r => {
+          const ioc = defang ? defangIndicator(r.ioc) : r.ioc;
+          const vt = r.vt_stats || 'N/A';
+          let secParts = [];
+          if (r.abuse_score && r.abuse_score !== 'N/A' && r.abuse_score !== 'Disabled') secParts.push(r.abuse_score);
+          if (r.urlhaus_data && r.urlhaus_data.found) secParts.push("URLhaus Flagged");
+          if (r.greynoise_data && r.greynoise_data.riot) secParts.push("GN RIOT");
+          else if (r.greynoise_data && r.greynoise_data.noise) secParts.push("GN Scanner");
+          const sec = secParts.join('; ') || 'N/A';
+
+          let noteParts = [];
+          if (r.notes) noteParts.push(r.notes.replace(/[\r\n|]/g, ' '));
+          if (r.threatfox_data && r.threatfox_data.found) noteParts.push(`ThreatFox: ${r.threatfox_data.malware || 'Malware'}`);
+          if (r.malwarebazaar_data && r.malwarebazaar_data.found) noteParts.push(`Bazaar: ${r.malwarebazaar_data.signature || 'Malware'}`);
+          const notes = noteParts.join(' | ') || '-';
+
+          output += `| ${r.verdict} | \`${ioc}\` | ${r.type} | ${vt} | ${sec} | ${notes} |\n`;
+        });
+        copyToClipboard(output.trim(), `Copied ${items.length} IoCs as Markdown Table!`);
+      } else if (format === 'jira') {
+        output += "||Verdict||Indicator||Type||VirusTotal||Abuse / URLhaus||Telemetry Notes||\n";
+        items.forEach(r => {
+          const ioc = defang ? defangIndicator(r.ioc) : r.ioc;
+          const vt = r.vt_stats || 'N/A';
+          let secParts = [];
+          if (r.abuse_score && r.abuse_score !== 'N/A' && r.abuse_score !== 'Disabled') secParts.push(r.abuse_score);
+          if (r.urlhaus_data && r.urlhaus_data.found) secParts.push("URLhaus Flagged");
+          if (r.greynoise_data && r.greynoise_data.riot) secParts.push("GN RIOT");
+          else if (r.greynoise_data && r.greynoise_data.noise) secParts.push("GN Scanner");
+          const sec = secParts.join('; ') || 'N/A';
+
+          let noteParts = [];
+          if (r.notes) noteParts.push(r.notes.replace(/[\r\n|]/g, ' '));
+          if (r.threatfox_data && r.threatfox_data.found) noteParts.push(`ThreatFox: ${r.threatfox_data.malware || 'Malware'}`);
+          if (r.malwarebazaar_data && r.malwarebazaar_data.found) noteParts.push(`Bazaar: ${r.malwarebazaar_data.signature || 'Malware'}`);
+          const notes = noteParts.join(' | ') || '-';
+
+          let vStyle = r.verdict === 'Malicious' ? `{color:red}*${r.verdict}*{color}` : (r.verdict === 'Suspicious' ? `{color:orange}*${r.verdict}*{color}` : `*${r.verdict}*`);
+          output += `| ${vStyle} | {{${ioc}}} | ${r.type} | ${vt} | ${sec} | ${notes} |\n`;
+        });
+        copyToClipboard(output.trim(), `Copied ${items.length} IoCs as Jira Table!`);
+      }
+    }
+
     async function downloadExport(format) {
       if (!currentResults.length) return;
       const defang = document.getElementById('export-defang').checked;
